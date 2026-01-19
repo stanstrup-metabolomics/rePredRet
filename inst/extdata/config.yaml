@@ -1,0 +1,25 @@
+# rePredRet Default Configuration
+# These parameters can be overridden when calling functions
+
+model_building:
+  min_compounds: 10       # Minimum common compounds required for model
+  n_bootstrap: 1000       # Number of bootstrap iterations
+  ci_alpha: 0.01          # Significance level (0.01 = 99% CI)
+  method_match: true      # Only build models between same method types (RP-RP, HILIC-HILIC)
+
+prediction:
+  ci_width_limit: 2.0     # Maximum absolute CI width (minutes)
+  ci_width_limit_rel: 0.2 # Maximum relative CI width (20%)
+  density_bw_mult: 0.03   # Bandwidth multiplier for density estimation
+  density_limit: 0.01     # Minimum density threshold for valid prediction
+
+# Method types to include
+method_types:
+  - RP                    # Reverse-phase chromatography
+  - HILIC                 # Hydrophilic interaction chromatography
+
+# Data repository settings
+data_repo:
+  owner: stanstrup
+  repo: rePredRet-data
+  branch: main

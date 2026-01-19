@@ -1,0 +1,2 @@
+website/data/predictions/by_system/*.json filter=lfs diff=lfs merge=lfs -text
+website/data/predictions/by_system/*.csv filter=lfs diff=lfs merge=lfs -text

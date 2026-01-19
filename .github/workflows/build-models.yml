@@ -1,0 +1,182 @@
+name: Build and Update Models
+
+on:
+  # Run on RepoRT releases (check daily)
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      max_systems:
+        description: 'Max systems to process (0 for all)'
+        required: false
+        default: '0'
+      n_boot:
+        description: 'Bootstrap iterations'
+        required: false
+        default: '1000'
+
+  # Run on push to main for testing
+  push:
+    branches: [main, master]
+    paths:
+      - 'R/**'
+      - 'inst/scripts/**'
+      - '.github/workflows/build-models.yml'
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+
+      - name: Checkout data repository (sparse)
+        run: |
+          git clone --filter=blob:none --no-checkout \
+            https://github.com/stanstrup/rePredRet-models.git data_repo
+          cd data_repo
+          git sparse-checkout set build_cache.rds model_index.csv
+          git checkout
+
+      - name: Check for new RepoRT release
+        id: check
+        run: |
+          # Get latest RepoRT release
+          LATEST=$(curl -s https://api.github.com/repos/michaelwitting/RepoRT/releases/latest | jq -r .tag_name)
+          echo "Latest RepoRT release: $LATEST"
+
+          # Check if we've processed this version (from build cache)
+          PROCESSED=$(Rscript -e "cache <- readRDS('data_repo/build_cache.rds'); cat(cache\$report_version %||% 'none')" 2>/dev/null || echo "none")
+          echo "Last processed version: $PROCESSED"
+
+          # Decide if we should run
+          if [ "$LATEST" != "$PROCESSED" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ] || [ "${{ github.event_name }}" == "push" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "version=$LATEST" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "version=$LATEST" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: check-release
+    if: needs.check-release.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - name: Install R dependencies
+        run: |
+          install.packages(c(
+            "remotes", "boot", "scam", "dplyr", "tidyr", "readr",
+            "ggplot2", "jsonlite", "tibble", "data.table", "curl",
+            "rappdirs", "here", "digest", "Matrix"
+          ))
+        shell: Rscript {0}
+
+      - name: Install rePredRet package
+        run: |
+          remotes::install_local(".", dependencies = FALSE)
+        shell: Rscript {0}
+
+      - name: Checkout data repository (sparse)
+        run: |
+          git clone --filter=blob:none --no-checkout \
+            https://${{ secrets.GITHUB_TOKEN }}@github.com/stanstrup/rePredRet-models.git data_repo
+          cd data_repo
+          git sparse-checkout set build_cache.rds model_index.csv
+          git checkout
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run pipeline with build cache
+        env:
+          MAX_SYSTEMS: ${{ github.event.inputs.max_systems || '0' }}
+          N_BOOT: ${{ github.event.inputs.n_boot || '1000' }}
+        run: |
+          # Copy existing build cache to website/data/models/
+          mkdir -p website/data/models
+          if [ -f data_repo/build_cache.rds ]; then
+            cp data_repo/build_cache.rds website/data/models/
+            echo "Copied existing build cache"
+          fi
+
+          # Run pipeline (will use cache to skip existing models)
+          max_sys <- as.integer(Sys.getenv("MAX_SYSTEMS", "0"))
+          n_boot <- as.integer(Sys.getenv("N_BOOT", "1000"))
+
+          # Convert 0 to Inf for "all systems"
+          if (max_sys == 0) max_sys <- Inf
+
+          source("inst/scripts/run_pipeline.R")
+        shell: Rscript {0}
+
+      - name: Update data repository
+        run: |
+          cd data_repo
+
+          # Enable sparse checkout to include models directory
+          git sparse-checkout set models build_cache.rds model_index.csv
+
+          # Copy new/updated models
+          echo "Copying updated models..."
+          rsync -av --delete ../website/data/models/ models/
+
+          # Copy metadata files
+          cp ../website/data/models/build_cache.rds .
+          if [ -f ../website/data/models/model_index.csv ]; then
+            cp ../website/data/models/model_index.csv .
+          fi
+
+          # Check for changes
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No model changes to commit"
+            echo "has_changes=false" >> $GITHUB_ENV
+          else
+            echo "has_changes=true" >> $GITHUB_ENV
+            git add -A
+            git commit -m "Update models (automated build)" -m "RepoRT version: ${{ needs.check-release.outputs.version }}" -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            git push
+          fi
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ env.has_changes }}" == "true" ]; then
+            echo "Models updated and pushed to rePredRet-models repository"
+          else
+            echo "No model updates needed"
+          fi
+
+  notify:
+    needs: [check-release, build]
+    if: always() && needs.check-release.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report status
+        run: |
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "Model build completed successfully for RepoRT ${{ needs.check-release.outputs.version }}"
+          else
+            echo "Model build failed for RepoRT ${{ needs.check-release.outputs.version }}"
+            exit 1
+          fi

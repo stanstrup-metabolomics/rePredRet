@@ -1,0 +1,235 @@
+---
+title: "System Network"
+subtitle: "Connectivity between chromatographic systems"
+---
+
+```{r setup}
+#| include: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(knitr)
+
+stats_dir <- file.path(here::here(), "data", "statistics")
+models_dir <- file.path(here::here(), "data", "models")
+
+has_model_stats <- file.exists(file.path(stats_dir, "model_stats.csv"))
+
+if (has_model_stats) {
+  model_stats <- read_csv(file.path(stats_dir, "model_stats.csv"), show_col_types = FALSE)
+}
+```
+
+## Network Overview
+
+The network visualization shows how chromatographic systems are connected through pairwise models. Each node represents a system, and edges represent available models between systems.
+
+```{r network-summary}
+#| echo: false
+if (has_model_stats) {
+  n_nodes <- length(unique(c(model_stats$from_id, model_stats$to_id)))
+  n_edges <- nrow(model_stats)
+
+  summary_table <- data.frame(
+    Metric = c(
+      "Total Systems (Nodes)",
+      "Total Models (Edges)",
+      "Average Connections per System",
+      "Network Density"
+    ),
+    Value = c(
+      n_nodes,
+      n_edges,
+      round(n_edges * 2 / n_nodes, 1),
+      sprintf("%.2f%%", n_edges / (n_nodes * (n_nodes - 1)) * 100)
+    )
+  )
+  kable(summary_table, align = "lr")
+}
+```
+
+## Network Visualization (Figure 2)
+
+```{r network-plot}
+#| fig-width: 12
+#| fig-height: 12
+#| echo: false
+if (has_model_stats) {
+  # Get unique nodes
+  nodes <- unique(c(model_stats$from_id, model_stats$to_id))
+  n_nodes <- length(nodes)
+
+  # Filter to models with enough compounds for visibility
+  edges <- model_stats %>%
+    filter(n_compounds >= 20)
+
+  if (nrow(edges) > 0) {
+    # Create circular layout
+    angles <- seq(0, 2 * pi, length.out = n_nodes + 1)[-(n_nodes + 1)]
+    node_coords <- data.frame(
+      id = nodes,
+      x = cos(angles),
+      y = sin(angles)
+    )
+
+    # Create edge coordinates
+    edge_coords <- edges %>%
+      left_join(node_coords, by = c("from_id" = "id")) %>%
+      rename(x_from = x, y_from = y) %>%
+      left_join(node_coords, by = c("to_id" = "id")) %>%
+      rename(x_to = x, y_to = y)
+
+    ggplot() +
+      geom_segment(
+        data = edge_coords,
+        aes(x = x_from, y = y_from, xend = x_to, yend = y_to,
+            alpha = log10(n_compounds)),
+        color = "gray50",
+        linewidth = 0.3
+      ) +
+      geom_point(
+        data = node_coords,
+        aes(x = x, y = y),
+        size = 3,
+        color = "steelblue"
+      ) +
+      coord_fixed() +
+      theme_void() +
+      theme(
+        legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 16)
+      ) +
+      labs(
+        title = "Chromatographic System Network",
+        subtitle = sprintf("%d systems, %d model pairs (min 20 compounds)",
+                          n_nodes, nrow(edges)),
+        alpha = "log10(Compounds)"
+      )
+  } else {
+    cat("No models meet the minimum compound threshold for visualization.")
+  }
+}
+```
+
+## Connectivity Statistics
+
+### Systems with Most Connections
+
+```{r most-connected}
+#| echo: false
+if (has_model_stats) {
+  # Count outgoing and incoming connections
+  outgoing <- model_stats %>%
+    group_by(from_id) %>%
+    summarize(n_outgoing = n(), .groups = "drop")
+
+  incoming <- model_stats %>%
+    group_by(to_id) %>%
+    summarize(n_incoming = n(), .groups = "drop")
+
+  connections <- outgoing %>%
+    full_join(incoming, by = c("from_id" = "to_id")) %>%
+    rename(system_id = from_id) %>%
+    mutate(
+      n_outgoing = ifelse(is.na(n_outgoing), 0, n_outgoing),
+      n_incoming = ifelse(is.na(n_incoming), 0, n_incoming),
+      total = n_outgoing + n_incoming
+    ) %>%
+    arrange(desc(total)) %>%
+    head(20)
+
+  kable(connections,
+        col.names = c("System", "Outgoing", "Incoming", "Total"),
+        caption = "Top 20 most connected systems")
+}
+```
+
+### Connection Distribution
+
+```{r connection-histogram}
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+if (has_model_stats) {
+  # Calculate total connections for all systems
+  all_systems <- unique(c(model_stats$from_id, model_stats$to_id))
+
+  outgoing <- model_stats %>%
+    group_by(from_id) %>%
+    summarize(n = n(), .groups = "drop") %>%
+    rename(system_id = from_id)
+
+  incoming <- model_stats %>%
+    group_by(to_id) %>%
+    summarize(n = n(), .groups = "drop") %>%
+    rename(system_id = to_id)
+
+  all_connections <- bind_rows(outgoing, incoming) %>%
+    group_by(system_id) %>%
+    summarize(total_connections = sum(n), .groups = "drop")
+
+  ggplot(all_connections, aes(x = total_connections)) +
+    geom_histogram(bins = 30, fill = "steelblue", color = "white", alpha = 0.8) +
+    geom_vline(xintercept = median(all_connections$total_connections),
+               color = "red", linetype = "dashed") +
+    labs(
+      x = "Number of Connections",
+      y = "Number of Systems",
+      title = "Distribution of System Connectivity"
+    ) +
+    theme_bw(base_size = 14)
+}
+```
+
+## Models by Compound Count
+
+```{r models-by-compounds}
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+if (has_model_stats) {
+  ggplot(model_stats, aes(x = n_compounds)) +
+    geom_histogram(bins = 50, fill = "steelblue", color = "white", alpha = 0.8) +
+    scale_x_log10() +
+    labs(
+      x = "Number of Common Compounds (log scale)",
+      y = "Number of Models",
+      title = "Distribution of Model Sizes"
+    ) +
+    theme_bw(base_size = 14)
+}
+```
+
+## Heatmap of System Pairs
+
+```{r heatmap}
+#| fig-width: 14
+#| fig-height: 12
+#| echo: false
+if (has_model_stats && nrow(model_stats) < 500) {
+  # Only show heatmap for smaller networks
+  systems_to_show <- unique(c(model_stats$from_id, model_stats$to_id))
+
+  if (length(systems_to_show) <= 50) {
+    ggplot(model_stats, aes(x = from_id, y = to_id, fill = log10(n_compounds))) +
+      geom_tile() +
+      scale_fill_viridis_c(option = "plasma", na.value = "white") +
+      labs(
+        x = "Source System",
+        y = "Target System",
+        fill = "log10(N)",
+        title = "Model Availability Heatmap"
+      ) +
+      theme_bw(base_size = 10) +
+      theme(
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 6),
+        axis.text.y = element_text(size = 6)
+      ) +
+      coord_fixed()
+  } else {
+    cat("Heatmap not shown: too many systems (", length(systems_to_show), ")")
+  }
+} else if (has_model_stats) {
+  cat("Heatmap not shown: too many models for visualization")
+}
+```

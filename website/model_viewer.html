@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rePredRet Model Viewer</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        select, input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 10px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .plot-container {
+            margin-bottom: 40px;
+        }
+
+        .plot-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .plot-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #plot {
+            width: 100%;
+            height: 600px;
+            background: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>rePredRet Model Viewer</h1>
+            <p class="subtitle">Interactive Retention Time Prediction Models</p>
+        </header>
+
+        <div class="controls">
+            <div class="form-group">
+                <label for="sys1Select">Source System:</label>
+                <select id="sys1Select">
+                    <option value="">Loading systems...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="sys2Select">Target System:</label>
+                <select id="sys2Select">
+                    <option value="">Loading systems...</option>
+                </select>
+            </div>
+
+            <button onclick="loadModel()">Load Model</button>
+        </div>
+
+        <div class="content">
+            <div id="message"></div>
+            <div class="plot-container">
+                <div class="plot-title" id="plotTitle"></div>
+                <div class="plot-stats" id="stats"></div>
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Models fetched from separate data repository
+        const MODELS_PATH = 'https://raw.githubusercontent.com/stanstrup/rePredRet-models/main/models';
+
+        // Fallback for local development (try local first, then GitHub)
+        const USE_LOCAL_FALLBACK = window.location.protocol === 'file:';
+        const LOCAL_MODELS_PATH = '../data/models';
+
+        // Global state
+        let modelIndex = {};
+        let currentModel = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadModelIndex();
+        });
+
+        // Load index of all available models
+        async function loadModelIndex() {
+            try {
+                const response = await fetch(`${MODELS_PATH}/model_index.csv`);
+                if (!response.ok) {
+                    showMessage('error', 'Could not find model index. Make sure models are built in: ' + MODELS_PATH);
+                    return;
+                }
+
+                const csv = await response.text();
+                const lines = csv.trim().split('\n').slice(1); // Skip header
+
+                const systems = new Set();
+                const systemPairs = {};
+
+                lines.forEach(line => {
+                    const [sys1, sys2] = line.split(',').slice(0, 2);
+                    if (sys1 && sys2) {
+                        systems.add(sys1);
+                        systems.add(sys2);
+                        const key = `${sys1}_to_${sys2}`;
+                        systemPairs[key] = { sys1, sys2 };
+                    }
+                });
+
+                // Populate dropdowns
+                const sortedSystems = Array.from(systems).sort();
+                const sys1Sel = document.getElementById('sys1Select');
+                const sys2Sel = document.getElementById('sys2Select');
+
+                sys1Sel.innerHTML = '<option value="">Select source system</option>' +
+                    sortedSystems.map(s => `<option value="${s}">${s}</option>`).join('');
+
+                sys2Sel.innerHTML = '<option value="">Select target system</option>' +
+                    sortedSystems.map(s => `<option value="${s}">${s}</option>`).join('');
+
+                modelIndex = systemPairs;
+                showMessage('success', `Loaded ${Object.keys(systemPairs).length} models`);
+
+            } catch (error) {
+                showMessage('error', `Error loading models: ${error.message}`);
+            }
+        }
+
+        // Load and display model
+        async function loadModel() {
+            const sys1 = document.getElementById('sys1Select').value;
+            const sys2 = document.getElementById('sys2Select').value;
+
+            if (!sys1 || !sys2) {
+                showMessage('error', 'Please select both source and target systems');
+                return;
+            }
+
+            const modelKey = `${sys1}_to_${sys2}`;
+            if (!(modelKey in modelIndex)) {
+                showMessage('error', `No model found for ${sys1} → ${sys2}`);
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${MODELS_PATH}/${modelKey}/model.json`);
+                if (!response.ok) {
+                    showMessage('error', `Could not load model: ${response.status}`);
+                    return;
+                }
+
+                const modelData = await response.json();
+                currentModel = modelData;
+                plotModel(modelData);
+                displayStats(modelData);
+                showMessage('success', `Loaded model: ${sys1} → ${sys2}`);
+
+            } catch (error) {
+                showMessage('error', `Error loading model: ${error.message}`);
+            }
+        }
+
+        // Create Plotly visualization
+        function plotModel(data) {
+            const pred = data.predictions;
+            const calib = data.calibration;
+
+            // Prediction line
+            const tracePred = {
+                x: pred.x,
+                y: pred.pred,
+                name: 'Predicted RT',
+                mode: 'lines',
+                line: { color: '#667eea', width: 3 }
+            };
+
+            // Upper bound
+            const traceUpper = {
+                x: pred.x,
+                y: pred.upper,
+                mode: 'lines',
+                line: { width: 0 },
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+
+            // Lower bound
+            const traceLower = {
+                x: pred.x,
+                y: pred.lower,
+                mode: 'lines',
+                line: { width: 0 },
+                fillcolor: 'rgba(102, 126, 234, 0.2)',
+                fill: 'tonexty',
+                name: '95% Prediction Interval',
+                hoverinfo: 'skip'
+            };
+
+            // Calibration points
+            const traceCalib = {
+                x: calib.x,
+                y: calib.y,
+                mode: 'markers',
+                name: 'Calibration Data',
+                marker: {
+                    size: 8,
+                    color: '#764ba2',
+                    opacity: 0.7,
+                    line: { color: 'white', width: 1 }
+                },
+                text: calib.compound || calib.x,
+                hovertemplate: '<b>Calibration Point</b><br>' +
+                    'Source RT: %{x:.3f}<br>' +
+                    'Target RT: %{y:.3f}<br>' +
+                    'Compound: %{text}<extra></extra>'
+            };
+
+            const layout = {
+                title: `RT Mapping: ${data.sys1_id} → ${data.sys2_id}`,
+                xaxis: {
+                    title: `Source System (${data.sys1_id}) RT (minutes)`,
+                    showgrid: true,
+                    gridwidth: 1,
+                    gridcolor: '#f0f0f0'
+                },
+                yaxis: {
+                    title: `Target System (${data.sys2_id}) RT (minutes)`,
+                    showgrid: true,
+                    gridwidth: 1,
+                    gridcolor: '#f0f0f0'
+                },
+                hovermode: 'closest',
+                plot_bgcolor: '#fafafa',
+                paper_bgcolor: 'white',
+                font: { family: 'Segoe UI' },
+                margin: { l: 80, r: 50, t: 80, b: 80 }
+            };
+
+            Plotly.newPlot('plot', [traceLower, traceUpper, tracePred, traceCalib], layout, {responsive: true});
+        }
+
+        // Display statistics
+        function displayStats(data) {
+            const stats = data.stats;
+            const html = `
+                <div class="stat-card">
+                    <div class="stat-label">Calibration Compounds</div>
+                    <div class="stat-value">${data.n_compounds}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Median PI Width</div>
+                    <div class="stat-value">${stats.median_pi_width.toFixed(3)} RT</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Median Error</div>
+                    <div class="stat-value">${stats.median_error.toFixed(3)} RT</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Method</div>
+                    <div class="stat-value">${data.method}</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = html;
+            document.getElementById('plotTitle').textContent = `${data.sys1_id} → ${data.sys2_id}`;
+        }
+
+        // UI helpers
+        function showLoading() {
+            document.getElementById('message').innerHTML =
+                '<div class="loading"><div class="spinner"></div>Loading model...</div>';
+        }
+
+        function showMessage(type, message) {
+            const messageEl = document.getElementById('message');
+            messageEl.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => messageEl.innerHTML = '', 5000);
+        }
+
+        // Allow Enter key to load model
+        document.getElementById('sys1Select').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') loadModel();
+        });
+
+        document.getElementById('sys2Select').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') loadModel();
+        });
+    </script>
+</body>
+</html>

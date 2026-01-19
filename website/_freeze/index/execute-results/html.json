@@ -1,0 +1,15 @@
+{
+  "hash": "7f7c03d70af8b8cab790327c4f99f219",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"rePredRet: Retention Time Prediction Statistics\"\nsubtitle: \"Automated predictions from RepoRT data\"\n---\n\n\n\n\n\n\n## Overview\n\nrePredRet is a reimplementation of [PredRet](http://predret.org) that predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. It uses data from the [RepoRT repository](https://github.com/michaelwitting/RepoRT) and publishes predictions to GitHub.\n\n### Key Statistics\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n\n\n|Metric                   |     Value|\n|:------------------------|---------:|\n|Number of Models         |       642|\n|Number of Systems        |        30|\n|Total Calibration Points |   124,996|\n|Median R²                |    0.8805|\n|Median Absolute Error    | 0.199 min|\n|Median Relative Error    |     4.61%|\n|Median CI Width          | 0.643 min|\n|Median Relative CI Width |    13.90%|\n\n\n:::\n:::\n\n\n\n\n### Comparison with Original PredRet Paper\n\nThe original PredRet paper (Stanstrup et al. 2015) reported:\n\n| Metric | Paper Value | rePredRet Value |\n|--------|-------------|-----------------|\n| R² (predicted vs actual) | 0.9992 | 0.8805 |\n| Median Error | 0.01-0.28 min | 0.199 min |\n| Median Relative Error | 1.8-3.7% | 4.61% |\n\n### Data Source\n\n\n\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n\n```\n**RepoRT Version:** test \n\n**Generated:** 2026-01-15 17:24:11.700818 \n```\n\n\n:::\n:::\n\n\n\n\n## Quick Links\n\n- [Model Statistics](models.qmd) - Detailed model performance metrics\n- [Predictions](predictions.qmd) - Prediction coverage and CI widths\n- [Network](network.qmd) - System connectivity visualization\n- [Methods](methods.qmd) - Algorithm documentation\n\n## References\n\n1. Stanstrup, J. et al. (2015). PredRet: Prediction of Retention Time by Direct Mapping between Multiple Chromatographic Systems. *Analytical Chemistry*, 87(18), 9421-9428.\n\n2. Kretschmer, F. et al. (2024). RepoRT: a comprehensive repository for small molecule retention times. *Nature Methods*, 21, 153-155.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

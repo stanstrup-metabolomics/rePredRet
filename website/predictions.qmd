@@ -1,0 +1,214 @@
+---
+title: "Prediction Statistics"
+subtitle: "Coverage and quality of RT predictions"
+---
+
+```{r setup}
+#| include: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(jsonlite)
+library(knitr)
+
+stats_dir <- file.path(here::here(), "data", "statistics")
+
+has_pred_stats <- file.exists(file.path(stats_dir, "prediction_stats_per_system.csv"))
+has_db_stats <- file.exists(file.path(stats_dir, "database_stats.csv"))
+
+if (has_pred_stats) {
+  pred_stats <- read_csv(file.path(stats_dir, "prediction_stats_per_system.csv"), show_col_types = FALSE)
+
+  if (file.exists(file.path(stats_dir, "prediction_stats_overall.json"))) {
+    pred_overall <- fromJSON(file.path(stats_dir, "prediction_stats_overall.json"))
+  } else {
+    pred_overall <- NULL
+  }
+}
+
+if (has_db_stats) {
+  db_stats <- read_csv(file.path(stats_dir, "database_stats.csv"), show_col_types = FALSE)
+}
+```
+
+## Prediction Summary
+
+```{r pred-summary}
+#| echo: false
+if (has_pred_stats && !is.null(pred_overall)) {
+  summary_table <- data.frame(
+    Metric = c(
+      "Total Predictions",
+      "Target Systems",
+      "Unique Compounds",
+      "Mean CI Width",
+      "Median CI Width",
+      "95th Percentile CI Width"
+    ),
+    Value = c(
+      format(pred_overall$total_predictions, big.mark = ","),
+      pred_overall$n_target_systems,
+      format(pred_overall$n_unique_compounds, big.mark = ","),
+      sprintf("%.3f min", pred_overall$mean_ci_width),
+      sprintf("%.3f min", pred_overall$median_ci_width),
+      sprintf("%.3f min", pred_overall$q95_ci_width)
+    )
+  )
+  kable(summary_table, align = "lr")
+} else {
+  cat("Prediction statistics not yet generated.")
+}
+```
+
+## Database Coverage (Figure 3A)
+
+This plot shows the number of compounds in the database vs the number of predictions available for each system.
+
+```{r coverage-plot}
+#| fig-width: 12
+#| fig-height: 8
+#| echo: false
+if (has_db_stats && has_pred_stats) {
+  # Merge database and prediction stats
+  combined <- db_stats %>%
+    left_join(pred_stats, by = c("system_id" = "target_system")) %>%
+    mutate(n_predictions = ifelse(is.na(n_predictions), 0, n_predictions))
+
+  ggplot(combined, aes(x = reorder(system_id, n_compounds),
+                       y = n_compounds)) +
+    geom_bar(stat = "identity", fill = "steelblue", alpha = 0.7) +
+    geom_point(aes(y = n_predictions), color = "red", size = 2) +
+    coord_flip() +
+    labs(
+      x = "System ID",
+      y = "Count",
+      title = "Database Size vs Predictions per System",
+      subtitle = "Blue bars: compounds in database | Red dots: predictions available"
+    ) +
+    theme_bw(base_size = 12) +
+    theme(
+      axis.text.y = element_text(size = 6),
+      plot.title = element_text(face = "bold")
+    )
+} else if (has_db_stats) {
+  ggplot(db_stats, aes(x = reorder(system_id, n_compounds),
+                       y = n_compounds)) +
+    geom_bar(stat = "identity", fill = "steelblue", alpha = 0.7) +
+    coord_flip() +
+    labs(
+      x = "System ID",
+      y = "Number of Compounds",
+      title = "Compounds per System"
+    ) +
+    theme_bw(base_size = 12) +
+    theme(axis.text.y = element_text(size = 6))
+}
+```
+
+## Predictions per System
+
+```{r predictions-histogram}
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+if (has_pred_stats) {
+  ggplot(pred_stats, aes(x = n_predictions)) +
+    geom_histogram(bins = 30, fill = "steelblue", color = "white", alpha = 0.8) +
+    geom_vline(xintercept = median(pred_stats$n_predictions),
+               color = "red", linetype = "dashed", linewidth = 1) +
+    annotate("text", x = median(pred_stats$n_predictions), y = Inf,
+             label = sprintf("Median = %d", median(pred_stats$n_predictions)),
+             vjust = 2, hjust = -0.1, color = "red") +
+    labs(
+      x = "Number of Predictions",
+      y = "Number of Systems",
+      title = "Distribution of Predictions per Target System"
+    ) +
+    theme_bw(base_size = 14)
+}
+```
+
+## CI Width Distribution by System
+
+```{r ci-by-system}
+#| fig-width: 12
+#| fig-height: 8
+#| echo: false
+if (has_pred_stats) {
+  pred_stats %>%
+    arrange(median_ci_width) %>%
+    mutate(target_system = factor(target_system, levels = target_system)) %>%
+    ggplot(aes(x = target_system, y = median_ci_width)) +
+    geom_bar(stat = "identity", fill = "steelblue", alpha = 0.7) +
+    geom_hline(yintercept = median(pred_stats$median_ci_width),
+               color = "red", linetype = "dashed") +
+    coord_flip() +
+    labs(
+      x = "Target System",
+      y = "Median CI Width (min)",
+      title = "Prediction Precision by Target System",
+      subtitle = "Lower values indicate more precise predictions"
+    ) +
+    theme_bw(base_size = 12) +
+    theme(axis.text.y = element_text(size = 6))
+}
+```
+
+## Database Statistics by Method Type
+
+```{r db-by-method}
+#| echo: false
+if (has_db_stats && "method_type" %in% names(db_stats)) {
+  method_summary <- db_stats %>%
+    group_by(method_type) %>%
+    summarize(
+      n_systems = n(),
+      total_compounds = sum(n_compounds, na.rm = TRUE),
+      mean_compounds = mean(n_compounds, na.rm = TRUE),
+      median_rt_range = median(rt_range, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  kable(method_summary,
+        digits = c(0, 0, 0, 1, 2),
+        col.names = c("Method", "Systems", "Total Compounds",
+                      "Mean Compounds", "Median RT Range (min)"),
+        caption = "Database coverage by chromatographic method")
+}
+```
+
+## Per-System Statistics
+
+```{r per-system-table}
+#| echo: false
+if (has_pred_stats) {
+  pred_stats %>%
+    arrange(desc(n_predictions)) %>%
+    head(50) %>%
+    kable(
+      digits = c(0, 0, 0, 3, 3, 3, 1),
+      col.names = c("System", "Predictions", "Unique Compounds",
+                    "Mean CI", "Median CI", "Q95 CI", "Mean N Cal"),
+      caption = "Top 50 systems by number of predictions"
+    )
+}
+```
+
+## Database Size Distribution
+
+```{r db-histogram}
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+if (has_db_stats) {
+  ggplot(db_stats, aes(x = n_compounds)) +
+    geom_histogram(bins = 50, fill = "steelblue", color = "white", alpha = 0.8) +
+    scale_x_log10() +
+    labs(
+      x = "Number of Compounds (log scale)",
+      y = "Number of Systems",
+      title = "Distribution of Dataset Sizes"
+    ) +
+    theme_bw(base_size = 14)
+}
+```

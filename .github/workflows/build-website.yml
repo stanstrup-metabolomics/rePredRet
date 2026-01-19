@@ -1,0 +1,56 @@
+name: Build and Deploy Website
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+
+  # Run on push to main or when website content changes
+  push:
+    branches: [main, master]
+    paths:
+      - 'website/**'
+      - '.github/workflows/build-website.yml'
+
+  # Trigger when models are updated (via repository_dispatch from build-models workflow)
+  repository_dispatch:
+    types: [models-updated]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Website rendering is fast
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Fetch model index from data repository
+        run: |
+          # Download model_index.csv from data repository for website dropdown
+          mkdir -p website/data/models
+          curl -L -o website/data/models/model_index.csv \
+            https://raw.githubusercontent.com/stanstrup/rePredRet-models/main/model_index.csv
+
+      - name: Render Quarto website
+        run: |
+          quarto render website
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: website/_site
+          publish_branch: gh-pages
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Website deployed successfully"
+          else
+            echo "Website deployment failed"
+            exit 1
+          fi

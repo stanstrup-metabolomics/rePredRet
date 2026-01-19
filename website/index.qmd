@@ -1,0 +1,93 @@
+---
+title: "rePredRet: Retention Time Prediction Statistics"
+subtitle: "Automated predictions from RepoRT data"
+---
+
+```{r setup}
+#| include: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(jsonlite)
+library(knitr)
+
+# Load statistics from generated files
+stats_dir <- file.path(here::here(), "data", "statistics")
+models_dir <- file.path(here::here(), "data", "models")
+
+# Check if data exists
+has_data <- dir.exists(stats_dir) && file.exists(file.path(stats_dir, "overall_stats.json"))
+```
+
+## Overview
+
+rePredRet is a reimplementation of [PredRet](http://predret.org) that predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. It uses data from the [RepoRT repository](https://github.com/michaelwitting/RepoRT) and publishes predictions to GitHub.
+
+### Key Statistics
+
+```{r overall-stats}
+#| echo: false
+if (has_data) {
+  overall <- fromJSON(file.path(stats_dir, "overall_stats.json"))
+
+  stats_table <- data.frame(
+    Metric = c(
+      "Number of Models",
+      "Number of Systems",
+      "Total Calibration Points",
+      "Median R²",
+      "Median Absolute Error",
+      "Median Relative Error",
+      "Median CI Width",
+      "Median Relative CI Width"
+    ),
+    Value = c(
+      format(overall$n_models, big.mark = ","),
+      format(overall$n_systems, big.mark = ","),
+      format(overall$total_calibration_points, big.mark = ","),
+      sprintf("%.4f", overall$median_r_squared),
+      sprintf("%.3f min", overall$overall_median_error_abs),
+      sprintf("%.2f%%", overall$overall_median_error_rel),
+      sprintf("%.3f min", overall$overall_median_ci_width),
+      sprintf("%.2f%%", overall$overall_median_ci_width_rel)
+    )
+  )
+
+  kable(stats_table, col.names = c("Metric", "Value"), align = "lr")
+} else {
+  cat("Statistics not yet generated. Run the pipeline first.")
+}
+```
+
+### Comparison with Original PredRet Paper
+
+The original PredRet paper (Stanstrup et al. 2015) reported:
+
+| Metric | Paper Value | rePredRet Value |
+|--------|-------------|-----------------|
+| R² (predicted vs actual) | 0.9992 | `r if(has_data) sprintf("%.4f", overall$median_r_squared) else "N/A"` |
+| Median Error | 0.01-0.28 min | `r if(has_data) sprintf("%.3f min", overall$overall_median_error_abs) else "N/A"` |
+| Median Relative Error | 1.8-3.7% | `r if(has_data) sprintf("%.2f%%", overall$overall_median_error_rel) else "N/A"` |
+
+### Data Source
+
+```{r data-info}
+#| echo: false
+if (has_data && !is.null(overall$metadata)) {
+  cat("**RepoRT Version:**", overall$metadata$report_version %||% "Unknown", "\n\n")
+  cat("**Generated:**", overall$metadata$generated_at %||% "Unknown", "\n")
+}
+```
+
+## Quick Links
+
+- [Model Statistics](models.qmd) - Detailed model performance metrics
+- [Predictions](predictions.qmd) - Prediction coverage and CI widths
+- [Network](network.qmd) - System connectivity visualization
+- [Methods](methods.qmd) - Algorithm documentation
+
+## References
+
+1. Stanstrup, J. et al. (2015). PredRet: Prediction of Retention Time by Direct Mapping between Multiple Chromatographic Systems. *Analytical Chemistry*, 87(18), 9421-9428.
+
+2. Kretschmer, F. et al. (2024). RepoRT: a comprehensive repository for small molecule retention times. *Nature Methods*, 21, 153-155.

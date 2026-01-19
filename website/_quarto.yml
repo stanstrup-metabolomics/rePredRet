@@ -1,0 +1,38 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "rePredRet"
+  description: "Retention Time Prediction Statistics"
+  navbar:
+    left:
+      - text: "Overview"
+        href: index.qmd
+      - text: "Model Statistics"
+        href: models.qmd
+      - text: "Predictions"
+        href: predictions.qmd
+      - text: "Network"
+        href: network.qmd
+      - text: "Methods"
+        href: methods.qmd
+    right:
+      - icon: github
+        href: https://github.com/stanstrup/rePredRet
+  page-footer:
+    center: "Generated automatically from RepoRT data"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-tools: true
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  freeze: auto

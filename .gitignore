@@ -1,0 +1,22 @@
+# R build files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Downloaded RepoRT data (cached locally, don't commit)
+RepoRT_data/
+
+# Model files (stored in separate rePredRet-models repository)
+website/data/models/
+
+# Large generated files (remove by_compound, keep by_system with LFS)
+website/data/predictions/by_compound/
+website/data/test_data.rds
+
+# Keep model_index.csv for metadata
+!website/data/model_index.csv
+
+# Output files
+*.log
+pipeline_output.log

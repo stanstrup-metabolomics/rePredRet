@@ -1,0 +1,17 @@
+{
+  "hash": "10d8791803296d7017debccc94141cca",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"System Network\"\nsubtitle: \"Connectivity between chromatographic systems\"\n---\n\n\n\n\n\n\n## Network Overview\n\nThe network visualization shows how chromatographic systems are connected through pairwise models. Each node represents a system, and edges represent available models between systems.\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n\n\n|Metric                         |  Value|\n|:------------------------------|------:|\n|Total Systems (Nodes)          |     30|\n|Total Models (Edges)           |    642|\n|Average Connections per System |   42.8|\n|Network Density                | 73.79%|\n\n\n:::\n:::\n\n\n\n\n## Network Visualization (Figure 2)\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](network_files/figure-html/network-plot-1.png){width=1152}\n:::\n:::\n\n\n\n\n## Connectivity Statistics\n\n### Systems with Most Connections\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n\n\nTable: Top 20 most connected systems\n\n|System | Outgoing| Incoming| Total|\n|:------|--------:|--------:|-----:|\n|0048   |       26|       26|    52|\n|0063   |       26|       26|    52|\n|0210   |       26|       26|    52|\n|0262   |       26|       26|    52|\n|0263   |       26|       26|    52|\n|0382   |       26|       26|    52|\n|0383   |       26|       26|    52|\n|0391   |       26|       26|    52|\n|0392   |       26|       26|    52|\n|0436   |       26|       26|    52|\n|0403   |       25|       25|    50|\n|0415   |       25|       25|    50|\n|0429   |       25|       25|    50|\n|0219   |       24|       24|    48|\n|0240   |       24|       24|    48|\n|0236   |       23|       23|    46|\n|0238   |       23|       23|    46|\n|0244   |       23|       23|    46|\n|0246   |       23|       23|    46|\n|0248   |       23|       23|    46|\n\n\n:::\n:::\n\n\n\n\n### Connection Distribution\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](network_files/figure-html/connection-histogram-1.png){width=960}\n:::\n:::\n\n\n\n\n## Models by Compound Count\n\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](network_files/figure-html/models-by-compounds-1.png){width=960}\n:::\n:::\n\n\n\n\n## Heatmap of System Pairs\n\n\n\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n\n```\nHeatmap not shown: too many models for visualization\n```\n\n\n:::\n:::\n",
+    "supporting": [
+      "network_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

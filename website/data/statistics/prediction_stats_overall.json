@@ -1,0 +1,8 @@
+{
+  "total_predictions": 1168118,
+  "n_target_systems": 30,
+  "n_unique_compounds": 93705,
+  "mean_ci_width": 0.9965,
+  "median_ci_width": 0.9305,
+  "q95_ci_width": 1.946
+}

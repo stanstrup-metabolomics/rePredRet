@@ -1,0 +1,320 @@
+---
+title: "Model Statistics"
+subtitle: "Performance metrics for all pairwise models"
+---
+
+```{r setup}
+#| include: false
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(jsonlite)
+library(knitr)
+library(tidyr)
+
+stats_dir <- file.path(here::here(), "data", "statistics")
+has_data <- dir.exists(stats_dir) && file.exists(file.path(stats_dir, "model_stats.csv"))
+
+if (has_data) {
+  model_stats <- read_csv(file.path(stats_dir, "model_stats.csv"), show_col_types = FALSE)
+  overall <- fromJSON(file.path(stats_dir, "overall_stats.json"))
+
+  if (file.exists(file.path(stats_dir, "regression_data.csv"))) {
+    regression_data <- read_csv(file.path(stats_dir, "regression_data.csv"), show_col_types = FALSE)
+  } else {
+    regression_data <- NULL
+  }
+
+  if (file.exists(file.path(stats_dir, "stats_by_method.csv"))) {
+    by_method <- read_csv(file.path(stats_dir, "stats_by_method.csv"), show_col_types = FALSE)
+  } else {
+    by_method <- NULL
+  }
+}
+```
+
+## Summary
+
+```{r summary-table}
+#| echo: false
+if (has_data) {
+  summary_stats <- data.frame(
+    Statistic = c("Total Models", "Total Systems", "Calibration Points",
+                  "Mean Compounds/Model", "Median R²", "Min R²"),
+    Value = c(
+      overall$n_models,
+      overall$n_systems,
+      format(overall$total_calibration_points, big.mark = ","),
+      round(overall$total_calibration_points / overall$n_models, 1),
+      round(overall$median_r_squared, 4),
+      round(overall$min_r_squared, 4)
+    )
+  )
+  kable(summary_stats, align = "lr")
+}
+```
+
+## Predicted vs Actual RT (Figure 3B)
+
+This plot shows the relationship between predicted and actual retention times across all calibration points, similar to Figure 3B in the original PredRet paper.
+
+```{r regression-plot}
+#| fig-width: 8
+#| fig-height: 8
+#| echo: false
+if (has_data && !is.null(regression_data)) {
+  # Calculate overall R²
+  r_sq <- cor(regression_data$rt_target_actual, regression_data$rt_target_predicted)^2
+
+  ggplot(regression_data, aes(x = rt_target_actual, y = rt_target_predicted)) +
+    geom_point(alpha = 0.1, size = 0.5) +
+    geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+    annotate("text", x = Inf, y = -Inf,
+             label = sprintf("R² = %.4f\nn = %s", r_sq, format(nrow(regression_data), big.mark = ",")),
+             hjust = 1.1, vjust = -0.5, size = 5) +
+    labs(
+      x = "Actual RT (min)",
+      y = "Predicted RT (min)",
+      title = "Predicted vs Actual Retention Times",
+      subtitle = "All calibration points across all models"
+    ) +
+    coord_fixed() +
+    theme_bw(base_size = 14) +
+    theme(plot.title = element_text(face = "bold"))
+} else {
+  cat("Regression data not available.")
+}
+```
+
+## Error Distributions (Figure 3C,D)
+
+### Absolute Prediction Errors
+
+```{r error-violin-abs}
+#| fig-width: 10
+#| fig-height: 6
+#| echo: false
+if (has_data) {
+  # Prepare data for violin plot
+  error_data <- model_stats %>%
+    select(model_key, median_error_abs) %>%
+    filter(!is.na(median_error_abs))
+
+  if ("method_type" %in% names(model_stats) && !all(is.na(model_stats$method_type))) {
+    error_data$method_type <- model_stats$method_type[match(error_data$model_key, model_stats$model_key)]
+    ggplot(error_data, aes(x = method_type, y = median_error_abs, fill = method_type)) +
+      geom_violin(alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "Method Type",
+        y = "Median Absolute Error (min)",
+        title = "Distribution of Median Absolute Errors by Method Type"
+      ) +
+      theme_bw(base_size = 14) +
+      theme(legend.position = "none")
+  } else {
+    ggplot(error_data, aes(x = "", y = median_error_abs)) +
+      geom_violin(fill = "steelblue", alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "",
+        y = "Median Absolute Error (min)",
+        title = "Distribution of Median Absolute Errors"
+      ) +
+      theme_bw(base_size = 14)
+  }
+}
+```
+
+### Relative Prediction Errors
+
+```{r error-violin-rel}
+#| fig-width: 10
+#| fig-height: 6
+#| echo: false
+if (has_data) {
+  error_data <- model_stats %>%
+    select(model_key, median_error_rel) %>%
+    filter(!is.na(median_error_rel))
+
+  if ("method_type" %in% names(model_stats) && !all(is.na(model_stats$method_type))) {
+    error_data$method_type <- model_stats$method_type[match(error_data$model_key, model_stats$model_key)]
+    ggplot(error_data, aes(x = method_type, y = median_error_rel, fill = method_type)) +
+      geom_violin(alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "Method Type",
+        y = "Median Relative Error (%)",
+        title = "Distribution of Median Relative Errors by Method Type"
+      ) +
+      theme_bw(base_size = 14) +
+      theme(legend.position = "none")
+  } else {
+    ggplot(error_data, aes(x = "", y = median_error_rel)) +
+      geom_violin(fill = "steelblue", alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "",
+        y = "Median Relative Error (%)",
+        title = "Distribution of Median Relative Errors"
+      ) +
+      theme_bw(base_size = 14)
+  }
+}
+```
+
+## CI Width Distributions (Figure 3E,F)
+
+### Absolute CI Widths
+
+```{r ci-violin-abs}
+#| fig-width: 10
+#| fig-height: 6
+#| echo: false
+if (has_data) {
+  ci_data <- model_stats %>%
+    select(model_key, median_ci_width) %>%
+    filter(!is.na(median_ci_width))
+
+  if ("method_type" %in% names(model_stats) && !all(is.na(model_stats$method_type))) {
+    ci_data$method_type <- model_stats$method_type[match(ci_data$model_key, model_stats$model_key)]
+    ggplot(ci_data, aes(x = method_type, y = median_ci_width, fill = method_type)) +
+      geom_violin(alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "Method Type",
+        y = "Median CI Width (min)",
+        title = "Distribution of Median CI Widths by Method Type"
+      ) +
+      theme_bw(base_size = 14) +
+      theme(legend.position = "none")
+  } else {
+    ggplot(ci_data, aes(x = "", y = median_ci_width)) +
+      geom_violin(fill = "steelblue", alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "",
+        y = "Median CI Width (min)",
+        title = "Distribution of Median CI Widths"
+      ) +
+      theme_bw(base_size = 14)
+  }
+}
+```
+
+### Relative CI Widths
+
+```{r ci-violin-rel}
+#| fig-width: 10
+#| fig-height: 6
+#| echo: false
+if (has_data) {
+  ci_data <- model_stats %>%
+    select(model_key, median_ci_width_rel) %>%
+    filter(!is.na(median_ci_width_rel))
+
+  if ("method_type" %in% names(model_stats) && !all(is.na(model_stats$method_type))) {
+    ci_data$method_type <- model_stats$method_type[match(ci_data$model_key, model_stats$model_key)]
+    ggplot(ci_data, aes(x = method_type, y = median_ci_width_rel, fill = method_type)) +
+      geom_violin(alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "Method Type",
+        y = "Median Relative CI Width (%)",
+        title = "Distribution of Median Relative CI Widths by Method Type"
+      ) +
+      theme_bw(base_size = 14) +
+      theme(legend.position = "none")
+  } else {
+    ggplot(ci_data, aes(x = "", y = median_ci_width_rel)) +
+      geom_violin(fill = "steelblue", alpha = 0.7) +
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.8) +
+      labs(
+        x = "",
+        y = "Median Relative CI Width (%)",
+        title = "Distribution of Median Relative CI Widths"
+      ) +
+      theme_bw(base_size = 14)
+  }
+}
+```
+
+## Statistics by Method Type
+
+```{r by-method-table}
+#| echo: false
+if (has_data && !is.null(by_method)) {
+  kable(by_method,
+        digits = c(0, 0, 0, 1, 4, 3, 2, 3, 2),
+        col.names = c("Method", "Models", "Systems", "Avg Compounds",
+                      "Median R²", "Med. Error (min)", "Med. Error (%)",
+                      "Med. CI (min)", "Med. CI (%)"),
+        caption = "Summary statistics by chromatographic method type")
+}
+```
+
+## R² Distribution
+
+```{r r2-histogram}
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+if (has_data) {
+  ggplot(model_stats, aes(x = r_squared)) +
+    geom_histogram(bins = 50, fill = "steelblue", color = "white", alpha = 0.8) +
+    geom_vline(xintercept = median(model_stats$r_squared),
+               color = "red", linetype = "dashed", linewidth = 1) +
+    annotate("text", x = median(model_stats$r_squared), y = Inf,
+             label = sprintf("Median = %.4f", median(model_stats$r_squared)),
+             vjust = 2, hjust = -0.1, color = "red") +
+    labs(
+      x = "R²",
+      y = "Count",
+      title = "Distribution of Model R² Values"
+    ) +
+    theme_bw(base_size = 14) +
+    xlim(0, 1)
+}
+```
+
+## Model Quality vs Number of Compounds
+
+```{r compounds-vs-error}
+#| fig-width: 10
+#| fig-height: 6
+#| echo: false
+if (has_data) {
+  ggplot(model_stats, aes(x = n_compounds, y = median_error_abs)) +
+    geom_point(alpha = 0.5, color = "steelblue") +
+    geom_smooth(method = "loess", se = TRUE, color = "red") +
+    scale_x_log10() +
+    labs(
+      x = "Number of Calibration Compounds (log scale)",
+      y = "Median Absolute Error (min)",
+      title = "Prediction Error vs Model Size",
+      subtitle = "More calibration compounds generally improve predictions"
+    ) +
+    theme_bw(base_size = 14)
+}
+```
+
+## Full Model Table
+
+```{r model-table}
+#| echo: false
+if (has_data) {
+  model_display <- model_stats %>%
+    select(from_id, to_id, n_compounds, r_squared,
+           median_error_abs, median_error_rel,
+           median_ci_width, median_ci_width_rel) %>%
+    arrange(desc(n_compounds)) %>%
+    head(100)
+
+  kable(model_display,
+        digits = c(0, 0, 0, 4, 3, 2, 3, 2),
+        col.names = c("From", "To", "N", "R²",
+                      "Error (min)", "Error (%)",
+                      "CI (min)", "CI (%)"),
+        caption = "Top 100 models by number of calibration compounds")
+}
+```

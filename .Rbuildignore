@@ -1,0 +1,38 @@
+^\.github$
+^website$
+^.*\.Rproj$
+^\.Rproj\.user$
+^_old$
+
+# Test and debug scripts
+^test_.*\.R$
+^debug_.*\.R$
+^run_.*\.R$
+^reanalyze_.*\.R$
+
+# Data files from testing
+^.*\.csv$
+^.*\.rds$
+^.*\.png$
+^.*\.RData$
+
+# Markdown documentation (not package vignettes)
+^.*_SUMMARY\.md$
+^.*_RESULTS\.md$
+^.*_FAILURE\.md$
+^.*_EXPLANATION\.md$
+^IMPLEMENTATION_SUMMARY\.md$
+^SESSION_SUMMARY\.md$
+^FINAL_SESSION_REPORT\.md$
+^PARALLELIZATION_EXPLANATION\.md$
+^PIPELINE_OPTIMIZATION\.md$
+
+# Specific test files
+^brms_feasibility\.R$
+^test_plots$
+
+# Large data directories (RepoRT data and models output)
+^RepoRT_data$
+
+# Log and temp files
+^new.*\.txt$

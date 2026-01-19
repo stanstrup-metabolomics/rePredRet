@@ -1,0 +1,43 @@
+Package: rePredRet
+Title: Retention Time Prediction by Direct System Mapping
+Version: 0.1.0
+Authors@R: c(
+    person("Jan", "Stanstrup", email = "stanstrup@gmail.com",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0541-7369"))
+  )
+Description: Predicts retention times (RTs) by directly mapping between
+    chromatographic systems using monotonically constrained GAMs. This is a
+    reimplementation of PredRet that uses RepoRT data as input and publishes
+    predictions to GitHub. Unlike QSRR models that use molecular descriptors,
+    rePredRet uses experimentally measured RTs from one system to predict RTs
+    in another system.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1.0)
+Imports:
+    boot,
+    data.table,
+    digest,
+    dplyr,
+    ggplot2,
+    jsonlite,
+    Matrix,
+    mgcv,
+    parallel,
+    pracma,
+    purrr,
+    rappdirs,
+    readr,
+    rlang,
+    tibble,
+    tidyr
+Suggests:
+    curl,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/stanstrup/rePredRet
+BugReports: https://github.com/stanstrup/rePredRet/issues

@@ -1,0 +1,27 @@
+{
+  "n_models": 642,
+  "n_systems": 30,
+  "total_calibration_points": 124996,
+  "mean_r_squared": 0.8509,
+  "median_r_squared": 0.8805,
+  "min_r_squared": 0.1633,
+  "weighted_mean_error_abs": 0.4086,
+  "overall_median_error_abs": 0.1985,
+  "overall_q95_error_abs": 0.658,
+  "weighted_mean_error_rel": 11.7344,
+  "overall_median_error_rel": 4.6124,
+  "overall_q95_error_rel": 15.9526,
+  "weighted_mean_ci_width": 0.5535,
+  "overall_median_ci_width": 0.643,
+  "overall_q95_ci_width": 2.5954,
+  "weighted_mean_ci_width_rel": "Inf",
+  "overall_median_ci_width_rel": 13.9029,
+  "overall_q95_ci_width_rel": 74.7843,
+  "metadata": {
+    "report_version": "test",
+    "n_boot": 1000,
+    "n_systems": 30,
+    "r_version": "4.5.1",
+    "generated_at": "2026-01-15 17:24:11.700818"
+  }
+}
