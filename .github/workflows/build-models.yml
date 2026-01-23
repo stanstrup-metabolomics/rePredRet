@@ -108,19 +108,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Run pipeline with build cache
-        env:
-          MAX_SYSTEMS: ${{ github.event.inputs.max_systems || '0' }}
-          N_BOOT: ${{ github.event.inputs.n_boot || '1000' }}
+      - name: Copy existing build cache
         run: |
-          # Copy existing build cache to website/data/models/
           mkdir -p website/data/models
           if [ -f data_repo/build_cache.rds ]; then
             cp data_repo/build_cache.rds website/data/models/
             echo "Copied existing build cache"
           fi
 
-          # Run pipeline (will use cache to skip existing models)
+      - name: Run pipeline with build cache
+        env:
+          MAX_SYSTEMS: ${{ github.event.inputs.max_systems || '0' }}
+          N_BOOT: ${{ github.event.inputs.n_boot || '1000' }}
+        run: |
           max_sys <- as.integer(Sys.getenv("MAX_SYSTEMS", "0"))
           n_boot <- as.integer(Sys.getenv("N_BOOT", "1000"))
 
