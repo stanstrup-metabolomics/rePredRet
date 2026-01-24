@@ -73,6 +73,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Git LFS
+        run: |
+          git lfs install --skip-repo
+
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
@@ -98,13 +102,17 @@ jobs:
           remotes::install_local(".", dependencies = FALSE)
         shell: Rscript {0}
 
-      - name: Checkout data repository (sparse)
+      - name: Checkout data repository (for build cache)
         run: |
-          git clone --filter=blob:none --no-checkout \
+          # Clone with sparse checkout to minimize download
+          git clone --no-checkout \
             https://${{ secrets.GITHUB_TOKEN }}@github.com/stanstrup/rePredRet-models.git data_repo
           cd data_repo
+          # Only checkout cache files, not all models yet
           git sparse-checkout set build_cache.rds model_index.csv
           git checkout
+          # Ensure LFS files are pulled
+          git lfs pull
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
