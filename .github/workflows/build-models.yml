@@ -37,11 +37,13 @@ jobs:
 
       - name: Checkout data repository (sparse)
         run: |
-          git clone --filter=blob:none --no-checkout \
+          GIT_LFS_SKIP_SMUDGE=1 git clone --filter=blob:none --no-checkout \
             https://github.com/stanstrup-metabolomics/rePredRet-models.git data_repo
           cd data_repo
           git sparse-checkout set build_cache.rds model_index.csv
           git checkout
+          # Cleanup to prevent pack corruption on next repo operation
+          git gc --aggressive --prune=now || true
 
       - name: Check for new RepoRT release
         id: check
@@ -73,8 +75,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Git LFS
+      - name: Cleanup and Setup Git LFS
         run: |
+          # Clean up git pack files to prevent corruption
+          git gc --aggressive --prune=now || true
           git lfs install --skip-repo
 
       - name: Setup R
@@ -105,7 +109,7 @@ jobs:
       - name: Checkout data repository (for build cache)
         run: |
           # Clone with sparse checkout to minimize download
-          git clone --no-checkout \
+          GIT_LFS_SKIP_SMUDGE=1 git clone --no-checkout \
             https://${{ secrets.GITHUB_TOKEN }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo
           cd data_repo
           # Only checkout cache files, not all models
@@ -115,6 +119,10 @@ jobs:
           git lfs pull --include="build_cache.rds"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Cleanup to prevent pack corruption
+          cd ..
+          rm -rf data_repo/.git/objects/pack
+          git -C data_repo gc --aggressive --prune=now || true
 
       - name: Copy existing build cache
         run: |
