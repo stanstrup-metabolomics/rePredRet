@@ -29,12 +29,16 @@ export_model_json <- function(model, output_file) {
     calibration = data.frame(
       x = model$calibration[, 1],
       y = model$calibration[, 2],
-      compound = model$compounds %||% NA_character_
+      compound = if (!is.null(model$compounds) && length(model$compounds) > 0) {
+        model$compounds
+      } else {
+        rep(NA_character_, nrow(model$calibration))
+      }
     ),
 
     # Statistics
     stats = list(
-      median_pi_width = model$stats$median_pi_width,
+      median_ci_width = model$stats$median_ci_width,
       median_error = model$stats$median_error,
       build_time = as.character(model$build_time)
     )

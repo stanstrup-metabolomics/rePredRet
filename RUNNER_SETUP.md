@@ -77,11 +77,13 @@ github-runner    | Current runner version: '2.x.x'
 github-runner    | Listening for Jobs
 ```
 
-## Step 4: Verify the Runner is Online
+## Step 4: Verify the Runner is Online and Configure Access
 
 1. Go to https://github.com/organizations/stanstrup-metabolomics/settings/actions/runners
 2. You should see your runner with a green dot (online)
-3. The runner is now available to ALL repos in the `stanstrup-metabolomics` organization
+3. Click on the runner to open its settings
+4. **Important**: Enable "Allow Public Repositories" - this allows the runner to accept jobs from repositories in the organization
+5. The runner is now available to ALL repos in the `stanstrup-metabolomics` organization
 
 ## Step 5: Update Workflows to Use Your Runner
 
@@ -206,6 +208,7 @@ Each runner will be available to the organization and can handle jobs in paralle
 - **Authentication**: Use GitHub Personal Access Token (PAT) with scopes: `repo`, `admin:org`, `workflow`, `notifications`
 - **Organization**: `stanstrup-metabolomics` - all runners serve all repos in this org
 - **Scope**: `RUNNER_SCOPE: 'org'` makes this runner available to all organization repositories
+- **Allow Public Repositories**: Must be enabled in runner settings (https://github.com/organizations/stanstrup-metabolomics/settings/actions/runners) for the runner to accept jobs from organization repositories
 - **Persistent mode**: `EPHEMERAL=false` (default) - runner stays online for multiple jobs
 - **Ephemeral mode**: `EPHEMERAL=true` - runner auto-removes after each job (more secure)
 - **Storage**: `/mnt/z/docker/config_dirs/github-runner` - persistent configuration and workspace
