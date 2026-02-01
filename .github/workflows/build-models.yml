@@ -150,9 +150,6 @@ jobs:
         run: |
           cd data_repo
 
-          # Enable sparse checkout to include models directory
-          git sparse-checkout set models build_cache.rds model_index.csv
-
           # Copy new/updated models
           echo "Copying updated models..."
           rsync -av --delete ../website/data/models/ models/
