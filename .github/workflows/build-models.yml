@@ -150,9 +150,6 @@ jobs:
         run: |
           cd data_repo
 
-          # Disable sparse-checkout to allow adding all files
-          git sparse-checkout disable
-
           # Copy new/updated models
           echo "Copying updated models..."
           rsync -av --delete ../website/data/models/ models/
@@ -169,7 +166,9 @@ jobs:
             echo "has_changes=false" >> $GITHUB_ENV
           else
             echo "has_changes=true" >> $GITHUB_ENV
-            git add -A
+            # Use git add --sparse to stage files while keeping sparse-checkout enabled
+            # (avoids hanging/sha1 errors from git sparse-checkout disable)
+            git add --sparse -A
             git commit -m "Update models (automated build)" -m "RepoRT version: ${{ needs.check-release.outputs.version }}" -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             git push
           fi
