@@ -118,8 +118,9 @@ jobs:
             # Clean up any partial clone from previous attempt
             rm -rf data_repo
 
-            # Clone with sparse checkout to minimize download
-            if GIT_LFS_SKIP_SMUDGE=1 git clone --no-checkout --depth=1 \
+            # Full clone (not shallow) to avoid corruption during large pushes
+            # Skip LFS smudge during clone - we'll pull specific files after
+            if GIT_LFS_SKIP_SMUDGE=1 git clone \
               https://${{ secrets.GITHUB_TOKEN }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
               echo "Clone successful"
               break
@@ -136,12 +137,6 @@ jobs:
           done
 
           cd data_repo
-          # Unshallow the repository to get full history for proper git operations
-          git fetch --unshallow || true
-
-          # Only checkout cache files, not all models
-          git sparse-checkout set build_cache.rds model_index.csv
-          git checkout
           # Pull only the build cache file from LFS (not all models)
           git lfs pull --include="build_cache.rds"
           git config user.name "github-actions[bot]"
@@ -189,11 +184,28 @@ jobs:
             echo "has_changes=false" >> $GITHUB_ENV
           else
             echo "has_changes=true" >> $GITHUB_ENV
-            # Use git add --sparse to stage files while keeping sparse-checkout enabled
-            # (avoids hanging/sha1 errors from git sparse-checkout disable)
-            git add --sparse -A
+            # Stage all changes (full clone, no sparse checkout)
+            git add -A
             git commit -m "Update models (automated build)" -m "RepoRT version: ${{ needs.check-release.outputs.version }}" -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            git push
+            # Push with retry logic for large repositories
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if git push; then
+                echo "Push successful"
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "Push failed, running gc and retrying in 30 seconds..."
+                  git gc --prune=now
+                  sleep 30
+                else
+                  echo "Push failed after $MAX_RETRIES attempts"
+                  exit 1
+                fi
+              fi
+            done
           fi
 
       - name: Report status
