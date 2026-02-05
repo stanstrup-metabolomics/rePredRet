@@ -29,6 +29,7 @@ Imports:
     htmlwidgets,
     jsonlite,
     Matrix,
+    methods,
     mgcv,
     parallel,
     plotly,
@@ -37,8 +38,10 @@ Imports:
     rappdirs,
     readr,
     rlang,
+    stats,
     tibble,
-    tidyr
+    tidyr,
+    utils
 Suggests:
     curl,
     testthat (>= 3.0.0)

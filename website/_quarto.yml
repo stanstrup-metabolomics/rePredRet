@@ -17,6 +17,8 @@ website:
         href: network.qmd
       - text: "Methods"
         href: methods.qmd
+      - text: "Tutorial"
+        href: tutorial.qmd
     right:
       - icon: github
         href: https://github.com/stanstrup/rePredRet

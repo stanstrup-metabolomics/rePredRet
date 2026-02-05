@@ -2,7 +2,7 @@
 % Please edit documentation in R/build_all_models_furrr.R
 \name{build_all_models_furrr}
 \alias{build_all_models_furrr}
-\title{Build All Models with Proper furrr Parallelization}
+\title{Build All Models with furrr - Optimized with Caching and Scheduling}
 \usage{
 build_all_models_furrr(
   report_data,
@@ -12,6 +12,7 @@ build_all_models_furrr(
   n_workers = parallel::detectCores(),
   save_json = TRUE,
   export_dir = NULL,
+  batch_size = NULL,
   verbose = TRUE
 )
 }
@@ -28,7 +29,9 @@ build_all_models_furrr(
 
 \item{save_json}{Save model data as JSON (default TRUE, much faster than HTML)}
 
-\item{export_dir}{Directory to save models (required)}
+\item{export_dir}{Directory to save models (required for caching)}
+
+\item{batch_size}{Number of models to send to each worker at once (NULL = auto, 1 = dynamic, large = upfront)}
 
 \item{verbose}{Print progress messages (default TRUE)}
 }
@@ -42,12 +45,11 @@ List with:
 }
 \description{
 Builds retention time prediction models using furrr for efficient outer-level
-parallelization. Much faster than nested parallelization approach.
+parallelization with support for incremental builds and scheduling tuning.
 }
 \details{
 This function uses furrr::future_map for outer-level parallelization,
-avoiding nested parallelization overhead. Each worker builds models
-sequentially.
+avoiding nested parallelization overhead. Each worker builds models sequentially.
 
-Expected speedup vs nested parallelization: 3-4x (less overhead)
+Caching: Detects changed datasets and skips unchanged models (requires export_dir)
 }
