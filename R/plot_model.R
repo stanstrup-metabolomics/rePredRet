@@ -167,32 +167,43 @@ plot_model <- function(from_id,
 
 
 #' @title Search for a Compound Across All Systems
-#' @description Searches for a compound by InChI, InChIKey, or name and returns
-#'   all systems where it has been measured.
+#' @description Searches for a compound by InChI and returns all systems where
+#'   it has been measured. Stereochemistry is automatically stripped for matching.
 #'
-#' @param query Search query: InChI, InChIKey, or compound name (partial match supported).
+#' @param inchi InChI string to search for. Stereochemistry layers will be
+#'   automatically removed for matching.
 #' @param system_type Optional filter by system type ("RP" or "HILIC").
-#' @param data_path Optional path to local rePredRet-data directory.
+#' @param data_path Optional path to local RepoRT data directory.
 #'
 #' @return A data.frame with columns: system_id, system_name, system_type,
 #'   compound_name, rt, inchi.
 #'
+#' @details
+#' The search automatically sanitizes InChI strings by removing stereochemistry
+#' layers (/t, /b, /m, /s) before matching, ensuring consistent results regardless
+#' of whether the query or database entries include stereochemistry information.
+#'
 #' @examples
 #' \dontrun{
-#' # Search by name
-#' search_compound("caffeine")
+#' # Search by InChI (caffeine)
+#' search_compound("InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3")
 #'
-#' # Search by InChI
+#' # Partial InChI also works
 #' search_compound("InChI=1S/C8H10N4O2")
 #'
 #' # Filter to RP systems only
-#' search_compound("quercetin", system_type = "RP")
+#' search_compound("InChI=1S/C15H14O6", system_type = "RP")
 #' }
 #'
 #' @export
-search_compound <- function(query,
+search_compound <- function(inchi,
                             system_type = NULL,
                             data_path = NULL) {
+
+  # Validate input
+ if (!grepl("^InChI=", inchi, ignore.case = TRUE)) {
+    stop("Query must be an InChI string (starting with 'InChI=')")
+  }
 
   # Get data path
   if (is.null(data_path)) {
@@ -223,9 +234,9 @@ search_compound <- function(query,
     return(data.frame())
   }
 
-  # Prepare query (case-insensitive)
-  query_lower <- tolower(query)
-  is_inchi <- grepl("^inchi=", query_lower)
+  # Sanitize query InChI (remove stereochemistry)
+  query_clean <- gsub("/(t|b|m|s)[^/]*.*$", "", inchi)
+  query_clean_lower <- tolower(query_clean)
 
   results <- list()
 
@@ -240,20 +251,11 @@ search_compound <- function(query,
     )
     if (is.null(rtdata) || nrow(rtdata) == 0) next
 
-    # Search by InChI or name
-    if (is_inchi) {
-      # Match InChI (strip stereochemistry for matching)
-      query_clean <- gsub("/(t|b|m|s)[^/]*.*$", "", query)
-      rtdata_inchi_clean <- gsub("/(t|b|m|s)[^/]*.*$", "", rtdata$inchi.std)
-      matches <- grepl(tolower(query_clean), tolower(rtdata_inchi_clean), fixed = TRUE)
-    } else {
-      # Match name (partial, case-insensitive)
-      if ("name" %in% names(rtdata)) {
-        matches <- grepl(query_lower, tolower(rtdata$name), fixed = FALSE)
-      } else {
-        matches <- rep(FALSE, nrow(rtdata))
-      }
-    }
+    # Sanitize database InChIs (remove stereochemistry)
+    rtdata_inchi_clean <- gsub("/(t|b|m|s)[^/]*.*$", "", rtdata$inchi.std)
+
+    # Match InChI (case-insensitive, partial match supported)
+    matches <- grepl(query_clean_lower, tolower(rtdata_inchi_clean), fixed = TRUE)
 
     if (any(matches)) {
       matched_data <- rtdata[matches, ]
@@ -274,7 +276,7 @@ search_compound <- function(query,
   }
 
   if (length(results) == 0) {
-    message("No compounds found matching '", query, "'")
+    message("No compounds found matching '", inchi, "'")
     return(data.frame(
       system_id = character(),
       system_name = character(),

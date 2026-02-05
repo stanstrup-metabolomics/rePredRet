@@ -183,19 +183,18 @@ compare_systems(models, metric = "r_squared", top_n = 5)
 
 ### `search_compound()`
 
-Searches for a compound across all systems.
+Searches for a compound by InChI across all systems. Stereochemistry is automatically removed for matching.
 
 ```{r}
 #| eval: false
-# Search by name (partial match)
-search_compound("caffeine")
-search_compound("quercetin")
+# Search by InChI (caffeine)
+search_compound("InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3")
 
-# Search by InChI
+# Partial InChI also works
 search_compound("InChI=1S/C8H10N4O2")
 
 # Filter to RP systems only
-search_compound("epicatechin", system_type = "RP")
+search_compound("InChI=1S/C15H14O6", system_type = "RP")
 ```
 
 **Returns:** Data frame with columns:
@@ -269,5 +268,5 @@ common <- get_common_compounds(dataset1, dataset2)
 | `build_user_models()` | Build models from your data |
 | `predict_rt_user()` | Generate predictions |
 | `compare_systems()` | Find similar systems |
-| `search_compound()` | Search for compounds |
+| `search_compound()` | Search for compounds by InChI |
 | `get_system_info()` | Get system details |
