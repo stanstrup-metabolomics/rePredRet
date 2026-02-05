@@ -245,7 +245,7 @@ Preview (first 5 predictions):
 
 ### Step 6: Extract and Filter Predictions
 
-Convert to a data.frame for further analysis:
+The predictions automatically contain only the **best prediction per compound** (the one with the narrowest confidence interval). Convert to a data.frame for further analysis:
 
 ```{r}
 #| eval: false
@@ -267,7 +267,7 @@ head(preds_df)
 3     7.65     8.77     1.12           0.992       0.38            12
 ```
 
-Filter to high-quality predictions:
+Optionally filter to high-quality predictions:
 
 ```{r}
 #| eval: false
@@ -279,7 +279,7 @@ good_preds <- preds_df[
 ]
 
 nrow(good_preds)
-# [1] 892
+# [1] 380
 
 # Summary of filtered predictions
 summary(good_preds$ci_width)

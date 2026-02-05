@@ -20,8 +20,11 @@
 #'   \item Takes each model from the UserRTModels object
 #'   \item For each source system, retrieves all measured compounds
 #'   \item Generates predictions by interpolating from the model's CI grid
-#'   \item Returns all predictions (user can filter afterward by CI width, R-squared, etc.)
+#'   \item Selects the best prediction per compound (narrowest CI width)
 #' }
+#'
+#' When a compound is measured in multiple source systems, only the prediction
+#' with the smallest confidence interval width is returned.
 #'
 #' @examples
 #' \dontrun{
@@ -198,6 +201,14 @@ predict_rt_user <- function(models,
       n_calibration = integer(),
       stringsAsFactors = FALSE
     )
+  }
+
+  # Select best prediction per compound (narrowest CI width)
+  # A compound may have predictions from multiple source systems
+  if (nrow(predictions) > 0) {
+    predictions <- predictions[order(predictions$compound_id, predictions$ci_width), ]
+    predictions <- predictions[!duplicated(predictions$compound_id), ]
+    rownames(predictions) <- NULL
   }
 
   elapsed_time <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))

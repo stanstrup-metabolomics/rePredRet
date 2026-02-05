@@ -32,8 +32,11 @@ The function:
 \item Takes each model from the UserRTModels object
 \item For each source system, retrieves all measured compounds
 \item Generates predictions by interpolating from the model's CI grid
-\item Returns all predictions (user can filter afterward by CI width, R-squared, etc.)
+\item Selects the best prediction per compound (narrowest CI width)
 }
+
+When a compound is measured in multiple source systems, only the prediction
+with the smallest confidence interval width is returned.
 }
 \examples{
 \dontrun{

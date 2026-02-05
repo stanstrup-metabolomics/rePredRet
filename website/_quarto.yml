@@ -19,6 +19,8 @@ website:
         href: methods.qmd
       - text: "Tutorial"
         href: tutorial.qmd
+      - text: "Reference"
+        href: reference.qmd
     right:
       - icon: github
         href: https://github.com/stanstrup/rePredRet
