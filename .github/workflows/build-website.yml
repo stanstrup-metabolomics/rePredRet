@@ -53,7 +53,7 @@ jobs:
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown
+          extra-packages: any::pkgdown, any::quarto
           needs: website
 
       - name: Fetch pipeline data for articles
