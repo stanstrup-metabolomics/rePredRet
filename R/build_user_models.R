@@ -74,6 +74,8 @@
 #'
 #' @export
 #' @importFrom methods new
+#' @importFrom cli cli_rule cli_alert cli_alert_info cli_alert_success
+#'   cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
 build_user_models <- function(inchis,
                                rts,
                                system_type = c("RP", "HILIC"),
@@ -109,16 +111,14 @@ build_user_models <- function(inchis,
   start_time <- Sys.time()
 
   if (verbose) {
-    message("\n================================================")
-    message("  build_user_models")
-    message("  System type: ", system_type)
-    message("  User compounds: ", length(inchis))
-    message("  Method: ", method)
-    message("================================================\n")
+    cli::cli_rule("build_user_models")
+    cli::cli_alert_info("System type: {system_type}")
+    cli::cli_alert_info("User compounds: {length(inchis)}")
+    cli::cli_alert_info("Method: {method}")
   }
 
   # Step 1: Standardize user's InChIs
-  if (verbose) message("Step 1/3: Standardizing InChIs...")
+  if (verbose) cli::cli_alert("Step 1/3: Standardizing InChIs...")
 
   inchis_clean <- gsub("/(t|b|m|s)[^/]*.*$", "", inchis)
 
@@ -142,11 +142,11 @@ build_user_models <- function(inchis,
   )
 
   if (verbose) {
-    message("  Unique compounds after deduplication: ", nrow(user_data_agg))
+    cli::cli_alert_success("Unique compounds after deduplication: {nrow(user_data_agg)}")
   }
 
   # Step 2: Load RepoRT data
-  if (verbose) message("\nStep 2/3: Loading RepoRT data...")
+  if (verbose) cli::cli_alert("Step 2/3: Loading RepoRT data...")
 
   if (is.null(report_data)) {
     report_path <- download_report()
@@ -163,7 +163,7 @@ build_user_models <- function(inchis,
 
   n_systems <- length(report_data$datasets)
   if (verbose) {
-    message("  Found ", n_systems, " ", system_type, " systems in RepoRT")
+    cli::cli_alert_success("Found {n_systems} {system_type} systems in RepoRT")
   }
 
   if (n_systems == 0) {
@@ -171,7 +171,7 @@ build_user_models <- function(inchis,
   }
 
   # Step 3: Build models
-  if (verbose) message("\nStep 3/3: Building calibration models...")
+  if (verbose) cli::cli_alert("Step 3/3: Building calibration models...")
 
   models <- list()
   diagnostics_list <- list()
@@ -186,13 +186,19 @@ build_user_models <- function(inchis,
     )
   )
 
-  # Progress tracking
-  n_processed <- 0
-  n_total <- length(report_data$datasets)
-
   # Build models from each repo system to user's system
-  for (sys_id in names(report_data$datasets)) {
-    n_processed <- n_processed + 1
+  n_total <- length(report_data$datasets)
+  sys_ids <- names(report_data$datasets)
+
+  if (verbose) {
+    cli::cli_progress_bar(
+      "Building models",
+      total = n_total,
+      format = "{cli::pb_spin} Building models [{cli::pb_current}/{cli::pb_total}] | {cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
+    )
+  }
+
+  for (sys_id in sys_ids) {
     repo_dataset <- report_data$datasets[[sys_id]]
 
     # Get common compounds
@@ -201,12 +207,8 @@ build_user_models <- function(inchis,
 
     if (nrow(rt_matrix) < min_compounds) {
       failed_systems <- c(failed_systems, sys_id)
+      if (verbose) cli::cli_progress_update()
       next
-    }
-
-    if (verbose && (length(models) %% 10 == 0 || n_processed == n_total)) {
-      message("  [", n_processed, "/", n_total, "] Building model from ",
-              sys_id, " (", nrow(rt_matrix), " compounds)...")
     }
 
     # Build model: FROM repo TO user
@@ -222,9 +224,11 @@ build_user_models <- function(inchis,
         save_plot = FALSE
       )
     }, error = function(e) {
-      if (verbose) message("    Error building model for ", sys_id, ": ", e$message)
+      if (verbose) cli::cli_alert_warning("Error building model for {sys_id}: {e$message}")
       list(status = "error", error = e$message)
     })
+
+    if (verbose) cli::cli_progress_update()
 
     if (!is.null(model$status) && model$status == "success") {
       models[[sys_id]] <- model
@@ -268,8 +272,9 @@ build_user_models <- function(inchis,
   }
 
   if (verbose) {
-    message("\n  Models built: ", length(models))
-    message("  Failed (insufficient compounds or error): ", length(failed_systems))
+    cli::cli_progress_done()
+    cli::cli_alert_success("Models built: {length(models)}")
+    cli::cli_alert_info("Failed (insufficient compounds or error): {length(failed_systems)}")
   }
 
   if (length(models) == 0) {
@@ -306,11 +311,9 @@ build_user_models <- function(inchis,
   )
 
   if (verbose) {
-    message("\n================================================")
-    message("  Complete!")
-    message("  Time elapsed: ", round(elapsed_time, 1), " seconds")
-    message("  Models built: ", length(models))
-    message("================================================\n")
+    cli::cli_rule("Complete")
+    cli::cli_alert_success("Time elapsed: {round(elapsed_time, 1)} seconds")
+    cli::cli_alert_success("Models built: {length(models)}")
   }
 
   return(result)

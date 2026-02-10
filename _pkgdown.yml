@@ -1,0 +1,136 @@
+url: https://stanstrup.github.io/rePredRet
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get Started
+      href: articles/tutorial.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+        - text: "Getting Started"
+        - text: Overview
+          href: articles/index.html
+        - text: Tutorial
+          href: articles/tutorial.html
+        - text: Function Reference
+          href: articles/reference.html
+        - text: "---"
+        - text: "Results & Statistics"
+        - text: Model Statistics
+          href: articles/models.html
+        - text: Predictions
+          href: articles/predictions.html
+        - text: System Network
+          href: articles/network.html
+        - text: "---"
+        - text: "Background"
+        - text: Methods
+          href: articles/methods.html
+    news:
+      text: News
+      href: news/index.html
+
+articles:
+  - title: Getting Started
+    navbar: ~
+    contents:
+      - index
+      - tutorial
+      - reference
+  - title: Results & Statistics
+    contents:
+      - models
+      - predictions
+      - network
+  - title: Background
+    contents:
+      - methods
+
+reference:
+  - title: User Workflow
+    desc: >
+      Build models from your own retention time data and generate predictions
+      for new systems. This is the primary interface for end users.
+    contents:
+      - build_user_models
+      - predict_rt_user
+      - UserRTModels-class
+      - UserRTPredictions-class
+      - validate_models
+      - check_input_data
+      - export_predictions
+
+  - title: Exploration & Search
+    desc: >
+      Search for compounds across systems, compare chromatographic systems,
+      and retrieve system metadata.
+    contents:
+      - search_compound
+      - search_compounds
+      - compare_systems
+      - get_system_info
+
+  - title: Visualization
+    desc: >
+      Plot models, prediction errors, system networks, and compound coverage.
+    contents:
+      - plot_model
+      - plot_system_network
+      - plot_prediction_errors
+      - plot_compound_coverage
+      - save_model_plot
+
+  - title: Pre-built Data Access
+    desc: >
+      Access pre-built models, predictions, and system information from the
+      latest rePredRet release on GitHub.
+    contents:
+      - rePredRet_download
+      - rePredRet_systems
+      - rePredRet_models
+      - rePredRet_model
+      - rePredRet_predict
+      - rePredRet_system_predictions
+      - rePredRet_plot_model
+      - rePredRet_plot_errors
+      - rePredRet_plot_network
+
+  - title: Core Pipeline
+    desc: >
+      Lower-level functions for the full model-building and prediction pipeline.
+      Most users should use the User Workflow or Pre-built Data Access functions
+      instead.
+    contents:
+      - build_model
+      - build_all_models
+      - build_all_models_furrr
+      - download_report
+      - load_report_data
+      - get_common_compounds
+      - predict_rt
+      - generate_all_predictions
+      - get_calibration_regression_data
+      - get_latest_report_release
+
+  - title: Statistics & GAM Utilities
+    desc: >
+      Functions for computing model statistics, prediction statistics, and
+      GAM confidence/prediction intervals.
+    contents:
+      - gam_fast_ci
+      - gam_prediction_intervals
+      - calculate_database_stats
+      - calculate_model_stats
+      - calculate_prediction_stats
+      - export_models
+      - export_statistics

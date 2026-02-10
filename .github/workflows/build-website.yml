@@ -1,24 +1,41 @@
-name: Build and Deploy Website
+name: Build and Deploy pkgdown Website
 
 on:
   # Manual trigger
   workflow_dispatch:
 
-  # Run on push to main or when website content changes
+  # Run on push to main when package or website content changes
   push:
     branches: [main, master]
     paths:
-      - 'website/**'
+      - 'R/**'
+      - 'man/**'
+      - 'vignettes/**'
+      - '_pkgdown.yml'
+      - 'DESCRIPTION'
+      - 'NEWS.md'
       - '.github/workflows/build-website.yml'
 
-  # Trigger when models are updated (via repository_dispatch from build-models workflow)
+  # Trigger when models are updated
   repository_dispatch:
     types: [models-updated]
 
+  # Run on release
+  release:
+    types: [published]
+
 jobs:
-  build:
+  pkgdown:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # Website rendering is fast
+    timeout-minutes: 30
+
+    # Grant GITHUB_TOKEN permission to deploy to GitHub Pages
+    permissions:
+      contents: write
+      pages: write
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -27,30 +44,32 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      - name: Fetch model index from data repository
-        run: |
-          # Download model_index.csv from data repository for website dropdown
-          mkdir -p website/data/models
-          curl -L -o website/data/models/model_index.csv \
-            https://raw.githubusercontent.com/stanstrup/rePredRet-models/main/model_index.csv
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
 
-      - name: Render Quarto website
+      - name: Setup R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown
+          needs: website
+
+      - name: Fetch pipeline data for articles
         run: |
-          quarto render website
+          # Download statistics/model data if available (for data-dependent articles)
+          mkdir -p website/data/models website/data/statistics
+          curl -f -L -o website/data/models/model_index.csv \
+            https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main/model_index.csv 2>/dev/null || true
+
+      - name: Build pkgdown site
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: website/_site
-          publish_branch: gh-pages
-
-      - name: Report status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "Website deployed successfully"
-          else
-            echo "Website deployment failed"
-            exit 1
-          fi
+          clean: false
+          branch: gh-pages
+          folder: docs

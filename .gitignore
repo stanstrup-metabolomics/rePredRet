@@ -17,6 +17,9 @@ website/data/test_data.rds
 # Keep model_index.csv for metadata
 !website/data/model_index.csv
 
+# pkgdown output
+docs/
+
 # Output files
 *.log
 pipeline_output.log

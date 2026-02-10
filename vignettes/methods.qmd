@@ -1,0 +1,145 @@
+---
+title: "Methods"
+subtitle: "Algorithm and implementation details"
+---
+
+## Overview
+
+rePredRet predicts retention times by directly mapping between chromatographic systems using monotonically constrained Generalized Additive Models (GAMs). This approach is based on the observation that elution order is largely conserved between similar chromatographic systems.
+
+## Algorithm
+
+### Core Principle
+
+If compound A elutes before compound B in chromatographic system 1, it will likely also elute before B in a similar system 2. This relationship can be modeled as a monotonic function:
+
+$$RT_{target} = f(RT_{source})$$
+
+where $f$ is a monotonically increasing function.
+
+### Model Fitting
+
+1. **Identify Common Compounds**: Find compounds present in both source and target systems using standardized InChI identifiers (with stereochemistry stripped for better matching).
+
+2. **Fit Monotonic GAM**: Using the `scam` package in R, fit a shape-constrained additive model:
+   - Thin plate regression splines for flexibility
+   - Monotonic increasing constraint (`bs = "mpi"`)
+   - Automatic smoothness selection via GCV
+
+3. **Bootstrap Confidence Intervals**:
+   - 1000 bootstrap iterations (resampling calibration compounds)
+   - 99% confidence intervals using the percentile method
+   - Parallel computation for efficiency
+
+4. **Quality Filters**: Predictions are only made where:
+   - CI width < 2 minutes OR relative CI width < 20%
+   - Source RT is in a dense region of calibration data (density check)
+
+### GAM Specification
+
+```r
+scam::scam(
+  y ~ s(x, bs = "mpi", k = -1),
+  data = calibration_data,
+  family = gaussian()
+)
+```
+
+- `bs = "mpi"`: Monotonically increasing P-spline
+- `k = -1`: Automatic basis dimension selection
+- `family = gaussian()`: Gaussian errors
+
+## Data Source
+
+### RepoRT Repository
+
+Retention time data comes from [RepoRT](https://github.com/michaelwitting/RepoRT) (Kretschmer et al. 2024), a comprehensive repository containing:
+
+- Multiple chromatographic method types (RP, HILIC, etc.)
+- Standardized compound identifiers (InChI, InChIKey, SMILES)
+- Rich metadata for each chromatographic system
+
+### Compound Matching
+
+Compounds are matched between systems using standardized InChI:
+
+1. Strip stereochemistry layers (`/t`, `/b`, `/m`, `/s`) from InChI
+2. Match on the remaining structural connectivity
+3. For duplicate measurements, use median RT value
+
+## Implementation
+
+### R Package Structure
+
+```
+rePredRet/
+├── R/
+│   ├── data_loading.R      # RepoRT data loading
+│   ├── gam_fitting.R       # Core GAM functions
+│   ├── model_building.R    # Model construction
+│   ├── prediction.R        # RT predictions
+│   ├── statistics.R        # Performance metrics
+│   └── user_functions.R    # User convenience functions
+├── tests/
+│   └── testthat/           # Unit tests
+└── website/                # This documentation
+```
+
+### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `download_report()` | Download RepoRT data |
+| `load_report_data()` | Load datasets from RepoRT |
+| `get_common_compounds()` | Find shared compounds |
+| `build_model()` | Build single pairwise model |
+| `build_all_models()` | Build all pairwise models |
+| `predict_rt()` | Predict RT for a compound |
+| `generate_all_predictions()` | Generate all predictions |
+
+### Computational Considerations
+
+- **Parallel Processing**: Bootstrap uses all available CPU cores
+- **Model Pruning**: Boot objects are pruned to reduce storage by ~95%
+- **Memory Management**: Large datasets processed incrementally
+
+## Validation
+
+### Cross-Validation
+
+Model quality is assessed using leave-one-out style evaluation at calibration points:
+
+- **R²**: Coefficient of determination for predicted vs actual RT
+- **Absolute Error**: |predicted - actual| in minutes
+- **Relative Error**: |predicted - actual| / actual × 100%
+- **CI Coverage**: Proportion of actual values within CI
+
+### Expected Performance
+
+Based on the original PredRet paper (Stanstrup et al. 2015):
+
+| Metric | Expected Range |
+|--------|----------------|
+| R² | > 0.99 |
+| Median Absolute Error | 0.01 - 0.28 min |
+| Median Relative Error | 1.8 - 3.7% |
+| Median CI Width | 0.08 - 1.86 min |
+
+## References
+
+1. **PredRet Algorithm**:
+   Stanstrup, J., Neumann, S., & Ivanova, I. V. (2015). PredRet: Prediction of Retention Time by Direct Mapping between Multiple Chromatographic Systems. *Analytical Chemistry*, 87(18), 9421-9428. doi:10.1021/acs.analchem.5b02287
+
+2. **RepoRT Database**:
+   Kretschmer, F., Witting, M., & al. (2024). RepoRT: a comprehensive repository for small molecule retention times. *Nature Methods*, 21, 153-155. doi:10.1038/s41592-023-02143-z
+
+3. **Shape-Constrained GAMs**:
+   Pya, N., & Wood, S. N. (2015). Shape constrained additive models. *Statistics and Computing*, 25, 543-559.
+
+## Source Code
+
+The complete source code is available on GitHub:
+
+- **rePredRet package**: [github.com/stanstrup/rePredRet](https://github.com/stanstrup/rePredRet)
+- **Published data**: [github.com/stanstrup/rePredRet-data](https://github.com/stanstrup/rePredRet-data)
+- **RepoRT**: [github.com/michaelwitting/RepoRT](https://github.com/michaelwitting/RepoRT)

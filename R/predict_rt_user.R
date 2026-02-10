@@ -59,6 +59,8 @@
 #'
 #' @export
 #' @importFrom methods is new
+#' @importFrom cli cli_rule cli_alert_info cli_alert_success cli_progress_bar
+#'   cli_progress_update cli_progress_done
 predict_rt_user <- function(models,
                              compounds = NULL,
                              verbose = TRUE) {
@@ -86,13 +88,11 @@ predict_rt_user <- function(models,
   start_time <- Sys.time()
 
   if (verbose) {
-    message("\n================================================")
-    message("  predict_rt_user")
-    message("  Models available: ", length(models@models))
+    cli::cli_rule("predict_rt_user")
+    cli::cli_alert_info("Models available: {length(models@models)}")
     if (!is.null(compounds)) {
-      message("  Filtering to ", length(compounds), " specific compounds")
+      cli::cli_alert_info("Filtering to {length(compounds)} specific compounds")
     }
-    message("================================================\n")
   }
 
   # Standardize compound filter if provided
@@ -104,14 +104,18 @@ predict_rt_user <- function(models,
   report_data <- models@report_data
   diagnostics <- models@diagnostics
 
-  if (verbose) message("Generating predictions...")
-
   predictions_list <- list()
   n_models <- length(models@models)
-  n_processed <- 0
+
+  if (verbose) {
+    cli::cli_progress_bar(
+      "Generating predictions",
+      total = n_models,
+      format = "{cli::pb_spin} Generating predictions [{cli::pb_current}/{cli::pb_total}] | {cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta}"
+    )
+  }
 
   for (sys_id in names(models@models)) {
-    n_processed <- n_processed + 1
     model <- models@models[[sys_id]]
 
     # Skip failed models
@@ -178,9 +182,7 @@ predict_rt_user <- function(models,
       )
     }
 
-    if (verbose && (n_processed %% 20 == 0 || n_processed == n_models)) {
-      message("  [", n_processed, "/", n_models, "] Processed ", sys_id)
-    }
+    if (verbose) cli::cli_progress_update()
   }
 
   # Combine all predictions
@@ -230,12 +232,11 @@ predict_rt_user <- function(models,
   )
 
   if (verbose) {
-    message("\n================================================")
-    message("  Complete!")
-    message("  Time elapsed: ", round(elapsed_time, 1), " seconds")
-    message("  Total predictions: ", nrow(predictions))
-    message("  Unique compounds: ", metadata$n_unique_compounds)
-    message("================================================\n")
+    cli::cli_progress_done()
+    cli::cli_rule("Complete")
+    cli::cli_alert_success("Time elapsed: {round(elapsed_time, 1)} seconds")
+    cli::cli_alert_success("Total predictions: {nrow(predictions)}")
+    cli::cli_alert_success("Unique compounds: {metadata$n_unique_compounds}")
   }
 
   return(result)

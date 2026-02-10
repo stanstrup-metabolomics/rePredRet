@@ -95,7 +95,7 @@ jobs:
       - name: Install R dependencies
         run: |
           install.packages(c(
-            "remotes", "boot", "data.table", "digest", "dplyr", "future", "furrr",
+            "remotes", "boot", "cli", "data.table", "digest", "dplyr", "future", "furrr",
             "ggplot2", "htmlwidgets", "jsonlite", "Matrix", "mgcv", "plotly",
             "pracma", "purrr", "rappdirs", "readr", "rlang", "tibble", "tidyr", "curl"
           ))
@@ -121,7 +121,7 @@ jobs:
             # Full clone (not shallow) to avoid corruption during large pushes
             # Skip LFS smudge during clone - we'll pull specific files after
             if GIT_LFS_SKIP_SMUDGE=1 git clone \
-              https://${{ secrets.GITHUB_TOKEN }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
+              https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
               echo "Clone successful"
               break
             else
@@ -178,27 +178,48 @@ jobs:
             cp ../website/data/models/model_index.csv .
           fi
 
-          # Check for changes
-          if git diff --quiet && git diff --staged --quiet; then
+          # Check for changes (include untracked files)
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No model changes to commit"
             echo "has_changes=false" >> $GITHUB_ENV
           else
             echo "has_changes=true" >> $GITHUB_ENV
-            # Stage all changes (full clone, no sparse checkout)
+
+            # Configure git for large pushes
+            git config http.postBuffer 524288000  # 500MB
+            git config http.lowSpeedLimit 1000
+            git config http.lowSpeedTime 600  # 10 min timeout for slow transfers
+            git config pack.windowMemory 256m
+            git config pack.packSizeLimit 200m
+
+            # Stage all changes
             git add -A
             git commit -m "Update models (automated build)" -m "RepoRT version: ${{ needs.check-release.outputs.version }}" -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+            # Refresh remote URL with current token before push
+            # (token embedded at clone time may be stale after hours-long build)
+            git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
+
+            # Repack before push to reduce pack size
+            echo "Repacking before push..."
+            git repack -a -d --max-pack-size=200m || true
+
             # Push with retry logic for large repositories
             MAX_RETRIES=3
             RETRY_COUNT=0
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              if git push; then
+              echo "Push attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+              if git push 2>&1; then
                 echo "Push successful"
                 break
               else
                 RETRY_COUNT=$((RETRY_COUNT + 1))
                 if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                  echo "Push failed, running gc and retrying in 30 seconds..."
-                  git gc --prune=now
+                  echo "Push failed, refreshing token and retrying in 30 seconds..."
+                  # Re-set remote URL (token refresh)
+                  git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
+                  # Light gc only (avoid aggressive repack that can cause fsync errors)
+                  git gc --auto || true
                   sleep 30
                 else
                   echo "Push failed after $MAX_RETRIES attempts"
