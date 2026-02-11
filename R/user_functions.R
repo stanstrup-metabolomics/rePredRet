@@ -2,6 +2,7 @@
 #' @description Easy-to-use functions for end users to access rePredRet
 #'   predictions and models from the published GitHub repository.
 #' @name user_functions
+#' @keywords internal
 NULL
 
 # GitHub repository for published data

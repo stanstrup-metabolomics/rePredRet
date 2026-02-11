@@ -48,5 +48,5 @@ Suggests:
     testthat (>= 3.0.0),
     writexl
 Config/testthat/edition: 3
-URL: https://github.com/stanstrup/rePredRet
+URL: https://stanstrup.github.io/rePredRet, https://github.com/stanstrup/rePredRet
 BugReports: https://github.com/stanstrup/rePredRet/issues
