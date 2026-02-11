@@ -2,6 +2,7 @@
 #' @description Fast calculation of prediction intervals using single GAM fit
 #'   with post-hoc monotonicity enforcement.
 #' @name gam_fast_pi
+#' @keywords internal
 NULL
 
 #' Fast Monotonic GAM Prediction Intervals

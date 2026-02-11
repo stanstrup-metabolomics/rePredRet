@@ -1,6 +1,7 @@
 #' @title Prediction Functions
 #' @description Functions for generating RT predictions from models.
 #' @name prediction
+#' @keywords internal
 NULL
 
 # Default prediction parameters (matching original PredRet)

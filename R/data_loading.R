@@ -2,6 +2,7 @@
 #' @description Functions for loading and processing data from the RepoRT
 #'   repository.
 #' @name data_loading
+#' @keywords internal
 NULL
 
 #' Download RepoRT Repository

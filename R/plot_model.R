@@ -464,6 +464,7 @@ get_system_info <- function(system_id, data_path = NULL) {
 }
 
 
+#' @rdname get_system_info
 #' @export
 print.system_info <- function(x, ...) {
   cat("System:", x$id, "-", x$name, "\n")

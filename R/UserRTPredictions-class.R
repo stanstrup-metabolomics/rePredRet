@@ -46,6 +46,7 @@ setClass(
 #' Show Method for UserRTPredictions
 #'
 #' @param object A UserRTPredictions object
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("show", "UserRTPredictions", function(object) {
   cat("UserRTPredictions Object\n")
@@ -82,6 +83,7 @@ setMethod("show", "UserRTPredictions", function(object) {
 #'
 #' @param object A UserRTPredictions object
 #' @return A list with summary statistics
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("summary", "UserRTPredictions", function(object, ...) {
 
@@ -125,6 +127,7 @@ setMethod("summary", "UserRTPredictions", function(object, ...) {
 #' @param optional Ignored
 #' @param ... Ignored
 #' @return A data.frame of predictions
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("as.data.frame", "UserRTPredictions",
           function(x, row.names = NULL, optional = FALSE, ...) {
@@ -136,6 +139,7 @@ setMethod("as.data.frame", "UserRTPredictions",
 #'
 #' @param x A UserRTPredictions object
 #' @return Integer
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("length", "UserRTPredictions", function(x) {
   nrow(x@predictions)
@@ -149,6 +153,7 @@ setMethod("length", "UserRTPredictions", function(x) {
 #' @param j Column names (optional)
 #' @param drop Passed to data.frame subsetting
 #' @return Subset of predictions data.frame
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("[", signature(x = "UserRTPredictions"),
           function(x, i, j, ..., drop = TRUE) {
@@ -169,6 +174,7 @@ setMethod("[", signature(x = "UserRTPredictions"),
 #' @return A ggplot object
 #' @importFrom ggplot2 ggplot aes geom_histogram geom_boxplot geom_density
 #'   labs theme_bw facet_wrap coord_flip
+#' @rdname UserRTPredictions-class
 #' @export
 setMethod("plot", signature(x = "UserRTPredictions", y = "missing"),
           function(x, y, type = c("ci_widths", "rt_distribution", "by_system"), ...) {

@@ -1,6 +1,7 @@
 #' @title Package Initialization
 #' @description Package startup messages and initialization.
 #' @name zzz
+#' @keywords internal
 NULL
 
 .onAttach <- function(libname, pkgname) {

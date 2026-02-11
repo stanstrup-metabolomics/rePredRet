@@ -94,6 +94,7 @@ setValidity("UserRTModels", function(object) {
 #' Show Method for UserRTModels
 #'
 #' @param object A UserRTModels object
+#' @rdname UserRTModels-class
 #' @export
 setMethod("show", "UserRTModels", function(object) {
  cat("UserRTModels Object\n")
@@ -133,6 +134,7 @@ setMethod("show", "UserRTModels", function(object) {
 #'
 #' @param object A UserRTModels object
 #' @return A list with summary statistics
+#' @rdname UserRTModels-class
 #' @export
 setMethod("summary", "UserRTModels", function(object, ...) {
 
@@ -177,6 +179,7 @@ setMethod("summary", "UserRTModels", function(object, ...) {
 #' @param x A UserRTModels object
 #' @param i System ID (character)
 #' @return The model object for that system
+#' @rdname UserRTModels-class
 #' @export
 setMethod("[[", signature(x = "UserRTModels", i = "character"),
          function(x, i) {
@@ -193,6 +196,7 @@ setMethod("[[", signature(x = "UserRTModels", i = "character"),
 #'
 #' @param x A UserRTModels object
 #' @return Character vector of system IDs
+#' @rdname UserRTModels-class
 #' @export
 setMethod("names", "UserRTModels", function(x) {
  names(x@models)
@@ -203,6 +207,7 @@ setMethod("names", "UserRTModels", function(x) {
 #'
 #' @param x A UserRTModels object
 #' @return Integer
+#' @rdname UserRTModels-class
 #' @export
 setMethod("length", "UserRTModels", function(x) {
  length(x@models)
@@ -219,6 +224,7 @@ setMethod("length", "UserRTModels", function(x) {
 #' @return A ggplot object or list of ggplot objects
 #' @importFrom ggplot2 ggplot aes geom_point geom_histogram geom_line geom_ribbon
 #'   labs theme_bw facet_wrap scale_color_viridis_c
+#' @rdname UserRTModels-class
 #' @export
 setMethod("plot", signature(x = "UserRTModels", y = "missing"),
          function(x, y, type = c("diagnostics", "calibration", "r_squared", "ci_widths"),

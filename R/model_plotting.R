@@ -1,6 +1,7 @@
 #' @title Model Plotting Functions
 #' @description Functions for creating interactive plots of RT prediction models.
 #' @name model_plotting
+#' @keywords internal
 NULL
 
 #' Create Interactive Model Plot

@@ -57,6 +57,10 @@ articles:
       - methods
 
 reference:
+  - title: Package
+    contents:
+      - rePredRet-package
+
   - title: User Workflow
     desc: >
       Build models from your own retention time data and generate predictions

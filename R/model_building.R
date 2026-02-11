@@ -2,6 +2,7 @@
 #' @description Functions for building RT prediction models between
 #'   chromatographic systems.
 #' @name model_building
+#' @keywords internal
 NULL
 
 #' Build a Single Model Between Two Systems

@@ -2,6 +2,7 @@
 #' @description Functions for computing performance statistics comparable to
 #'   the original PredRet papers.
 #' @name statistics
+#' @keywords internal
 NULL
 
 #' Calculate Model Performance Statistics

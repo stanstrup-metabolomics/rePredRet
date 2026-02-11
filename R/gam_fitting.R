@@ -2,6 +2,7 @@
 #' @description Internal functions for monotonically constrained GAM fitting
 #'   used in bootstrap confidence interval estimation.
 #' @name gam_fitting
+#' @keywords internal
 NULL
 
 #' Monotonically Constrained GAM Bootstrap Function
