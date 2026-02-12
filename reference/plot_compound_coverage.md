@@ -15,7 +15,9 @@ plot_compound_coverage(models, top_n = 30)
 
 - models:
 
-  A `UserRTModels` object from
+  A
+  [UserRTModels](https://stanstrup.github.io/rePredRet/reference/UserRTModels-class.md)
+  object from
   [`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
 
 - top_n:

@@ -17,7 +17,9 @@ plot_prediction_errors(
 
 - predictions:
 
-  A `UserRTPredictions` object from
+  A
+  [UserRTPredictions](https://stanstrup.github.io/rePredRet/reference/UserRTPredictions-class.md)
+  object from
   [`predict_rt_user`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md).
 
 - type:

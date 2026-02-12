@@ -103,7 +103,7 @@ and column 2 is RT in target system.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matrix with 3 columns: predicted, lower, upper at each
+    <p>A matrix with 3 columns: <code>[predicted, lower, upper]</code> at each
 newdata point.</p>
     </div>
     <div class="section level2">
@@ -113,7 +113,7 @@ newdata point.</p>
 <li><p>Simulate parameter vectors: β_sim = β + L<em>ν where V = L</em>L' (Cholesky)
 and ν ~ N(0,1)</p></li>
 <li><p>Generate predictions: pred_sim = Xp %*% β_sim</p></li>
-<li><p>Add observation noise: y_sim ~ N(pred_sim, σ²)</p></li>
+<li><p>Add observation noise: y_sim ~ N(pred_sim, sigma^2)</p></li>
 <li><p>Calculate quantiles across simulations</p></li>
 </ol><p>This gives TRUE prediction intervals (for future observations), not
 confidence intervals (for the mean function). Prediction intervals are

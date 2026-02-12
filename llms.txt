@@ -197,7 +197,7 @@ for new systems. This is the primary interface for end users.
 - [`check_input_data()`](https://stanstrup.github.io/rePredRet/reference/check_input_data.md)
   : Check Input Data Quality
 - [`export_predictions()`](https://stanstrup.github.io/rePredRet/reference/export_predictions.md)
-  : Export Predictions to Files
+  : Export Predictions to File
 
 ## Exploration & Search
 
@@ -219,7 +219,7 @@ and retrieve system metadata.
 Plot models, prediction errors, system networks, and compound coverage.
 
 - [`plot_model()`](https://stanstrup.github.io/rePredRet/reference/plot_model.md)
-  : Create Interactive Model Plot
+  : Plot a Pre-built Model from the Data Repository
 - [`plot_system_network()`](https://stanstrup.github.io/rePredRet/reference/plot_system_network.md)
   : Plot System Network
 - [`plot_prediction_errors()`](https://stanstrup.github.io/rePredRet/reference/plot_prediction_errors.md)

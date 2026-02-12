@@ -22,6 +22,14 @@ print(x, ...)
 
   Optional path to local RepoRT data directory.
 
+- x:
+
+  A system_info object from `get_system_info()`.
+
+- ...:
+
+  Ignored.
+
 ## Value
 
 A list with components: id, name, type, n_compounds, info, metadata,

@@ -16,7 +16,7 @@ gam_fast_pi(rt_matrix, newdata, alpha = 0.05, prediction_interval = TRUE)
 
 - rt_matrix:
 
-  A 2-column matrix rt_source, rt_target.
+  A 2-column matrix `[rt_source, rt_target]`.
 
 - newdata:
 
@@ -33,7 +33,7 @@ gam_fast_pi(rt_matrix, newdata, alpha = 0.05, prediction_interval = TRUE)
 
 ## Value
 
-A matrix with 3 columns: predicted, lower, upper.
+A matrix with 3 columns: `[predicted, lower, upper]`.
 
 ## Details
 
@@ -43,7 +43,7 @@ Algorithm:
 
 2.  Estimate pointwise SE from model variance
 
-3.  Build intervals: mean ± k\*SE (+ observation variance if PI)
+3.  Build intervals: mean +/- k\*SE (+ observation variance if PI)
 
 4.  Enforce monotonicity with cummax() on bounds
 

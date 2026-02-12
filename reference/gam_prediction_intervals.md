@@ -44,7 +44,8 @@ gam_prediction_intervals(
 
 ## Value
 
-A matrix with 3 columns: predicted, lower, upper at each newdata point.
+A matrix with 3 columns: `[predicted, lower, upper]` at each newdata
+point.
 
 ## Details
 
@@ -59,7 +60,7 @@ The algorithm:
 
 4.  Generate predictions: pred_sim = Xp %\*% β_sim
 
-5.  Add observation noise: y_sim ~ N(pred_sim, σ²)
+5.  Add observation noise: y_sim ~ N(pred_sim, sigma^2)
 
 6.  Calculate quantiles across simulations
 

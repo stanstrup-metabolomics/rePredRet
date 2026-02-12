@@ -72,7 +72,7 @@ estimating pointwise SE, and enforcing monotonicity with cummax().</p>
 
 
 <dl><dt id="arg-rt-matrix">rt_matrix<a class="anchor" aria-label="anchor" href="#arg-rt-matrix"></a></dt>
-<dd><p>A 2-column matrix rt_source, rt_target.</p></dd>
+<dd><p>A 2-column matrix <code>[rt_source, rt_target]</code>.</p></dd>
 
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
@@ -90,13 +90,13 @@ variance for prediction intervals. If FALSE, gives confidence intervals.</p></dd
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matrix with 3 columns: predicted, lower, upper.</p>
+    <p>A matrix with 3 columns: <code>[predicted, lower, upper]</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Algorithm:</p><ol><li><p>Fit monotonically constrained GAM to full dataset</p></li>
 <li><p>Estimate pointwise SE from model variance</p></li>
-<li><p>Build intervals: mean ± k*SE (+ observation variance if PI)</p></li>
+<li><p>Build intervals: mean +/- k*SE (+ observation variance if PI)</p></li>
 <li><p>Enforce monotonicity with cummax() on bounds</p></li>
 </ol><p>This is ~25x faster than bootstrap because:</p><ul><li><p>Fits model only once (vs 200 times)</p></li>
 <li><p>Uses analytic variance estimates (vs resampling)</p></li>

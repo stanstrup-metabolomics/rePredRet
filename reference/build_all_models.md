@@ -52,6 +52,11 @@ build_all_models(
   Optional directory to incrementally save models as they're built. If
   NULL (default), models are only stored in memory.
 
+- method:
+
+  Method for confidence intervals: "fast_ci" (default, fast) or
+  "bootstrap" (accurate, slower).
+
 - save_plots:
 
   Logical, whether to save interactive HTML plots for each model

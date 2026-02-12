@@ -40,7 +40,7 @@ diagnostic metrics.
 if (FALSE) { # \dontrun{
 models <- build_user_models(my_inchis, my_rts, "RP")
 
-# Find most similar systems (best R²)
+# Find most similar systems (best R-squared)
 compare_systems(models)
 
 # Rank by lowest RMSE

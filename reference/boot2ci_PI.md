@@ -26,7 +26,8 @@ boot2ci_PI(loess_boot, newdata, alpha = 0.05)
 
 ## Value
 
-A matrix with 3 columns: predicted, lower, upper at each newdata point.
+A matrix with 3 columns: `[predicted, lower, upper]` at each newdata
+point.
 
 ## Details
 

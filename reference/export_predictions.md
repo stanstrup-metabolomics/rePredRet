@@ -1,14 +1,10 @@
-# Export Predictions to Files
-
-Saves predictions to CSV and JSON files with full provenance.
+# Export Predictions to File
 
 Exports predictions to CSV or Excel format.
 
 ## Usage
 
 ``` r
-export_predictions(predictions, file, format = c("auto", "csv", "xlsx"))
-
 export_predictions(predictions, file, format = c("auto", "csv", "xlsx"))
 ```
 
@@ -26,17 +22,7 @@ export_predictions(predictions, file, format = c("auto", "csv", "xlsx"))
 
   Output format: "auto" (from extension), "csv", or "xlsx".
 
-- output_dir:
-
-  Directory to save predictions.
-
-- studies:
-
-  Studies tibble for system metadata.
-
 ## Value
-
-Invisibly returns the output directory path.
 
 Invisibly returns the file path.
 

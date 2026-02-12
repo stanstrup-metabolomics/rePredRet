@@ -25,6 +25,6 @@ get_common_compounds(dataset1, dataset2, by = "inchi.std")
 
 ## Value
 
-A 2-column matrix with retention times rt1, rt2 for compounds present in
-both systems. If multiple measurements exist for the same compound, the
-median RT is used.
+A 2-column matrix with retention times `[rt1, rt2]` for compounds
+present in both systems. If multiple measurements exist for the same
+compound, the median RT is used.

@@ -103,11 +103,11 @@ A ggplot object or list of ggplot objects
 
   ci
 
-  :   Matrix pred, lower, upper at newdata points
+  :   Matrix `[pred, lower, upper]` at newdata points
 
   calibration
 
-  :   Matrix rt_source, rt_user for calibration compounds
+  :   Matrix `[rt_source, rt_user]` for calibration compounds
 
   stats
 

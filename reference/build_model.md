@@ -25,8 +25,8 @@ build_model(
 
 - rt_matrix:
 
-  A 2-column matrix rt_source, rt_target of common compound retention
-  times.
+  A 2-column matrix `[rt_source, rt_target]` of common compound
+  retention times.
 
 - sys1_id:
 
@@ -38,7 +38,7 @@ build_model(
 
 - n_boot:
 
-  Number of bootstrap iterations (default 200). Only used if method =
+  Number of bootstrap iterations (default 1000). Only used if method =
   "bootstrap".
 
 - alpha:
@@ -97,7 +97,7 @@ A list with model information:
 
 - ci:
 
-  Matrix pred, lower, upper at newdata points
+  Matrix `[pred, lower, upper]` at newdata points
 
 - calibration:
 

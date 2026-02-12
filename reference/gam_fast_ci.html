@@ -4,7 +4,7 @@ and enforcing monotonicity with cummax. 72x faster than bootstrap.
 Computes prediction intervals efficiently by:
 Fitting constrained GAM to get monotonic predictions
 Estimating observation variance from residuals
-Building PIs: mean ± z * sqrt(SE² + σ²)
+Building PIs: mean +/- z * sqrt(SE^2 + sigma^2)
 Enforcing monotonicity on bounds with cummax()
 
 "><meta property="og:description" content="Fast calculation of prediction intervals by fitting GAM once
@@ -12,7 +12,7 @@ and enforcing monotonicity with cummax. 72x faster than bootstrap.
 Computes prediction intervals efficiently by:
 Fitting constrained GAM to get monotonic predictions
 Estimating observation variance from residuals
-Building PIs: mean ± z * sqrt(SE² + σ²)
+Building PIs: mean +/- z * sqrt(SE^2 + sigma^2)
 Enforcing monotonicity on bounds with cummax()
 
 "></head><body>
@@ -70,7 +70,7 @@ Enforcing monotonicity on bounds with cummax()
 and enforcing monotonicity with cummax. 72x faster than bootstrap.</p>
 <p>Computes prediction intervals efficiently by:</p><ol><li><p>Fitting constrained GAM to get monotonic predictions</p></li>
 <li><p>Estimating observation variance from residuals</p></li>
-<li><p>Building PIs: mean ± z * sqrt(SE² + σ²)</p></li>
+<li><p>Building PIs: mean +/- z * sqrt(SE^2 + sigma^2)</p></li>
 <li><p>Enforcing monotonicity on bounds with cummax()</p></li>
 </ol></div>
 
@@ -84,7 +84,7 @@ and enforcing monotonicity with cummax. 72x faster than bootstrap.</p>
 
 
 <dl><dt id="arg-rt-matrix">rt_matrix<a class="anchor" aria-label="anchor" href="#arg-rt-matrix"></a></dt>
-<dd><p>A 2-column matrix rt_source, rt_target.</p></dd>
+<dd><p>A 2-column matrix <code>[rt_source, rt_target]</code>.</p></dd>
 
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
@@ -97,14 +97,14 @@ and enforcing monotonicity with cummax. 72x faster than bootstrap.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matrix with 3 columns: predicted, lower, upper.</p>
+    <p>A matrix with 3 columns: <code>[predicted, lower, upper]</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Algorithm:</p><ol><li><p>Fit constrained GAM for monotonic predictions</p></li>
-<li><p>Calculate residual variance (σ²) from constrained fit</p></li>
+<li><p>Calculate residual variance (sigma^2) from constrained fit</p></li>
 <li><p>Get SE estimates from unconstrained fit</p></li>
-<li><p>Build PIs: mean ± z*sqrt(SE² + σ²) (includes observation variance)</p></li>
+<li><p>Build PIs: mean +/- z*sqrt(SE^2 + sigma^2) (includes observation variance)</p></li>
 <li><p>Enforce monotonicity: lower = cummax(lower), upper = cummax(upper)</p></li>
 </ol><p>This is ~72x faster than bootstrap (0.02 sec vs 1.5 sec per model) because:</p><ul><li><p>Fits models once instead of 200 times</p></li>
 <li><p>Uses analytic SE + variance instead of resampling</p></li>
@@ -114,8 +114,8 @@ and enforcing monotonicity with cummax. 72x faster than bootstrap.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>"Fit monotone GAM → Calculate σ² from residuals → Get fit ± z·sqrt(SE² + σ²)
-→ Enforce monotonicity afterwards" - Hybrid approach for fast PIs</p>
+    <p>"Fit monotone GAM -&gt; Calculate sigma^2 from residuals -&gt; Get fit +/- z*sqrt(SE^2 + sigma^2)
+-&gt; Enforce monotonicity afterwards" - Hybrid approach for fast PIs</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

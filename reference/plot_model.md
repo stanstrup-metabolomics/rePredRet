@@ -1,7 +1,4 @@
-# Create Interactive Model Plot
-
-Creates an interactive scatter plot with prediction intervals using
-ggplot2 and plotly.
+# Plot a Pre-built Model from the Data Repository
 
 Downloads and plots a calibration model showing the relationship between
 retention times in two chromatographic systems.
@@ -9,15 +6,6 @@ retention times in two chromatographic systems.
 ## Usage
 
 ``` r
-plot_model(
-  from_id,
-  to_id,
-  interactive = FALSE,
-  show_ci = TRUE,
-  show_calibration = TRUE,
-  data_path = NULL
-)
-
 plot_model(
   from_id,
   to_id,
@@ -56,22 +44,7 @@ plot_model(
   Optional path to local rePredRet-data directory. If NULL,
   downloads/uses cached data.
 
-- model:
-
-  A model object from
-  [`build_model()`](https://stanstrup.github.io/rePredRet/reference/build_model.md).
-
-- dataset1:
-
-  Optional dataset object for compound names (source system).
-
-- dataset2:
-
-  Optional dataset object for compound names (target system).
-
 ## Value
-
-A plotly object (interactive plot).
 
 A ggplot2 object (if interactive = FALSE) or a plotly object (if
 interactive = TRUE).

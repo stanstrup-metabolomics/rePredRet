@@ -40,4 +40,5 @@ gam_prediction_intervals_parallel(
 
 ## Value
 
-A matrix with 3 columns: predicted, lower, upper at each newdata point.
+A matrix with 3 columns: `[predicted, lower, upper]` at each newdata
+point.

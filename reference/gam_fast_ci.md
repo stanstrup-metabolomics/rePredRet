@@ -9,7 +9,7 @@ Computes prediction intervals efficiently by:
 
 2.  Estimating observation variance from residuals
 
-3.  Building PIs: mean ± z \* sqrt(SE² + σ²)
+3.  Building PIs: mean +/- z \* sqrt(SE^2 + sigma^2)
 
 4.  Enforcing monotonicity on bounds with cummax()
 
@@ -23,7 +23,7 @@ gam_fast_ci(rt_matrix, newdata, alpha = 0.05)
 
 - rt_matrix:
 
-  A 2-column matrix rt_source, rt_target.
+  A 2-column matrix `[rt_source, rt_target]`.
 
 - newdata:
 
@@ -35,7 +35,7 @@ gam_fast_ci(rt_matrix, newdata, alpha = 0.05)
 
 ## Value
 
-A matrix with 3 columns: predicted, lower, upper.
+A matrix with 3 columns: `[predicted, lower, upper]`.
 
 ## Details
 
@@ -43,11 +43,12 @@ Algorithm:
 
 1.  Fit constrained GAM for monotonic predictions
 
-2.  Calculate residual variance (σ²) from constrained fit
+2.  Calculate residual variance (sigma^2) from constrained fit
 
 3.  Get SE estimates from unconstrained fit
 
-4.  Build PIs: mean ± z\*sqrt(SE² + σ²) (includes observation variance)
+4.  Build PIs: mean +/- z\*sqrt(SE^2 + sigma^2) (includes observation
+    variance)
 
 5.  Enforce monotonicity: lower = cummax(lower), upper = cummax(upper)
 
@@ -68,5 +69,6 @@ Trade-off:
 
 ## References
 
-"Fit monotone GAM → Calculate σ² from residuals → Get fit ± z·sqrt(SE² +
-σ²) → Enforce monotonicity afterwards" - Hybrid approach for fast PIs
+"Fit monotone GAM -\> Calculate sigma^2 from residuals -\> Get fit +/-
+z\*sqrt(SE^2 + sigma^2) -\> Enforce monotonicity afterwards" - Hybrid
+approach for fast PIs

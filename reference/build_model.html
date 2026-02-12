@@ -78,7 +78,7 @@ from one chromatographic system to another.</p>
 
 
 <dl><dt id="arg-rt-matrix">rt_matrix<a class="anchor" aria-label="anchor" href="#arg-rt-matrix"></a></dt>
-<dd><p>A 2-column matrix rt_source, rt_target of common
+<dd><p>A 2-column matrix <code>[rt_source, rt_target]</code> of common
 compound retention times.</p></dd>
 
 
@@ -91,7 +91,7 @@ compound retention times.</p></dd>
 
 
 <dt id="arg-n-boot">n_boot<a class="anchor" aria-label="anchor" href="#arg-n-boot"></a></dt>
-<dd><p>Number of bootstrap iterations (default 200). Only used if
+<dd><p>Number of bootstrap iterations (default 1000). Only used if
 method = "bootstrap".</p></dd>
 
 
@@ -143,7 +143,7 @@ or "bootstrap" (accurate, slower).</p></dd>
 <dd><p>Vector of x-values for prediction grid (1000 points)</p></dd>
 
 <dt>ci</dt>
-<dd><p>Matrix pred, lower, upper at newdata points</p></dd>
+<dd><p>Matrix <code>[pred, lower, upper]</code> at newdata points</p></dd>
 
 <dt>calibration</dt>
 <dd><p>Original RT matrix used for training</p></dd>
