@@ -3,7 +3,58 @@
 \docType{class}
 \name{UserRTPredictions-class}
 \alias{UserRTPredictions-class}
+\alias{show,UserRTPredictions-method}
+\alias{summary,UserRTPredictions-method}
+\alias{as.data.frame,UserRTPredictions-method}
+\alias{length,UserRTPredictions-method}
+\alias{[,UserRTPredictions,ANY,ANY,ANY-method}
+\alias{plot,UserRTPredictions,missing-method}
 \title{UserRTPredictions S4 Class}
+\usage{
+\S4method{show}{UserRTPredictions}(object)
+
+\S4method{summary}{UserRTPredictions}(object, ...)
+
+\S4method{as.data.frame}{UserRTPredictions}(x, row.names = NULL, optional = FALSE, ...)
+
+\S4method{length}{UserRTPredictions}(x)
+
+\S4method{[}{UserRTPredictions,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
+
+\S4method{plot}{UserRTPredictions,missing}(x, y, type = c("ci_widths", "rt_distribution", "by_system"), ...)
+}
+\arguments{
+\item{object}{A UserRTPredictions object}
+
+\item{...}{Additional arguments}
+
+\item{x}{A UserRTPredictions object}
+
+\item{row.names}{Ignored}
+
+\item{optional}{Ignored}
+
+\item{i}{Row indices or logical vector}
+
+\item{j}{Column names (optional)}
+
+\item{drop}{Passed to data.frame subsetting}
+
+\item{y}{Ignored}
+
+\item{type}{Plot type: "ci_widths" (default), "rt_distribution", "by_system"}
+}
+\value{
+A list with summary statistics
+
+A data.frame of predictions
+
+Integer
+
+Subset of predictions data.frame
+
+A ggplot object
+}
 \description{
 S4 class for storing RT predictions generated from UserRTModels.
 }

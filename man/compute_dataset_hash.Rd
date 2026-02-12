@@ -15,3 +15,4 @@ Character string with MD5 hash
 \description{
 Creates an MD5 hash of a dataset's RT data to detect changes
 }
+\keyword{internal}

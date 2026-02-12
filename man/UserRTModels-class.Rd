@@ -3,7 +3,58 @@
 \docType{class}
 \name{UserRTModels-class}
 \alias{UserRTModels-class}
+\alias{show,UserRTModels-method}
+\alias{summary,UserRTModels-method}
+\alias{[[,UserRTModels,character-method}
+\alias{names,UserRTModels-method}
+\alias{length,UserRTModels-method}
+\alias{plot,UserRTModels,missing-method}
 \title{UserRTModels S4 Class}
+\usage{
+\S4method{show}{UserRTModels}(object)
+
+\S4method{summary}{UserRTModels}(object, ...)
+
+\S4method{[[}{UserRTModels,character}(x, i)
+
+\S4method{names}{UserRTModels}(x)
+
+\S4method{length}{UserRTModels}(x)
+
+\S4method{plot}{UserRTModels,missing}(
+  x,
+  y,
+  type = c("diagnostics", "calibration", "r_squared", "ci_widths"),
+  max_plots = 9,
+  ...
+)
+}
+\arguments{
+\item{object}{A UserRTModels object}
+
+\item{...}{Additional arguments}
+
+\item{x}{A UserRTModels object}
+
+\item{i}{System ID (character)}
+
+\item{y}{Ignored}
+
+\item{type}{Plot type: "diagnostics" (default), "calibration", "r_squared", "ci_widths"}
+
+\item{max_plots}{Maximum number of calibration plots to show (default 9)}
+}
+\value{
+A list with summary statistics
+
+The model object for that system
+
+Character vector of system IDs
+
+Integer
+
+A ggplot object or list of ggplot objects
+}
 \description{
 S4 class for storing calibration models built from repository
 systems to a user's chromatographic system.
@@ -19,8 +70,8 @@ source_system_id. Each model contains:
 \item{sys2_id}{"USER" (target is user's system)}
 \item{n_points}{Number of calibration compounds}
 \item{newdata}{Prediction grid (1000 points)}
-\item{ci}{Matrix \link{pred, lower, upper} at newdata points}
-\item{calibration}{Matrix \link{rt_source, rt_user} for calibration compounds}
+\item{ci}{Matrix \verb{[pred, lower, upper]} at newdata points}
+\item{calibration}{Matrix \verb{[rt_source, rt_user]} for calibration compounds}
 \item{stats}{Error statistics at calibration points}
 }}
 

@@ -30,12 +30,31 @@
 ^PARALLELIZATION_EXPLANATION\.md$
 ^PIPELINE_OPTIMIZATION\.md$
 
-# Specific test files
+# Specific test files and directories
 ^brms_feasibility\.R$
 ^test_plots$
+^test_scheduling$
+^test_scheduling_strategies$
+^test_furrr_benchmark$
+^test_furrr_pipeline$
 
 # Large data directories (RepoRT data and models output)
 ^RepoRT_data$
 
 # Log and temp files
 ^new.*\.txt$
+
+# Downloaded installers
+^quarto-.*\.deb.*$
+
+# Runner setup files
+^RUNNER_SETUP\.md$
+^github_runner\.yml$
+
+# Quarto rendered output in vignettes (pkgdown articles, not R vignettes)
+^vignettes/.*_files$
+^vignettes/\.quarto$
+^vignettes/.*\.qmd$
+
+# Hidden config files
+^\.github_runner\.env$

@@ -6,3 +6,4 @@
 \description{
 Functions for generating RT predictions from models.
 }
+\keyword{internal}

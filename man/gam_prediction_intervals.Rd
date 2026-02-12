@@ -25,7 +25,7 @@ and column 2 is RT in target system.}
 \item{n_cores}{Number of cores for parallel simulation (default 1).}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper} at each
+A matrix with 3 columns: \verb{[predicted, lower, upper]} at each
 newdata point.
 }
 \description{
@@ -44,7 +44,7 @@ The algorithm:
 \item Simulate parameter vectors: β_sim = β + L\emph{ν where V = L}L' (Cholesky)
 and ν ~ N(0,1)
 \item Generate predictions: pred_sim = Xp \%*\% β_sim
-\item Add observation noise: y_sim ~ N(pred_sim, σ²)
+\item Add observation noise: y_sim ~ N(pred_sim, sigma^2)
 \item Calculate quantiles across simulations
 }
 

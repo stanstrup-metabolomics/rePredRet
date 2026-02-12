@@ -6,3 +6,4 @@
 \description{
 Functions for creating interactive plots of RT prediction models.
 }
+\keyword{internal}

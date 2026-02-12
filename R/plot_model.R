@@ -312,7 +312,7 @@ search_compound <- function(inchi,
 #' \dontrun{
 #' models <- build_user_models(my_inchis, my_rts, "RP")
 #'
-#' # Find most similar systems (best R²)
+#' # Find most similar systems (best R-squared)
 #' compare_systems(models)
 #'
 #' # Rank by lowest RMSE
@@ -464,6 +464,8 @@ get_system_info <- function(system_id, data_path = NULL) {
 }
 
 
+#' @param x A system_info object from `get_system_info()`.
+#' @param ... Ignored.
 #' @rdname get_system_info
 #' @export
 print.system_info <- function(x, ...) {

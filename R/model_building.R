@@ -10,7 +10,7 @@ NULL
 #' Builds a monotonically constrained GAM model to predict retention times
 #' from one chromatographic system to another.
 #'
-#' @param rt_matrix A 2-column matrix [rt_source, rt_target] of common
+#' @param rt_matrix A 2-column matrix `[rt_source, rt_target]` of common
 #'   compound retention times.
 #' @param sys1_id Source system identifier.
 #' @param sys2_id Target system identifier.
@@ -21,8 +21,6 @@ NULL
 #'   Default uses all available cores.
 #' @param method Method for confidence intervals: "fast_ci" (72x faster, default)
 #'   or "bootstrap" (accurate, slower).
-#' @param n_boot Number of bootstrap iterations (default 200). Only used if
-#'   method = "bootstrap".
 #' @param save_plot Logical, whether to save an interactive plot (default FALSE).
 #' @param plot_dir Directory to save plot HTML files (required if save_plot = TRUE).
 #' @param dataset1 Optional dataset object for compound names in plots.
@@ -35,7 +33,7 @@ NULL
 #'     \item{sys2_id}{Target system ID}
 #'     \item{n_points}{Number of calibration compounds}
 #'     \item{newdata}{Vector of x-values for prediction grid (1000 points)}
-#'     \item{ci}{Matrix [pred, lower, upper] at newdata points}
+#'     \item{ci}{Matrix `[pred, lower, upper]` at newdata points}
 #'     \item{calibration}{Original RT matrix used for training}
 #'     \item{compounds}{InChI strings of calibration compounds}
 #'     \item{build_time}{Timestamp when model was built}
@@ -209,6 +207,8 @@ prune_boot_object <- function(boot_object) {
 #'   same method types (RP-RP, HILIC-HILIC).
 #' @param export_dir Optional directory to incrementally save models as
 #'   they're built. If NULL (default), models are only stored in memory.
+#' @param method Method for confidence intervals: "fast_ci" (default, fast) or
+#'   "bootstrap" (accurate, slower).
 #' @param save_plots Logical, whether to save interactive HTML plots for each
 #'   model (default TRUE).
 #'
@@ -298,8 +298,8 @@ build_all_models <- function(report_data,
   }
 
   # Intelligent parallelization based on method:
-  # - fast_ci: single-threaded, so use all cores for models (8×1)
-  # - bootstrap: needs cores for resampling, so use balanced (4×2)
+  # - fast_ci: single-threaded, so use all cores for models (8x1)
+  # - bootstrap: needs cores for resampling, so use balanced (4x2)
   if (method == "fast_ci") {
     n_parallel <- n_cores               # All cores for parallel models
     n_cores_per_model <- 1              # 1 core per model (fast_ci doesn't parallelize)
@@ -308,7 +308,7 @@ build_all_models <- function(report_data,
     n_cores_per_model <- max(1, floor(n_cores / n_parallel))  # 2 cores per model for bootstrap
   }
 
-  message("Parallelization: ", n_parallel, " models × ", n_cores_per_model,
+  message("Parallelization: ", n_parallel, " models x ", n_cores_per_model,
           " cores = ", n_parallel * n_cores_per_model, " total cores")
   message("(Optimized for ", method, " method)\n")
 
@@ -342,11 +342,11 @@ build_all_models <- function(report_data,
       dims = c(length(all_compounds), length(system_compounds))
     )
 
-    # Compute overlap matrix (systems × systems)
+    # Compute overlap matrix (systems x systems)
     overlap_matrix <- as.matrix(Matrix::crossprod(M))
 
     message("  Found ", sum(overlap_matrix >= min_compounds & row(overlap_matrix) != col(overlap_matrix)),
-            " system pairs with ≥", min_compounds, " compounds\n")
+            " system pairs with >=", min_compounds, " compounds\n")
 
     # Collect model pairs that meet minimum compound threshold (metadata only)
     # RT data will be fetched on-demand during model building
@@ -378,7 +378,7 @@ build_all_models <- function(report_data,
     }
 
     if (length(model_pairs) == 0) {
-      message("  ✓ All models up-to-date, nothing to build\n")
+      message("  \u2713 All models up-to-date, nothing to build\n")
       next
     }
 

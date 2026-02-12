@@ -149,7 +149,7 @@ purge_removed_models <- function(removed_ids, cache, export_dir) {
       cache$models[[model_key]] <- NULL
     }
 
-    message("  ✓ Purged ", length(models_to_purge), " models from disk and cache")
+    message("  \u2713 Purged ", length(models_to_purge), " models from disk and cache")
   }
 
   # Remove datasets from cache
@@ -241,7 +241,7 @@ filter_model_pairs <- function(model_pairs, changes, cache, export_dir) {
   }
 
   if (pairs_skipped > 0) {
-    message("  ✓ Skipping ", pairs_skipped, " models (files complete)")
+    message("  \u2713 Skipping ", pairs_skipped, " models (files complete)")
   }
 
   pairs_to_build

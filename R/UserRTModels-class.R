@@ -10,8 +10,8 @@
 #'     \item{sys2_id}{"USER" (target is user's system)}
 #'     \item{n_points}{Number of calibration compounds}
 #'     \item{newdata}{Prediction grid (1000 points)}
-#'     \item{ci}{Matrix [pred, lower, upper] at newdata points}
-#'     \item{calibration}{Matrix [rt_source, rt_user] for calibration compounds}
+#'     \item{ci}{Matrix `[pred, lower, upper]` at newdata points}
+#'     \item{calibration}{Matrix `[rt_source, rt_user]` for calibration compounds}
 #'     \item{stats}{Error statistics at calibration points}
 #'   }
 #' @slot diagnostics A data.frame with per-model diagnostic metrics:
@@ -68,7 +68,6 @@ setClass(
  )
 )
 
-#' @describeIn UserRTModels-class Validity check for UserRTModels
 setValidity("UserRTModels", function(object) {
  errors <- character()
 
@@ -133,6 +132,7 @@ setMethod("show", "UserRTModels", function(object) {
 #' Summary Method for UserRTModels
 #'
 #' @param object A UserRTModels object
+#' @param ... Ignored.
 #' @return A list with summary statistics
 #' @rdname UserRTModels-class
 #' @export

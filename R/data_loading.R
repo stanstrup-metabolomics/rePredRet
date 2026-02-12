@@ -175,7 +175,7 @@ load_report_data <- function(report_path,
 #' @param dataset2 Second dataset (from load_report_data).
 #' @param by Column name to match compounds. Default "inchi.std".
 #'
-#' @return A 2-column matrix with retention times [rt1, rt2] for compounds
+#' @return A 2-column matrix with retention times `[rt1, rt2]` for compounds
 #'   present in both systems. If multiple measurements exist for the same
 #'   compound, the median RT is used.
 #'

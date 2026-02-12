@@ -6,3 +6,4 @@
 \description{
 Functions for managing incremental model building with change detection
 }
+\keyword{internal}

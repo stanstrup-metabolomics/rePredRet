@@ -138,7 +138,7 @@ fit_gam_mono_once <- function(rt_matrix, newdata) {
 #' @param alpha Significance level for PI (default 0.05 for 95% PI).
 #' @param n_cores Number of cores for parallel simulation (default 1).
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper] at each
+#' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
 #'   newdata point.
 #'
 #' @details
@@ -148,7 +148,7 @@ fit_gam_mono_once <- function(rt_matrix, newdata) {
 #' 3. Simulate parameter vectors: β_sim = β + L*ν where V = L*L' (Cholesky)
 #'    and ν ~ N(0,1)
 #' 4. Generate predictions: pred_sim = Xp %*% β_sim
-#' 5. Add observation noise: y_sim ~ N(pred_sim, σ²)
+#' 5. Add observation noise: y_sim ~ N(pred_sim, sigma^2)
 #' 6. Calculate quantiles across simulations
 #'
 #' This gives TRUE prediction intervals (for future observations), not
@@ -199,7 +199,7 @@ gam_prediction_intervals <- function(rt_matrix,
   pred_sims <- Xp %*% beta_sims
 
   # Add observation noise to get prediction intervals
-  # y_sim ~ N(pred_sim, σ²)
+  # y_sim ~ N(pred_sim, sigma^2)
   obs_sims <- pred_sims + matrix(
     rnorm(prod(dim(pred_sims)), mean = 0, sd = sigma),
     nrow = nrow(pred_sims),
@@ -227,7 +227,7 @@ gam_prediction_intervals <- function(rt_matrix,
 #'
 #' @inheritParams gam_prediction_intervals
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper] at each
+#' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
 #'   newdata point.
 #'
 #' @importFrom parallel makeCluster clusterEvalQ clusterExport parApply stopCluster

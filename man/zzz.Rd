@@ -6,3 +6,4 @@
 \description{
 Package startup messages and initialization.
 }
+\keyword{internal}

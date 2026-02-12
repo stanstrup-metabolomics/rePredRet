@@ -7,14 +7,14 @@
 gam_fast_ci(rt_matrix, newdata, alpha = 0.05)
 }
 \arguments{
-\item{rt_matrix}{A 2-column matrix \link{rt_source, rt_target}.}
+\item{rt_matrix}{A 2-column matrix \verb{[rt_source, rt_target]}.}
 
 \item{newdata}{Numeric vector of x-values for predictions.}
 
 \item{alpha}{Significance level (default 0.05 for 95\% PI).}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper}.
+A matrix with 3 columns: \verb{[predicted, lower, upper]}.
 }
 \description{
 Fast calculation of prediction intervals by fitting GAM once
@@ -24,7 +24,7 @@ Computes prediction intervals efficiently by:
 \enumerate{
 \item Fitting constrained GAM to get monotonic predictions
 \item Estimating observation variance from residuals
-\item Building PIs: mean ± z * sqrt(SE² + σ²)
+\item Building PIs: mean +/- z * sqrt(SE^2 + sigma^2)
 \item Enforcing monotonicity on bounds with cummax()
 }
 }
@@ -32,9 +32,9 @@ Computes prediction intervals efficiently by:
 Algorithm:
 \enumerate{
 \item Fit constrained GAM for monotonic predictions
-\item Calculate residual variance (σ²) from constrained fit
+\item Calculate residual variance (sigma^2) from constrained fit
 \item Get SE estimates from unconstrained fit
-\item Build PIs: mean ± z*sqrt(SE² + σ²) (includes observation variance)
+\item Build PIs: mean +/- z*sqrt(SE^2 + sigma^2) (includes observation variance)
 \item Enforce monotonicity: lower = cummax(lower), upper = cummax(upper)
 }
 
@@ -52,6 +52,6 @@ Trade-off:
 }
 }
 \references{
-"Fit monotone GAM → Calculate σ² from residuals → Get fit ± z·sqrt(SE² + σ²)
-→ Enforce monotonicity afterwards" - Hybrid approach for fast PIs
+"Fit monotone GAM -> Calculate sigma^2 from residuals -> Get fit +/- z*sqrt(SE^2 + sigma^2)
+-> Enforce monotonicity afterwards" - Hybrid approach for fast PIs
 }

@@ -9,21 +9,21 @@ NULL
 #' Computes prediction intervals efficiently by:
 #' 1. Fitting constrained GAM to get monotonic predictions
 #' 2. Estimating observation variance from residuals
-#' 3. Building PIs: mean ± z * sqrt(SE² + σ²)
+#' 3. Building PIs: mean +/- z * sqrt(SE^2 + sigma^2)
 #' 4. Enforcing monotonicity on bounds with cummax()
 #'
-#' @param rt_matrix A 2-column matrix [rt_source, rt_target].
+#' @param rt_matrix A 2-column matrix `[rt_source, rt_target]`.
 #' @param newdata Numeric vector of x-values for predictions.
 #' @param alpha Significance level (default 0.05 for 95% PI).
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper].
+#' @return A matrix with 3 columns: `[predicted, lower, upper]`.
 #'
 #' @details
 #' Algorithm:
 #' 1. Fit constrained GAM for monotonic predictions
-#' 2. Calculate residual variance (σ²) from constrained fit
+#' 2. Calculate residual variance (sigma^2) from constrained fit
 #' 3. Get SE estimates from unconstrained fit
-#' 4. Build PIs: mean ± z*sqrt(SE² + σ²) (includes observation variance)
+#' 4. Build PIs: mean +/- z*sqrt(SE^2 + sigma^2) (includes observation variance)
 #' 5. Enforce monotonicity: lower = cummax(lower), upper = cummax(upper)
 #'
 #' This is ~72x faster than bootstrap (0.02 sec vs 1.5 sec per model) because:
@@ -36,8 +36,8 @@ NULL
 #' - More realistic for predicting individual observations
 #'
 #' @references
-#' "Fit monotone GAM → Calculate σ² from residuals → Get fit ± z·sqrt(SE² + σ²)
-#' → Enforce monotonicity afterwards" - Hybrid approach for fast PIs
+#' "Fit monotone GAM -> Calculate sigma^2 from residuals -> Get fit +/- z*sqrt(SE^2 + sigma^2)
+#' -> Enforce monotonicity afterwards" - Hybrid approach for fast PIs
 #'
 #' @importFrom stats qnorm
 #' @export
@@ -110,7 +110,7 @@ gam_fast_ci <- function(rt_matrix, newdata, alpha = 0.05) {
 
   # Step 4: Build prediction intervals (include both parameter + observation variance)
   z <- stats::qnorm(1 - alpha / 2)
-  # PI = mean ± z * sqrt(SE² + σ²)
+  # PI = mean +/- z * sqrt(SE^2 + sigma^2)
   se_pred <- sqrt(se_param^2 + sigma_sq)
   upper_raw <- mu_const + z * se_pred
   lower_raw <- mu_const - z * se_pred

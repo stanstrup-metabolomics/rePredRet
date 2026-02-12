@@ -82,6 +82,7 @@ setMethod("show", "UserRTPredictions", function(object) {
 #' Summary Method for UserRTPredictions
 #'
 #' @param object A UserRTPredictions object
+#' @param ... Ignored.
 #' @return A list with summary statistics
 #' @rdname UserRTPredictions-class
 #' @export

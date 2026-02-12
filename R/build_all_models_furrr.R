@@ -48,10 +48,10 @@ build_all_models_furrr <- function(report_data,
   dataset_ids <- names(datasets)
 
   if (verbose) {
-    message("\n╔════════════════════════════════════════════════════════╗")
-    message("║  Building Models with furrr + Caching                 ║")
-    message("║  Method: ", method, " | Workers: ", n_workers, "                   ║")
-    message("╚════════════════════════════════════════════════════════╝\n")
+    message("\n========================================================")
+    message("  Building Models with furrr + Caching")
+    message("  Method: ", method, " | Workers: ", n_workers)
+    message("========================================================\n")
   }
 
   # Load build cache for incremental updates
@@ -239,7 +239,7 @@ build_all_models_furrr <- function(report_data,
     speed <- length(successful) / max(1, elapsed_build)
 
     message("\n")
-    message("─── Build Complete ───")
+    message("--- Build Complete ---")
     message("  Total models: ", length(model_pairs))
     message("  Successful: ", length(successful))
     message("  Success rate: ", round(length(successful) / length(model_pairs) * 100, 1), "%")
@@ -278,9 +278,9 @@ build_all_models_furrr <- function(report_data,
     )
 
     if (verbose) {
-      message("\n╔════════════════════════════════════════════════════════╗")
-      message("║  Pipeline Complete!                                    ║")
-      message("╚════════════════════════════════════════════════════════╝\n")
+      message("\n========================================================")
+      message("  Pipeline Complete!")
+      message("========================================================\n")
       message("Summary:")
       message("  Total pairs to build: ", stats$total_pairs)
       message("  Successful models: ", stats$successful)

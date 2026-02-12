@@ -14,7 +14,7 @@ boot2ci_PI(loess_boot, newdata, alpha = 0.05)
 \item{alpha}{Significance level for PI (default 0.05 for 95\% PI).}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper} at each
+A matrix with 3 columns: \verb{[predicted, lower, upper]} at each
 newdata point.
 }
 \description{

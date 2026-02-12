@@ -12,7 +12,7 @@ boot2ci(loess_boot, alpha = 0.01)
 \item{alpha}{Significance level for CI (default 0.01 for 99\% CI).}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper} at each
+A matrix with 3 columns: \verb{[predicted, lower, upper]} at each
 newdata point.
 }
 \description{

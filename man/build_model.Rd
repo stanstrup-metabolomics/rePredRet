@@ -19,14 +19,14 @@ build_model(
 )
 }
 \arguments{
-\item{rt_matrix}{A 2-column matrix \link{rt_source, rt_target} of common
+\item{rt_matrix}{A 2-column matrix \verb{[rt_source, rt_target]} of common
 compound retention times.}
 
 \item{sys1_id}{Source system identifier.}
 
 \item{sys2_id}{Target system identifier.}
 
-\item{n_boot}{Number of bootstrap iterations (default 200). Only used if
+\item{n_boot}{Number of bootstrap iterations (default 1000). Only used if
 method = "bootstrap".}
 
 \item{alpha}{Significance level for PI (default 0.05 for 95\% PI).}
@@ -53,7 +53,7 @@ A list with model information:
 \item{sys2_id}{Target system ID}
 \item{n_points}{Number of calibration compounds}
 \item{newdata}{Vector of x-values for prediction grid (1000 points)}
-\item{ci}{Matrix \link{pred, lower, upper} at newdata points}
+\item{ci}{Matrix \verb{[pred, lower, upper]} at newdata points}
 \item{calibration}{Original RT matrix used for training}
 \item{compounds}{InChI strings of calibration compounds}
 \item{build_time}{Timestamp when model was built}

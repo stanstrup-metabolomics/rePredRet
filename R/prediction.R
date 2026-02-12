@@ -342,21 +342,11 @@ generate_all_predictions <- function(models,
 }
 
 
-#' Export Predictions to Files
-#'
-#' Saves predictions to CSV and JSON files with full provenance.
-#'
-#' @param predictions Output from `generate_all_predictions()`.
-#' @param output_dir Directory to save predictions.
-#' @param studies Studies tibble for system metadata.
-#'
-#' @return Invisibly returns the output directory path.
-#'
 #' @importFrom readr write_csv
 #' @importFrom jsonlite write_json
-#' @export
-export_predictions <- function(predictions, output_dir = "predictions",
-                               studies = NULL) {
+#' @noRd
+export_predictions_pipeline <- function(predictions, output_dir = "predictions",
+                                        studies = NULL) {
 
   # Create directories
   by_system_dir <- file.path(output_dir, "by_system")

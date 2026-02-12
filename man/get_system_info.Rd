@@ -2,14 +2,21 @@
 % Please edit documentation in R/plot_model.R
 \name{get_system_info}
 \alias{get_system_info}
+\alias{print.system_info}
 \title{Get Detailed System Information}
 \usage{
 get_system_info(system_id, data_path = NULL)
+
+\method{print}{system_info}(x, ...)
 }
 \arguments{
 \item{system_id}{System identifier (e.g., "0001").}
 
 \item{data_path}{Optional path to local RepoRT data directory.}
+
+\item{x}{A system_info object from \code{get_system_info()}.}
+
+\item{...}{Ignored.}
 }
 \value{
 A list with components: id, name, type, n_compounds, info, metadata, gradient.

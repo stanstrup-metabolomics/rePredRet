@@ -10,19 +10,19 @@ NULL
 #' Computes prediction intervals by fitting the constrained GAM once,
 #' estimating pointwise SE, and enforcing monotonicity with cummax().
 #'
-#' @param rt_matrix A 2-column matrix [rt_source, rt_target].
+#' @param rt_matrix A 2-column matrix `[rt_source, rt_target]`.
 #' @param newdata Numeric vector of x-values for predictions.
 #' @param alpha Significance level (default 0.05 for 95% intervals).
 #' @param prediction_interval Logical, if TRUE (default) adds observation
 #'   variance for prediction intervals. If FALSE, gives confidence intervals.
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper].
+#' @return A matrix with 3 columns: `[predicted, lower, upper]`.
 #'
 #' @details
 #' Algorithm:
 #' 1. Fit monotonically constrained GAM to full dataset
 #' 2. Estimate pointwise SE from model variance
-#' 3. Build intervals: mean ± k*SE (+ observation variance if PI)
+#' 3. Build intervals: mean +/- k*SE (+ observation variance if PI)
 #' 4. Enforce monotonicity with cummax() on bounds
 #'
 #' This is ~25x faster than bootstrap because:
@@ -36,6 +36,7 @@ NULL
 #' - May slightly overestimate uncertainty at inflection points
 #'
 #' @importFrom stats qnorm sd approxfun
+#' @importFrom MASS ginv
 #' @keywords internal
 gam_fast_pi <- function(rt_matrix,
                         newdata,

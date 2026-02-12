@@ -117,7 +117,7 @@ if (any(is.na(p))) {
 #' @param loess_boot A boot object from `boot::boot()`.
 #' @param alpha Significance level for CI (default 0.01 for 99% CI).
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper] at each
+#' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
 #'   newdata point.
 #'
 #' @importFrom boot boot.ci
@@ -191,7 +191,7 @@ boot2ci <- function(loess_boot, alpha = 0.01) {
 #' @param newdata Numeric vector of x-values used for prediction.
 #' @param alpha Significance level for PI (default 0.05 for 95% PI).
 #'
-#' @return A matrix with 3 columns: [predicted, lower, upper] at each
+#' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
 #'   newdata point.
 #'
 #' @details

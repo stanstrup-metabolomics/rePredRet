@@ -33,6 +33,9 @@ same method types (RP-RP, HILIC-HILIC).}
 \item{export_dir}{Optional directory to incrementally save models as
 they're built. If NULL (default), models are only stored in memory.}
 
+\item{method}{Method for confidence intervals: "fast_ci" (default, fast) or
+"bootstrap" (accurate, slower).}
+
 \item{save_plots}{Logical, whether to save interactive HTML plots for each
 model (default TRUE).}
 }

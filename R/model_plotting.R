@@ -4,20 +4,9 @@
 #' @keywords internal
 NULL
 
-#' Create Interactive Model Plot
-#'
-#' Creates an interactive scatter plot with prediction intervals using
-#' ggplot2 and plotly.
-#'
-#' @param model A model object from `build_model()`.
-#' @param dataset1 Optional dataset object for compound names (source system).
-#' @param dataset2 Optional dataset object for compound names (target system).
-#'
-#' @return A plotly object (interactive plot).
-#'
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_minimal theme element_text
 #' @importFrom plotly ggplotly
-#' @export
+#' @noRd
 plot_model <- function(model, dataset1 = NULL, dataset2 = NULL) {
 
   if (model$status != "success") {
@@ -104,7 +93,7 @@ plot_model <- function(model, dataset1 = NULL, dataset2 = NULL) {
     ) +
     # Labels
     ggplot2::labs(
-      title = paste0("RT Prediction Model: ", model$sys1_id, " → ", model$sys2_id),
+      title = paste0("RT Prediction Model: ", model$sys1_id, " \u2192 ", model$sys2_id),
       subtitle = paste0(model$n_points, " compounds, ", interval_type),
       x = paste0("RT in ", model$sys1_id, " (min)"),
       y = paste0("RT in ", model$sys2_id, " (min)")
@@ -125,7 +114,7 @@ plot_model <- function(model, dataset1 = NULL, dataset2 = NULL) {
     p_interactive,
     hovermode = "closest",
     title = list(
-      text = paste0("<b>", model$sys1_id, " → ", model$sys2_id, "</b><br>",
+      text = paste0("<b>", model$sys1_id, " \u2192 ", model$sys2_id, "</b><br>",
                    "<sub>", model$n_points, " compounds, ", interval_type, "</sub>"),
       x = 0.5,
       xanchor = "center"
@@ -181,7 +170,7 @@ save_model_plot <- function(model,
     p,
     file = output_path,
     selfcontained = TRUE,
-    title = paste0("RT Model: ", model$sys1_id, " → ", model$sys2_id)
+    title = paste0("RT Model: ", model$sys1_id, " \u2192 ", model$sys2_id)
   )
 
   return(invisible(output_path))

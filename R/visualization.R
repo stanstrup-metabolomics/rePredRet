@@ -12,7 +12,7 @@ NULL
 #'   edges represent calibration models, and edge opacity/width reflect model
 #'   quality (R-squared).
 #'
-#' @param models A \code{\link{UserRTModels}} object from
+#' @param models A \linkS4class{UserRTModels} object from
 #'   \code{\link{build_user_models}}.
 #' @param min_compounds Minimum number of calibration compounds for a model to
 #'   be included in the network (default 10).
@@ -196,7 +196,7 @@ plot_system_network <- function(models,
 #' @description Visualizes the distribution of confidence interval widths (and
 #'   optionally model errors) from a set of RT predictions.
 #'
-#' @param predictions A \code{\link{UserRTPredictions}} object from
+#' @param predictions A \linkS4class{UserRTPredictions} object from
 #'   \code{\link{predict_rt_user}}.
 #' @param type Type of plot to create. One of \code{"density"} (default),
 #'   \code{"histogram"}, or \code{"boxplot"}.
@@ -352,7 +352,7 @@ plot_prediction_errors <- function(predictions,
 #'   compounds with broad coverage across systems and systems with extensive
 #'   compound libraries.
 #'
-#' @param models A \code{\link{UserRTModels}} object from
+#' @param models A \linkS4class{UserRTModels} object from
 #'   \code{\link{build_user_models}}.
 #' @param top_n Number of most-covered compounds to display (default 30).
 #'   Compounds are ranked by the number of systems in which they appear.

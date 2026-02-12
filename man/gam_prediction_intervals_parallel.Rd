@@ -25,7 +25,7 @@ and column 2 is RT in target system.}
 \item{n_cores}{Number of cores for parallel simulation (default 1).}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper} at each
+A matrix with 3 columns: \verb{[predicted, lower, upper]} at each
 newdata point.
 }
 \description{

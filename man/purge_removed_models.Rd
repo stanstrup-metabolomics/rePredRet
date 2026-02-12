@@ -19,3 +19,4 @@ Updated cache object
 \description{
 Deletes model directories and cache entries for models referencing removed datasets
 }
+\keyword{internal}

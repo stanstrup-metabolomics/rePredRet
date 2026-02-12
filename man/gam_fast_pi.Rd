@@ -7,7 +7,7 @@
 gam_fast_pi(rt_matrix, newdata, alpha = 0.05, prediction_interval = TRUE)
 }
 \arguments{
-\item{rt_matrix}{A 2-column matrix \link{rt_source, rt_target}.}
+\item{rt_matrix}{A 2-column matrix \verb{[rt_source, rt_target]}.}
 
 \item{newdata}{Numeric vector of x-values for predictions.}
 
@@ -17,7 +17,7 @@ gam_fast_pi(rt_matrix, newdata, alpha = 0.05, prediction_interval = TRUE)
 variance for prediction intervals. If FALSE, gives confidence intervals.}
 }
 \value{
-A matrix with 3 columns: \link{predicted, lower, upper}.
+A matrix with 3 columns: \verb{[predicted, lower, upper]}.
 }
 \description{
 Fast calculation of prediction intervals using single GAM fit
@@ -31,7 +31,7 @@ Algorithm:
 \enumerate{
 \item Fit monotonically constrained GAM to full dataset
 \item Estimate pointwise SE from model variance
-\item Build intervals: mean ± k*SE (+ observation variance if PI)
+\item Build intervals: mean +/- k*SE (+ observation variance if PI)
 \item Enforce monotonicity with cummax() on bounds
 }
 

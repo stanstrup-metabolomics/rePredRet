@@ -17,3 +17,4 @@ TRUE if all files exist, FALSE otherwise
 \description{
 Checks if all required files exist for a model
 }
+\keyword{internal}

@@ -21,3 +21,4 @@ Updated cache object
 \description{
 Updates cache with current dataset hashes
 }
+\keyword{internal}
