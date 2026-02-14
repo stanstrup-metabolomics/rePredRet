@@ -118,9 +118,9 @@ jobs:
             # Clean up any partial clone from previous attempt
             rm -rf data_repo
 
-            # Full clone (not shallow) to avoid corruption during large pushes
-            # Skip LFS smudge during clone - we'll pull specific files after
-            if GIT_LFS_SKIP_SMUDGE=1 git clone \
+            # Use sparse checkout: only check out build_cache.rds initially
+            # (full checkout of ~50k model files fails on some runners)
+            if GIT_LFS_SKIP_SMUDGE=1 git clone --no-checkout \
               https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
               echo "Clone successful"
               break
@@ -137,7 +137,10 @@ jobs:
           done
 
           cd data_repo
-          # Pull only the build cache file from LFS (not all models)
+          # Sparse checkout: only need build_cache.rds and model_index.csv for now
+          git sparse-checkout set build_cache.rds model_index.csv
+          git checkout
+          # Pull build cache from LFS
           git lfs pull --include="build_cache.rds"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -167,6 +170,9 @@ jobs:
       - name: Update data repository
         run: |
           cd data_repo
+
+          # Disable sparse checkout so git can track all model files
+          git sparse-checkout disable
 
           # Copy new/updated models
           echo "Copying updated models..."
