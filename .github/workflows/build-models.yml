@@ -145,12 +145,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Copy existing build cache
+      - name: Restore build cache and models
         run: |
           mkdir -p website/data/models
+          RUNNER_CACHE="/opt/repredret-cache/models"
+
+          # Restore models from runner-local cache (survives across CI runs)
+          # This enables resume after a failed push without rebuilding
+          if [ -d "$RUNNER_CACHE" ] && [ "$(ls -A "$RUNNER_CACHE" 2>/dev/null)" ]; then
+            echo "Restoring models from runner cache..."
+            cp -a "$RUNNER_CACHE"/. website/data/models/
+            echo "Restored $(find website/data/models -name 'model.rds' | wc -l) models from runner cache"
+          fi
+
+          # Overlay build_cache.rds from git repo (authoritative source)
           if [ -f data_repo/build_cache.rds ]; then
             cp data_repo/build_cache.rds website/data/models/
-            echo "Copied existing build cache"
+            echo "Copied build cache from data repo"
           fi
 
       - name: Run pipeline with build cache
@@ -166,6 +177,18 @@ jobs:
 
           source("inst/scripts/run_pipeline.R")
         shell: Rscript {0}
+
+      - name: Save models to runner cache
+        if: always()
+        run: |
+          # Persist built models on the self-hosted runner so they survive
+          # across CI runs. This avoids rebuilding after a failed push.
+          RUNNER_CACHE="/opt/repredret-cache/models"
+          if [ -d website/data/models ]; then
+            mkdir -p "$RUNNER_CACHE"
+            rsync -a --delete website/data/models/ "$RUNNER_CACHE"/
+            echo "Saved $(find "$RUNNER_CACHE" -name 'model.rds' | wc -l) models to runner cache"
+          fi
 
       - name: Update data repository
         run: |
