@@ -77,6 +77,9 @@ jobs:
 
       - name: Cleanup and Setup Git LFS
         run: |
+          # Disable fsync - Docker/overlayfs doesn't support it and causes
+          # "fsync error: Permission denied" on pack files
+          git config --global core.fsync none
           # Clean up git pack files to prevent corruption
           git gc --aggressive --prune=now || true
           git lfs install --skip-repo
