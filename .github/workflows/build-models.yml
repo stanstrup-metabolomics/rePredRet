@@ -37,13 +37,11 @@ jobs:
 
       - name: Checkout data repository (sparse)
         run: |
-          GIT_LFS_SKIP_SMUDGE=1 git clone --filter=blob:none --no-checkout \
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --no-checkout \
             https://github.com/stanstrup-metabolomics/rePredRet-models.git data_repo
           cd data_repo
           git sparse-checkout set build_cache.rds model_index.csv
           git checkout
-          # Cleanup to prevent pack corruption on next repo operation
-          git gc --aggressive --prune=now || true
 
       - name: Check for new RepoRT release
         id: check
@@ -121,9 +119,10 @@ jobs:
             # Clean up any partial clone from previous attempt
             rm -rf data_repo
 
-            # Use sparse checkout: only check out build_cache.rds initially
-            # (full checkout of ~50k model files fails on some runners)
-            if GIT_LFS_SKIP_SMUDGE=1 git clone --no-checkout \
+            # Shallow + sparse clone: only fetch latest commit, only check out
+            # build_cache.rds. Avoids corrupted pack files from history and
+            # full checkout of ~50k model files that fails on some runners.
+            if GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --no-checkout \
               https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
               echo "Clone successful"
               break
