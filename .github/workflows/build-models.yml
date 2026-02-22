@@ -25,6 +25,11 @@ on:
       - 'inst/scripts/**'
       - '.github/workflows/build-models.yml'
 
+# Prevent concurrent runs from canceling each other (build takes hours)
+concurrency:
+  group: build-models
+  cancel-in-progress: false
+
 jobs:
   check-release:
     runs-on: ubuntu-latest
