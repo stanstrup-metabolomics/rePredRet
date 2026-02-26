@@ -199,79 +199,51 @@ jobs:
 
       - name: Update data repository
         run: |
-          cd data_repo
+          # Create a fresh git repo from scratch instead of cloning.
+          # This avoids all pack corruption issues on Docker/overlayfs.
+          mkdir -p push_repo
+          cd push_repo
+          git init
+          git lfs install
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config http.postBuffer 524288000
+          git config http.lowSpeedLimit 1000
+          git config http.lowSpeedTime 600
+          git remote add origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
 
-          # Disable sparse checkout so git can track all model files
-          git sparse-checkout disable
+          # Copy repo scaffolding from the sparse clone
+          cp ../data_repo/.gitattributes . 2>/dev/null || echo 'models/**/*.rds filter=lfs diff=lfs merge=lfs -text
+          *.rds filter=lfs diff=lfs merge=lfs -text' > .gitattributes
+          cp ../data_repo/.gitignore . 2>/dev/null || true
+          cp ../data_repo/README.md . 2>/dev/null || true
 
-          # Copy new/updated models
-          echo "Copying updated models..."
-          rsync -av --delete ../website/data/models/ models/
-
-          # Copy metadata files
+          # Copy pipeline output
+          echo "Copying models..."
+          cp -a ../website/data/models/ models/
           cp ../website/data/models/build_cache.rds .
           if [ -f ../website/data/models/model_index.csv ]; then
             cp ../website/data/models/model_index.csv .
           fi
 
-          # Check for changes (include untracked files)
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No model changes to commit"
-            echo "has_changes=false" >> $GITHUB_ENV
-            exit 0
-          fi
-
           echo "has_changes=true" >> $GITHUB_ENV
 
-          # Configure git for large pushes
-          git config http.postBuffer 524288000  # 500MB
-          git config http.lowSpeedLimit 1000
-          git config http.lowSpeedTime 600  # 10 min timeout for slow transfers
-          git config pack.windowMemory 256m
-          git config pack.packSizeLimit 200m
-
-          # Refresh remote URL with current token before push
-          # (token embedded at clone time may be stale after hours-long build)
-          git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
-
-          # --- Batched commit + push ---
-          # Push metadata files first (small, always needed)
-          git add build_cache.rds model_index.csv 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Update metadata (automated build)" \
-              -m "RepoRT version: ${{ needs.check-release.outputs.version }}" \
-              -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-            if ! git push 2>&1; then
-              echo "Failed to push metadata"
-              exit 1
-            fi
-            echo "Metadata pushed successfully"
-          fi
-
-          # Batch model directories to avoid HTTP 500 on large pushes
-          BATCH_SIZE=2000
-          if [ -d models/ ]; then
-            cd models/
-            MODEL_DIRS=($(ls -d */ 2>/dev/null))
-            cd ..
-          else
-            MODEL_DIRS=()
-          fi
-
+          # Collect model directories for batching
+          cd models/
+          MODEL_DIRS=($(ls -d */ 2>/dev/null))
+          cd ..
           TOTAL=${#MODEL_DIRS[@]}
           echo "Total model directories: $TOTAL"
 
-          if [ $TOTAL -eq 0 ]; then
-            # No model dirs but maybe other changes (deletions etc)
-            git add -A
-            if ! git diff --cached --quiet; then
-              git commit -m "Update models (automated build)"
-              git push 2>&1 || exit 1
-            fi
-            exit 0
-          fi
+          # Commit metadata + repo files first
+          git add .gitattributes .gitignore README.md build_cache.rds model_index.csv 2>/dev/null || true
+          git commit -m "Update models (automated build)" \
+            -m "RepoRT version: ${{ needs.check-release.outputs.version }}" \
+            -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --allow-empty
 
+          # Batch add model directories
+          BATCH_SIZE=2000
           BATCH_NUM=0
           for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
             BATCH_NUM=$((BATCH_NUM + 1))
@@ -280,49 +252,37 @@ jobs:
 
             echo "=== Batch $BATCH_NUM: directories $((i+1))-$END of $TOTAL ==="
 
-            # Stage this batch of model directories
             for ((j=i; j<END; j++)); do
               git add "models/${MODEL_DIRS[$j]}"
             done
 
-            # Skip if nothing staged in this batch
-            if git diff --cached --quiet; then
-              echo "No changes in this batch, skipping"
-              continue
-            fi
-
-            git commit -m "Update models batch $BATCH_NUM (automated build)"
-
-            # Push with retry
-            MAX_RETRIES=3
-            RETRY_COUNT=0
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              echo "Push attempt $((RETRY_COUNT + 1))/$MAX_RETRIES for batch $BATCH_NUM..."
-              if git push 2>&1; then
-                echo "Batch $BATCH_NUM pushed successfully"
-                break
-              else
-                RETRY_COUNT=$((RETRY_COUNT + 1))
-                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                  echo "Push failed, refreshing token and retrying in 30 seconds..."
-                  git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
-                  sleep 30
-                else
-                  echo "Push failed after $MAX_RETRIES attempts for batch $BATCH_NUM"
-                  exit 1
-                fi
-              fi
-            done
+            git commit -m "Add models batch $BATCH_NUM" --allow-empty
           done
 
-          # Handle any remaining changes (deletions of removed models, etc.)
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Cleanup removed models (automated build)"
-            git push 2>&1 || exit 1
-          fi
+          # Force push everything (replaces remote history)
+          # LFS objects already on the server won't be re-uploaded
+          echo "Pushing all commits..."
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Push attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+            if git push --force origin main 2>&1; then
+              echo "Push successful"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Push failed, retrying in 30 seconds..."
+                git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
+                sleep 30
+              else
+                echo "Push failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
 
-          echo "All batches pushed successfully"
+          echo "All models pushed successfully"
 
       - name: Report status
         if: always()
