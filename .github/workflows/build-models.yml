@@ -112,47 +112,24 @@ jobs:
           remotes::install_local(".", dependencies = FALSE)
         shell: Rscript {0}
 
-      - name: Checkout data repository (for build cache)
+      - name: Download build cache
         run: |
-          # Clone with retry logic to handle transient network/corruption issues
-          MAX_RETRIES=3
-          RETRY_COUNT=0
+          # Download build_cache.rds directly via GitHub API instead of git clone.
+          # Git clone fails on this Docker runner due to filesystem limitations.
+          mkdir -p website/data/models
 
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "Clone attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+          echo "Downloading build_cache.rds from rePredRet-models..."
+          if curl -sL -f \
+            -H "Authorization: token ${{ secrets.MODELS_REPO_PAT }}" \
+            -H "Accept: application/octet-stream" \
+            "https://api.github.com/repos/stanstrup-metabolomics/rePredRet-models/contents/build_cache.rds?ref=main" \
+            -o website/data/models/build_cache.rds; then
+            echo "Downloaded build_cache.rds ($(wc -c < website/data/models/build_cache.rds) bytes)"
+          else
+            echo "No build_cache.rds found or download failed, starting fresh"
+          fi
 
-            # Clean up any partial clone from previous attempt
-            rm -rf data_repo
-
-            # Shallow + sparse clone: only fetch latest commit, only check out
-            # build_cache.rds. Avoids corrupted pack files from history and
-            # full checkout of ~50k model files that fails on some runners.
-            if GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --no-checkout \
-              https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git data_repo; then
-              echo "Clone successful"
-              break
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "Clone failed, retrying in 10 seconds..."
-                sleep 10
-              else
-                echo "Clone failed after $MAX_RETRIES attempts"
-                exit 1
-              fi
-            fi
-          done
-
-          cd data_repo
-          # Sparse checkout: only need build_cache.rds and model_index.csv for now
-          git sparse-checkout set build_cache.rds model_index.csv
-          git checkout
-          # Pull build cache from LFS
-          git lfs pull --include="build_cache.rds"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Restore build cache and models
+      - name: Restore models from runner cache
         run: |
           mkdir -p website/data/models
           RUNNER_CACHE="/opt/repredret-cache/models"
@@ -163,12 +140,6 @@ jobs:
             echo "Restoring models from runner cache..."
             cp -a "$RUNNER_CACHE"/. website/data/models/
             echo "Restored $(find website/data/models -name 'model.rds' | wc -l) models from runner cache"
-          fi
-
-          # Overlay build_cache.rds from git repo (authoritative source)
-          if [ -f data_repo/build_cache.rds ]; then
-            cp data_repo/build_cache.rds website/data/models/
-            echo "Copied build cache from data repo"
           fi
 
       - name: Run pipeline with build cache
@@ -212,11 +183,8 @@ jobs:
           git config http.lowSpeedTime 600
           git remote add origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
 
-          # Copy repo scaffolding from the sparse clone
-          cp ../data_repo/.gitattributes . 2>/dev/null || echo 'models/**/*.rds filter=lfs diff=lfs merge=lfs -text
-          *.rds filter=lfs diff=lfs merge=lfs -text' > .gitattributes
-          cp ../data_repo/.gitignore . 2>/dev/null || true
-          cp ../data_repo/README.md . 2>/dev/null || true
+          # Set up LFS tracking (same rules as rePredRet-models repo)
+          printf 'models/**/*.rds filter=lfs diff=lfs merge=lfs -text\n*.rds filter=lfs diff=lfs merge=lfs -text\n' > .gitattributes
 
           # Copy pipeline output
           echo "Copying models..."
