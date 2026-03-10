@@ -119,12 +119,18 @@ jobs:
           mkdir -p website/data/models
 
           echo "Downloading build_cache.rds from rePredRet-models..."
+          # Use raw.githubusercontent.com which properly resolves LFS files
           if curl -sL -f \
             -H "Authorization: token ${{ secrets.MODELS_REPO_PAT }}" \
-            -H "Accept: application/octet-stream" \
-            "https://api.github.com/repos/stanstrup-metabolomics/rePredRet-models/contents/build_cache.rds?ref=main" \
+            "https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main/build_cache.rds" \
             -o website/data/models/build_cache.rds; then
-            echo "Downloaded build_cache.rds ($(wc -c < website/data/models/build_cache.rds) bytes)"
+            FILE_SIZE=$(wc -c < website/data/models/build_cache.rds)
+            echo "Downloaded build_cache.rds ($FILE_SIZE bytes)"
+            # Sanity check: LFS pointer files are ~130 bytes, real cache is larger
+            if [ "$FILE_SIZE" -lt 200 ]; then
+              echo "WARNING: File too small, likely LFS pointer. Removing."
+              rm website/data/models/build_cache.rds
+            fi
           else
             echo "No build_cache.rds found or download failed, starting fresh"
           fi
@@ -174,7 +180,7 @@ jobs:
           # This avoids all pack corruption issues on Docker/overlayfs.
           mkdir -p push_repo
           cd push_repo
-          git init
+          git init -b main
           git lfs install
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -189,10 +195,15 @@ jobs:
           # Copy pipeline output
           echo "Copying models..."
           cp -a ../website/data/models/ models/
-          cp ../website/data/models/build_cache.rds .
-          if [ -f ../website/data/models/model_index.csv ]; then
-            cp ../website/data/models/model_index.csv .
-          fi
+
+          # Copy metadata to repo root (may be inside models/ or website/)
+          for f in build_cache.rds model_index.csv; do
+            if [ -f "../website/data/models/$f" ]; then
+              cp "../website/data/models/$f" .
+            elif [ -f "models/$f" ]; then
+              cp "models/$f" .
+            fi
+          done
 
           echo "has_changes=true" >> $GITHUB_ENV
 
