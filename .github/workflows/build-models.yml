@@ -101,6 +101,10 @@ jobs:
           # model.rds files are LFS objects; the pipeline only needs them to exist,
           # so they stay pointer files instead of downloading ~50k objects.
           export GIT_LFS_SKIP_SMUDGE=1
+          # The cache is a host mount whose files are not owned by the job's
+          # user, so git would refuse to use the clone ("dubious ownership")
+          git config --global --get-all safe.directory | grep -qxF "$DATA_REPO" ||
+            git config --global --add safe.directory "$DATA_REPO"
           if [ -d "$DATA_REPO/.git" ] &&
              git -C "$DATA_REPO" fetch --depth=1 origin main &&
              git -C "$DATA_REPO" reset --hard origin/main &&
