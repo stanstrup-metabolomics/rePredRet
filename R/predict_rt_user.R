@@ -60,7 +60,7 @@
 #' @export
 #' @importFrom methods is new
 #' @importFrom cli cli_rule cli_alert_info cli_alert_success cli_progress_bar
-#'   cli_progress_update cli_progress_done
+#' @importFrom cli cli_progress_update cli_progress_done
 predict_rt_user <- function(models,
                              compounds = NULL,
                              verbose = TRUE) {

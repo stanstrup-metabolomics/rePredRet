@@ -9,7 +9,7 @@ utils::globalVariables(c(
   "ci_lower", "ci_upper", "ci_width", "compound_label", "compound_name",
   "from_id", "id", "lower", "median_ci_width", "median_ci_width_rel",
   "median_error_abs", "median_error_rel", "method_type", "n_calibration",
-  "n_compounds", "n_predictions", "pred", "predicted_rt", "r_sq_display",
+  "n_compounds", "n_predictions", "name", "pred", "predicted", "predicted_rt", "r_sq_display",
   "r_squared", "rt", "rt.1", "rt.2", "rt_source", "rt_target", "rt_user",
   "source_system", "to_id", "upper", "x", "x_end", "x_from", "x_start",
   "x_to", "y", "y_end", "y_from", "y_start", "y_to"
@@ -18,8 +18,8 @@ utils::globalVariables(c(
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
     "rePredRet: Retention Time Prediction by Direct System Mapping\n",
-    "  - Use rePredRet_download() to get the latest predictions\n",
-    "  - Use rePredRet_predict() to query predictions for a compound\n",
+    "  - Use build_user_models() and predict_rt_user() to predict RTs for your data\n",
+    "  - Use rePredRet_models() and plot_model() to explore pre-built models\n",
     "  - See ?rePredRet for more information"
   )
 }

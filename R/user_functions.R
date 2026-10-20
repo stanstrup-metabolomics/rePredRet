@@ -1,131 +1,90 @@
 #' @title User Convenience Functions
-#' @description Easy-to-use functions for end users to access rePredRet
-#'   predictions and models from the published GitHub repository.
+#' @description Easy-to-use functions for end users to access pre-built
+#'   rePredRet models. Files are fetched on demand from the
+#'   rePredRet-models GitHub repository and cached locally.
 #' @name user_functions
 #' @keywords internal
 NULL
 
-# GitHub repository for published data
-.data_repo <- "stanstrup/rePredRet-data"
-.data_repo_url <- paste0("https://github.com/", .data_repo)
-.raw_url_base <- paste0("https://raw.githubusercontent.com/", .data_repo, "/main")
+# GitHub repository with the published models
+.models_repo <- "stanstrup-metabolomics/rePredRet-models"
+.models_url_base <- paste0("https://raw.githubusercontent.com/", .models_repo, "/main")
+.studies_url <- "https://raw.githubusercontent.com/michaelwitting/RepoRT/master/processed_data/studies.tsv"
 
 
-#' Download rePredRet Data
+#' Fetch a File into the Local Cache
 #'
-#' Downloads the latest predictions and models from the rePredRet-data
-#' GitHub repository.
+#' Downloads a file once and reuses the cached copy until it is older than
+#' `max_age_days`.
 #'
-#' @param cache_dir Directory to cache downloaded data. Default uses
-#'   a user-specific cache directory.
-#' @param force_download If TRUE, re-download even if cached data exists.
+#' @param url URL to download.
+#' @param cache_path Path of the file relative to the cache directory.
+#' @param refresh If TRUE, download even if a recent cached copy exists.
+#' @param max_age_days Age after which the cached copy is downloaded again.
 #'
-#' @return Path to the cached data directory.
-#'
-#' @export
-#' @examples
-#' \dontrun{
-#' data_path <- rePredRet_download()
-#' }
-rePredRet_download <- function(cache_dir = NULL,
-                                force_download = FALSE) {
-
-  if (is.null(cache_dir)) {
-    cache_dir <- rappdirs::user_cache_dir("rePredRet")
-  }
-
-  if (!dir.exists(cache_dir)) {
-    dir.create(cache_dir, recursive = TRUE)
-  }
-
-  # Download as zip
-  zip_url <- paste0(.data_repo_url, "/archive/refs/heads/main.zip")
-  zip_path <- file.path(cache_dir, "rePredRet-data.zip")
-
-  if (!file.exists(zip_path) || force_download) {
-    message("Downloading rePredRet data...")
-    if (!requireNamespace("curl", quietly = TRUE)) {
-      stop("Package 'curl' required. Install with install.packages('curl')")
-    }
-    curl::curl_download(zip_url, zip_path)
-
-    # Extract
-    utils::unzip(zip_path, exdir = cache_dir, overwrite = TRUE)
-  }
-
-  # Return path to extracted data
-  data_path <- file.path(cache_dir, "rePredRet-data-main")
-
-  if (!dir.exists(data_path)) {
-    stop("Download failed or extraction failed.")
-  }
-
-  return(data_path)
-}
-
-
-#' Get Path to Cached Data
-#'
-#' Returns the path to cached rePredRet data, downloading if necessary.
-#'
-#' @param data_path Optional path to rePredRet-data. If NULL, uses
-#'   cached data (downloading if needed).
-#'
-#' @return Path to data directory.
+#' @return Local path to the cached file.
 #' @keywords internal
-.get_data_path <- function(data_path = NULL) {
-  if (is.null(data_path)) {
-    cache_dir <- rappdirs::user_cache_dir("rePredRet")
-    data_path <- file.path(cache_dir, "rePredRet-data-main")
+.fetch_file <- function(url, cache_path, refresh = FALSE, max_age_days = 1) {
+  local_file <- file.path(rappdirs::user_cache_dir("rePredRet"), cache_path)
 
-    if (!dir.exists(data_path)) {
-      data_path <- rePredRet_download()
+  is_recent <- file.exists(local_file) &&
+    difftime(Sys.time(), file.mtime(local_file), units = "days") < max_age_days
+
+  if (refresh || !is_recent) {
+    dir.create(dirname(local_file), recursive = TRUE, showWarnings = FALSE)
+    tmp_file <- paste0(local_file, ".part")
+    ok <- tryCatch(
+      utils::download.file(url, tmp_file, mode = "wb", quiet = TRUE) == 0,
+      error = function(e) FALSE,
+      warning = function(w) FALSE
+    )
+    if (!ok) {
+      unlink(tmp_file)
+      stop("Could not download ", url, call. = FALSE)
     }
+    file.rename(tmp_file, local_file)
   }
 
-  if (!dir.exists(data_path)) {
-    stop("Data path does not exist: ", data_path)
-  }
-
-  return(data_path)
+  local_file
 }
 
 
 #' List Available Chromatographic Systems
 #'
-#' Returns information about all chromatographic systems with available
-#' predictions.
+#' Returns RepoRT study information for all chromatographic systems that
+#' have pre-built models.
 #'
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
+#' @param refresh If TRUE, download fresh copies instead of using the cache.
 #'
-#' @return Tibble with system information.
+#' @return Tibble with system information from RepoRT (id, name, url,
+#'   method.type, authors, ...).
 #'
-#' @importFrom readr read_csv
+#' @importFrom readr read_tsv
 #' @export
 #' @examples
 #' \dontrun{
 #' systems <- rePredRet_systems()
 #' }
-rePredRet_systems <- function(data_path = NULL) {
-  data_path <- .get_data_path(data_path)
+rePredRet_systems <- function(refresh = FALSE) {
+  studies_file <- .fetch_file(.studies_url, "RepoRT/studies.tsv", refresh = refresh)
+  studies <- readr::read_tsv(studies_file, col_types = readr::cols(id = "c", .default = "c"),
+                             progress = FALSE)
 
-  systems_file <- file.path(data_path, "metadata", "systems_info.csv")
+  models <- rePredRet_models(refresh = refresh)
+  system_ids <- unique(c(models$sys1_id, models$sys2_id))
 
-  if (!file.exists(systems_file)) {
-    stop("systems_info.csv not found. Data may be incomplete.")
-  }
-
-  readr::read_csv(systems_file, show_col_types = FALSE)
+  studies[studies$id %in% system_ids, ]
 }
 
 
 #' List Available Models
 #'
-#' Returns the model index with statistics for all available models.
+#' Returns the model index with statistics for all pre-built models.
 #'
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
+#' @param refresh If TRUE, download a fresh copy instead of using the cache.
 #'
-#' @return Tibble with model index.
+#' @return Tibble with one row per model: sys1_id (source system), sys2_id
+#'   (target system), n_compounds, median_ci_width and median_error.
 #'
 #' @importFrom readr read_csv
 #' @export
@@ -133,268 +92,71 @@ rePredRet_systems <- function(data_path = NULL) {
 #' \dontrun{
 #' models <- rePredRet_models()
 #' }
-rePredRet_models <- function(data_path = NULL) {
-  data_path <- .get_data_path(data_path)
-
-  index_file <- file.path(data_path, "models", "model_index.csv")
-
-  if (!file.exists(index_file)) {
-    stop("model_index.csv not found. Data may be incomplete.")
-  }
-
-  readr::read_csv(index_file, show_col_types = FALSE)
+rePredRet_models <- function(refresh = FALSE) {
+  index_file <- .fetch_file(paste0(.models_url_base, "/model_index.csv"),
+                            "models/model_index.csv", refresh = refresh)
+  readr::read_csv(index_file,
+                  col_types = readr::cols(sys1_id = "c", sys2_id = "c"),
+                  progress = FALSE)
 }
 
 
 #' Get Model Details
 #'
-#' Retrieves a specific model with CI grid and calibration data.
+#' Retrieves a pre-built model with its prediction grid and calibration data.
 #'
 #' @param from_id Source system identifier.
 #' @param to_id Target system identifier.
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
+#' @param refresh If TRUE, download a fresh copy instead of using the cache.
 #'
 #' @return A list with:
 #'   \describe{
-#'     \item{ci_grid}{Tibble with x, pred, lower, upper}
-#'     \item{calibration_data}{Tibble with rt_source, rt_target, compound}
-#'     \item{model}{RDS model object if available}
+#'     \item{sys1_id, sys2_id}{Source and target system}
+#'     \item{n_compounds}{Number of calibration compounds}
+#'     \item{method}{Interval method}
+#'     \item{predictions}{Data frame with x, pred, lower, upper}
+#'     \item{calibration}{Data frame with x, y, compound}
+#'     \item{stats}{List with median_ci_width, median_error, build_time}
 #'   }
 #'
-#' @importFrom readr read_csv
 #' @export
 #' @examples
 #' \dontrun{
-#' model_info <- rePredRet_model("0001", "0002")
+#' model <- rePredRet_model("0001", "0002")
 #' }
-rePredRet_model <- function(from_id, to_id, data_path = NULL) {
-  data_path <- .get_data_path(data_path)
-
+rePredRet_model <- function(from_id, to_id, refresh = FALSE) {
   model_key <- paste0(from_id, "_to_", to_id)
-  model_dir <- file.path(data_path, "models", model_key)
 
-  if (!dir.exists(model_dir)) {
-    stop("Model not found: ", model_key)
-  }
-
-  result <- list()
-
-  # Load CI grid
-  ci_file <- file.path(model_dir, "ci_grid.csv")
-  if (file.exists(ci_file)) {
-    result$ci_grid <- readr::read_csv(ci_file, show_col_types = FALSE)
-  }
-
-  # Load calibration data
-  cal_file <- file.path(model_dir, "calibration_data.csv")
-  if (file.exists(cal_file)) {
-    result$calibration_data <- readr::read_csv(cal_file, show_col_types = FALSE)
-  }
-
-  # Load RDS model (optional)
-  rds_file <- file.path(model_dir, "model.rds")
-  if (file.exists(rds_file)) {
-    result$model <- readRDS(rds_file)
-  }
-
-  return(result)
-}
-
-
-#' Get Predictions for a Compound
-#'
-#' Retrieves all predictions for a compound across all systems.
-#'
-#' @param compound_id Compound identifier (InChI, InChIKey, or partial match).
-#' @param target_system Optional: filter to specific target system.
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
-#'
-#' @return Tibble with predictions.
-#'
-#' @importFrom readr read_csv
-#' @importFrom dplyr filter
-#' @export
-#' @examples
-#' \dontrun{
-#' preds <- rePredRet_predict("RYYVLZVUVIJVGH-UHFFFAOYSA-N")
-#' }
-rePredRet_predict <- function(compound_id,
-                               target_system = NULL,
-                               data_path = NULL) {
-  data_path <- .get_data_path(data_path)
-
-  all_preds_file <- file.path(data_path, "predictions", "by_compound",
-                               "all_predictions.csv")
-
-  if (!file.exists(all_preds_file)) {
-    stop("Predictions file not found. Data may be incomplete.")
-  }
-
-  preds <- readr::read_csv(all_preds_file, show_col_types = FALSE)
-
-  # Filter by compound (supports partial matching)
-  preds <- dplyr::filter(
-    preds,
-    grepl(compound_id, compound_id, fixed = TRUE) |
-    grepl(compound_id, compound_name, ignore.case = TRUE, fixed = TRUE)
+  json_file <- tryCatch(
+    .fetch_file(paste0(.models_url_base, "/models/", model_key, "/model.json"),
+                file.path("models", model_key, "model.json"),
+                refresh = refresh, max_age_days = 7),
+    error = function(e) {
+      stop("Model not found: ", from_id, " -> ", to_id,
+           "\nUse rePredRet_models() to see available models.", call. = FALSE)
+    }
   )
 
-  # Filter by target system if specified
-  if (!is.null(target_system)) {
-    preds <- dplyr::filter(preds, target_system == !!target_system)
-  }
-
-  return(preds)
-}
-
-
-#' Get All Predictions for a System
-#'
-#' Retrieves all predictions for a specific chromatographic system.
-#'
-#' @param system_id Target system identifier.
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
-#'
-#' @return Tibble with predictions.
-#'
-#' @importFrom readr read_csv
-#' @export
-#' @examples
-#' \dontrun{
-#' preds <- rePredRet_system_predictions("0001")
-#' }
-rePredRet_system_predictions <- function(system_id, data_path = NULL) {
-  data_path <- .get_data_path(data_path)
-
-  pred_file <- file.path(data_path, "predictions", "by_system",
-                          paste0(system_id, "_predictions.csv"))
-
-  if (!file.exists(pred_file)) {
-    stop("No predictions found for system: ", system_id)
-  }
-
-  readr::read_csv(pred_file, show_col_types = FALSE)
-}
-
-
-#' Plot Model Fit
-#'
-#' Creates a visualization of a model showing the fit curve, confidence
-#' interval, and calibration points.
-#'
-#' @param from_id Source system identifier.
-#' @param to_id Target system identifier.
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
-#'
-#' @return A ggplot object.
-#'
-#' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_bw
-#' @export
-#' @examples
-#' \dontrun{
-#' p <- rePredRet_plot_model("0001", "0002")
-#' print(p)
-#' }
-rePredRet_plot_model <- function(from_id, to_id, data_path = NULL) {
-  model_info <- rePredRet_model(from_id, to_id, data_path)
-
-  if (is.null(model_info$ci_grid) || is.null(model_info$calibration_data)) {
-    stop("Model data incomplete")
-  }
-
-  ci_grid <- model_info$ci_grid
-  calibration <- model_info$calibration_data
-
-  p <- ggplot2::ggplot() +
-    ggplot2::geom_ribbon(
-      data = ci_grid,
-      ggplot2::aes(x = x, ymin = lower, ymax = upper),
-      fill = "lightblue",
-      alpha = 0.5
-    ) +
-    ggplot2::geom_line(
-      data = ci_grid,
-      ggplot2::aes(x = x, y = pred),
-      color = "blue",
-      linewidth = 1
-    ) +
-    ggplot2::geom_point(
-      data = calibration,
-      ggplot2::aes(x = rt_source, y = rt_target),
-      color = "black",
-      alpha = 0.6
-    ) +
-    ggplot2::labs(
-      x = paste("RT in", from_id, "(min)"),
-      y = paste("RT in", to_id, "(min)"),
-      title = paste("Model:", from_id, "->", to_id),
-      subtitle = paste(nrow(calibration), "calibration compounds")
-    ) +
-    ggplot2::theme_bw()
-
-  return(p)
-}
-
-
-#' Plot Prediction Error Distribution
-#'
-#' Creates a histogram or density plot of prediction errors for a system.
-#'
-#' @param system_id Target system identifier.
-#' @param type Plot type: "histogram" or "density".
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
-#'
-#' @return A ggplot object.
-#'
-#' @importFrom ggplot2 ggplot aes geom_histogram geom_density labs theme_bw
-#' @export
-rePredRet_plot_errors <- function(system_id,
-                                   type = c("histogram", "density"),
-                                   data_path = NULL) {
-  type <- match.arg(type)
-
-  preds <- rePredRet_system_predictions(system_id, data_path)
-
-  p <- ggplot2::ggplot(preds, ggplot2::aes(x = ci_width))
-
-  if (type == "histogram") {
-    p <- p + ggplot2::geom_histogram(
-      bins = 30,
-      fill = "steelblue",
-      color = "white"
-    )
-  } else {
-    p <- p + ggplot2::geom_density(fill = "steelblue", alpha = 0.5)
-  }
-
-  p <- p +
-    ggplot2::labs(
-      x = "CI Width (min)",
-      y = if (type == "histogram") "Count" else "Density",
-      title = paste("Prediction CI Width Distribution for", system_id),
-      subtitle = paste(nrow(preds), "predictions")
-    ) +
-    ggplot2::theme_bw()
-
-  return(p)
+  jsonlite::fromJSON(json_file)
 }
 
 
 #' Plot System Network
 #'
 #' Creates a network visualization showing connections between chromatographic
-#' systems based on model availability.
+#' systems based on pre-built model availability.
 #'
 #' @param min_compounds Minimum compounds to show edge (default 20).
-#' @param data_path Path to rePredRet-data (or NULL to use cache).
+#' @param show_labels If TRUE (default), label each system with its ID.
+#' @param refresh If TRUE, download a fresh model index instead of using the cache.
 #'
-#' @return A ggplot object or network diagram.
+#' @return A ggplot object.
 #'
 #' @importFrom ggplot2 ggplot aes geom_segment geom_point geom_text
-#'   coord_fixed theme_void labs
+#' @importFrom ggplot2 coord_fixed theme_void labs
 #' @export
-rePredRet_plot_network <- function(min_compounds = 20, data_path = NULL) {
-  models <- rePredRet_models(data_path)
+rePredRet_plot_network <- function(min_compounds = 20, show_labels = TRUE, refresh = FALSE) {
+  models <- rePredRet_models(refresh = refresh)
 
   # Filter by minimum compounds
   models <- models[models$n_compounds >= min_compounds, ]
@@ -404,7 +166,7 @@ rePredRet_plot_network <- function(min_compounds = 20, data_path = NULL) {
   }
 
   # Get unique nodes
-  nodes <- unique(c(models$from_id, models$to_id))
+  nodes <- unique(c(models$sys1_id, models$sys2_id))
   n_nodes <- length(nodes)
 
   # Create circular layout
@@ -416,10 +178,10 @@ rePredRet_plot_network <- function(min_compounds = 20, data_path = NULL) {
   )
 
   # Create edge coordinates
-  edges <- merge(models, node_coords, by.x = "from_id", by.y = "id")
+  edges <- merge(models, node_coords, by.x = "sys1_id", by.y = "id")
   names(edges)[names(edges) == "x"] <- "x_from"
   names(edges)[names(edges) == "y"] <- "y_from"
-  edges <- merge(edges, node_coords, by.x = "to_id", by.y = "id")
+  edges <- merge(edges, node_coords, by.x = "sys2_id", by.y = "id")
   names(edges)[names(edges) == "x"] <- "x_to"
   names(edges)[names(edges) == "y"] <- "y_to"
 
@@ -438,12 +200,17 @@ rePredRet_plot_network <- function(min_compounds = 20, data_path = NULL) {
       ggplot2::aes(x = x, y = y),
       size = 4,
       color = "steelblue"
-    ) +
-    ggplot2::geom_text(
+    )
+
+  if (show_labels) {
+    p <- p + ggplot2::geom_text(
       data = node_coords,
       ggplot2::aes(x = x * 1.15, y = y * 1.15, label = id),
       size = 3
-    ) +
+    )
+  }
+
+  p <- p +
     ggplot2::coord_fixed() +
     ggplot2::theme_void() +
     ggplot2::labs(

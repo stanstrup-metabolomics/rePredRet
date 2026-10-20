@@ -49,8 +49,8 @@ NULL
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_segment geom_point geom_text
-#'   scale_alpha_continuous scale_linewidth_continuous scale_color_manual
-#'   scale_size_manual labs theme_void theme element_text coord_equal
+#' @importFrom ggplot2 scale_alpha_continuous scale_linewidth_continuous scale_color_manual
+#' @importFrom ggplot2 scale_size_manual labs theme_void theme element_text coord_equal
 plot_system_network <- function(models,
                                 min_compounds = 10,
                                 interactive = FALSE) {
@@ -232,7 +232,7 @@ plot_system_network <- function(models,
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_density geom_histogram geom_boxplot
-#'   geom_vline labs theme_bw facet_wrap coord_flip
+#' @importFrom ggplot2 geom_vline labs theme_bw facet_wrap coord_flip
 plot_prediction_errors <- function(predictions,
                                    type = c("density", "histogram", "boxplot"),
                                    by_system = FALSE) {
@@ -384,7 +384,7 @@ plot_prediction_errors <- function(predictions,
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c labs theme_bw
-#'   theme element_text element_blank
+#' @importFrom ggplot2 theme element_text element_blank
 plot_compound_coverage <- function(models,
                                    top_n = 30) {
 

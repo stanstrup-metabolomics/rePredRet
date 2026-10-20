@@ -4,17 +4,18 @@
 \alias{rePredRet_systems}
 \title{List Available Chromatographic Systems}
 \usage{
-rePredRet_systems(data_path = NULL)
+rePredRet_systems(refresh = FALSE)
 }
 \arguments{
-\item{data_path}{Path to rePredRet-data (or NULL to use cache).}
+\item{refresh}{If TRUE, download fresh copies instead of using the cache.}
 }
 \value{
-Tibble with system information.
+Tibble with system information from RepoRT (id, name, url,
+method.type, authors, ...).
 }
 \description{
-Returns information about all chromatographic systems with available
-predictions.
+Returns RepoRT study information for all chromatographic systems that
+have pre-built models.
 }
 \examples{
 \dontrun{

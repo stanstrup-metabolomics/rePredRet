@@ -174,7 +174,7 @@ setMethod("[", signature(x = "UserRTPredictions"),
 #' @param ... Additional arguments
 #' @return A ggplot object
 #' @importFrom ggplot2 ggplot aes geom_histogram geom_boxplot geom_density
-#'   labs theme_bw facet_wrap coord_flip
+#' @importFrom ggplot2 labs theme_bw facet_wrap coord_flip
 #' @rdname UserRTPredictions-class
 #' @export
 setMethod("plot", signature(x = "UserRTPredictions", y = "missing"),

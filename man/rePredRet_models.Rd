@@ -4,16 +4,17 @@
 \alias{rePredRet_models}
 \title{List Available Models}
 \usage{
-rePredRet_models(data_path = NULL)
+rePredRet_models(refresh = FALSE)
 }
 \arguments{
-\item{data_path}{Path to rePredRet-data (or NULL to use cache).}
+\item{refresh}{If TRUE, download a fresh copy instead of using the cache.}
 }
 \value{
-Tibble with model index.
+Tibble with one row per model: sys1_id (source system), sys2_id
+(target system), n_compounds, median_ci_width and median_error.
 }
 \description{
-Returns the model index with statistics for all available models.
+Returns the model index with statistics for all pre-built models.
 }
 \examples{
 \dontrun{

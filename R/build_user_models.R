@@ -75,7 +75,7 @@
 #' @export
 #' @importFrom methods new
 #' @importFrom cli cli_rule cli_alert cli_alert_info cli_alert_success
-#'   cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
+#' @importFrom cli cli_alert_warning cli_progress_bar cli_progress_update cli_progress_done
 build_user_models <- function(inchis,
                                rts,
                                system_type = c("RP", "HILIC"),
@@ -84,7 +84,7 @@ build_user_models <- function(inchis,
                                method = c("fast_ci", "bootstrap"),
                                alpha = 0.05,
                                n_boot = 200,
-                               n_workers = parallel::detectCores(),
+                               n_workers = parallelly::availableCores(),
                                verbose = TRUE) {
 
   # Validate inputs

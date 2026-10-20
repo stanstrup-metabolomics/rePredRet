@@ -8,8 +8,7 @@
 #'   returns a ggplot2 static plot.
 #' @param show_ci If TRUE (default), shows confidence interval bands.
 #' @param show_calibration If TRUE (default), shows calibration points.
-#' @param data_path Optional path to local rePredRet-data directory. If NULL,
-#'   downloads/uses cached data.
+#' @param refresh If TRUE, download fresh copies instead of using the cache.
 #'
 #' @return A ggplot2 object (if interactive = FALSE) or a plotly object
 #'   (if interactive = TRUE).
@@ -40,77 +39,38 @@
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_bw
-#'   scale_x_continuous scale_y_continuous
+#' @importFrom ggplot2 scale_x_continuous scale_y_continuous
 plot_model <- function(from_id,
                        to_id,
                        interactive = FALSE,
                        show_ci = TRUE,
                        show_calibration = TRUE,
-                       data_path = NULL) {
+                       refresh = FALSE) {
 
-  # Get data path
-  if (is.null(data_path)) {
-    data_path <- .get_data_path()
+  model <- rePredRet_model(from_id, to_id, refresh = refresh)
+  ci_grid <- model$predictions
+  calibration <- model$calibration
+
+  # System names for labels (fall back to IDs if RepoRT is unreachable)
+  systems <- tryCatch(rePredRet_systems(refresh = refresh), error = function(e) NULL)
+  system_name <- function(id) {
+    name <- systems$name[systems$id == id]
+    if (length(name) == 0 || is.na(name[1])) id else name[1]
   }
+  from_name <- system_name(from_id)
+  to_name <- system_name(to_id)
 
-  model_dir <- file.path(data_path, "models", paste0(from_id, "_to_", to_id))
-
-  if (!dir.exists(model_dir)) {
-    stop("Model not found: ", from_id, " -> ", to_id,
-         "\nUse rePredRet_models() to see available models.")
-  }
-
-  # Load CI grid
-  ci_file <- file.path(model_dir, "ci_grid.csv")
-  if (!file.exists(ci_file)) {
-    stop("CI grid file not found for model ", from_id, " -> ", to_id)
-  }
-  ci_grid <- utils::read.csv(ci_file, stringsAsFactors = FALSE)
-
-  # Load calibration data
-  calib_file <- file.path(model_dir, "calibration_data.csv")
-  calibration <- if (file.exists(calib_file)) {
-    utils::read.csv(calib_file, stringsAsFactors = FALSE)
-  } else {
-    NULL
-  }
-
-  # Get system names for labels
-  systems_file <- file.path(data_path, "metadata", "systems_info.csv")
-  if (file.exists(systems_file)) {
-    systems <- utils::read.csv(systems_file, stringsAsFactors = FALSE)
-    from_name <- systems$name[systems$id == from_id]
-    to_name <- systems$name[systems$id == to_id]
-    if (length(from_name) == 0) from_name <- from_id
-    if (length(to_name) == 0) to_name <- to_id
-  } else {
-    from_name <- from_id
-    to_name <- to_id
-  }
-
-  # Load model index for statistics
-  index_file <- file.path(data_path, "models", "model_index.csv")
-  model_stats <- NULL
-  if (file.exists(index_file)) {
-    index <- utils::read.csv(index_file, stringsAsFactors = FALSE)
-    model_stats <- index[index$from_id == from_id & index$to_id == to_id, ]
-  }
-
-  # Build subtitle with model stats
-  subtitle <- NULL
-  if (!is.null(model_stats) && nrow(model_stats) > 0) {
-    subtitle <- paste0(
-      "n = ", model_stats$n_compounds, " compounds | ",
-      "Median error: ", round(model_stats$median_error, 2), " min | ",
-      "Median CI: ", round(model_stats$median_ci_width, 2), " min"
-    )
-  }
+  subtitle <- paste0(
+    "n = ", model$n_compounds, " compounds | ",
+    "Median error: ", round(model$stats$median_error, 2), " min | ",
+    "Median CI: ", round(model$stats$median_ci_width, 2), " min"
+  )
 
   # Create ggplot
   p <- ggplot2::ggplot()
 
   # Add CI ribbon
-  if (show_ci && "lower" %in% names(ci_grid) && "upper" %in% names(ci_grid)) {
+  if (show_ci) {
     p <- p + ggplot2::geom_ribbon(
       data = ci_grid,
       ggplot2::aes(x = x, ymin = lower, ymax = upper),
@@ -128,10 +88,10 @@ plot_model <- function(from_id,
   )
 
   # Add calibration points
-  if (show_calibration && !is.null(calibration)) {
+  if (show_calibration) {
     p <- p + ggplot2::geom_point(
       data = calibration,
-      ggplot2::aes(x = rt_source, y = rt_target),
+      ggplot2::aes(x = x, y = y),
       color = "black",
       size = 2,
       alpha = 0.7
@@ -153,12 +113,7 @@ plot_model <- function(from_id,
     )
 
   # Return interactive or static
-
   if (interactive) {
-    if (!requireNamespace("plotly", quietly = TRUE)) {
-      warning("Package 'plotly' is required for interactive plots. Returning ggplot.")
-      return(p)
-    }
     return(plotly::ggplotly(p))
   }
 
@@ -210,7 +165,8 @@ search_compound <- function(inchi,
     # Try to use RepoRT data if available
     report_path <- file.path(getwd(), "RepoRT_data", "RepoRT-master", "processed_data")
     if (!dir.exists(report_path)) {
-      report_path <- tryCatch(download_report(), error = function(e) NULL)
+      report_path <- tryCatch(file.path(download_report(), "processed_data"),
+                              error = function(e) NULL)
     }
     if (is.null(report_path) || !dir.exists(report_path)) {
       stop("RepoRT data not found. Use download_report() first.")
@@ -391,7 +347,8 @@ get_system_info <- function(system_id, data_path = NULL) {
   if (is.null(data_path)) {
     report_path <- file.path(getwd(), "RepoRT_data", "RepoRT-master", "processed_data")
     if (!dir.exists(report_path)) {
-      report_path <- tryCatch(download_report(), error = function(e) NULL)
+      report_path <- tryCatch(file.path(download_report(), "processed_data"),
+                              error = function(e) NULL)
     }
     if (is.null(report_path) || !dir.exists(report_path)) {
       stop("RepoRT data not found. Use download_report() first.")

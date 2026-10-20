@@ -13,7 +13,7 @@ build_user_models(
   method = c("fast_ci", "bootstrap"),
   alpha = 0.05,
   n_boot = 200,
-  n_workers = parallel::detectCores(),
+  n_workers = parallelly::availableCores(),
   verbose = TRUE
 )
 }

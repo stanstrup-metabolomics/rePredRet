@@ -9,20 +9,22 @@
 rePredRet predicts retention times (RTs) by directly mapping between
 chromatographic systems using monotonically constrained GAMs. This is a
 reimplementation of PredRet that uses RepoRT data as input and publishes
-predictions to GitHub.
+pre-built models to GitHub.
 }
 \section{User Functions}{
 
-For accessing pre-computed predictions from rePredRet-data:
+For predicting RTs from your own data:
 \itemize{
-\item \code{\link{rePredRet_download}}: Download latest predictions
+\item \code{\link{build_user_models}}: Build models from your RT data to RepoRT systems
+\item \code{\link{predict_rt_user}}: Predict RTs with those models
+}
+
+For exploring the pre-built models (fetched on demand from rePredRet-models):
+\itemize{
 \item \code{\link{rePredRet_systems}}: List available systems
 \item \code{\link{rePredRet_models}}: List available models
 \item \code{\link{rePredRet_model}}: Get specific model details
-\item \code{\link{rePredRet_predict}}: Get predictions for a compound
-\item \code{\link{rePredRet_system_predictions}}: Get system predictions
-\item \code{\link{rePredRet_plot_model}}: Visualize model fit
-\item \code{\link{rePredRet_plot_errors}}: Plot error distribution
+\item \code{\link{plot_model}}: Visualize model fit
 \item \code{\link{rePredRet_plot_network}}: Visualize system network
 }
 }
@@ -53,7 +55,8 @@ The algorithm fits monotonically constrained GAMs using:
 \enumerate{
 \item Thin plate regression splines for flexibility
 \item Monotonic constraints to preserve elution order
-\item Bootstrap resampling (1000 iterations) for CI estimation
+\item Prediction intervals from the GAM standard errors and residual
+variance (\code{method = "fast_ci"}, default) or bootstrap resampling
 \item Sigmoid weighting to downweight outliers
 }
 }
@@ -69,11 +72,16 @@ small molecule retention times. \emph{Nature Methods}, 21, 153-155.
 \seealso{
 \itemize{
 \item RepoRT: \url{https://github.com/michaelwitting/RepoRT}
-\item rePredRet-data: \url{https://github.com/stanstrup/rePredRet-data}
+\item rePredRet-models: \url{https://github.com/stanstrup-metabolomics/rePredRet-models}
 \item Original PredRet: \url{http://predret.org}
 }
 }
 \author{
 \strong{Maintainer}: Jan Stanstrup \email{stanstrup@gmail.com} (\href{https://orcid.org/0000-0003-0541-7369}{ORCID})
+
+Authors:
+\itemize{
+  \item Jan Stanstrup \email{stanstrup@gmail.com} (\href{https://orcid.org/0000-0003-0541-7369}{ORCID})
+}
 
 }

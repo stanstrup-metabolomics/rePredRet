@@ -10,7 +10,7 @@ build_model(
   sys2_id,
   n_boot = 200,
   alpha = 0.05,
-  n_cores = parallel::detectCores(),
+  n_cores = parallelly::availableCores(),
   method = c("fast_ci", "bootstrap"),
   save_plot = FALSE,
   plot_dir = NULL,

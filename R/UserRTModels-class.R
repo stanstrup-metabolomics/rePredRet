@@ -223,7 +223,7 @@ setMethod("length", "UserRTModels", function(x) {
 #' @param ... Additional arguments
 #' @return A ggplot object or list of ggplot objects
 #' @importFrom ggplot2 ggplot aes geom_point geom_histogram geom_line geom_ribbon
-#'   labs theme_bw facet_wrap scale_color_viridis_c
+#' @importFrom ggplot2 labs theme_bw facet_wrap scale_color_viridis_c
 #' @rdname UserRTModels-class
 #' @export
 setMethod("plot", signature(x = "UserRTModels", y = "missing"),

@@ -4,28 +4,31 @@
 \alias{rePredRet_model}
 \title{Get Model Details}
 \usage{
-rePredRet_model(from_id, to_id, data_path = NULL)
+rePredRet_model(from_id, to_id, refresh = FALSE)
 }
 \arguments{
 \item{from_id}{Source system identifier.}
 
 \item{to_id}{Target system identifier.}
 
-\item{data_path}{Path to rePredRet-data (or NULL to use cache).}
+\item{refresh}{If TRUE, download a fresh copy instead of using the cache.}
 }
 \value{
 A list with:
 \describe{
-\item{ci_grid}{Tibble with x, pred, lower, upper}
-\item{calibration_data}{Tibble with rt_source, rt_target, compound}
-\item{model}{RDS model object if available}
+\item{sys1_id, sys2_id}{Source and target system}
+\item{n_compounds}{Number of calibration compounds}
+\item{method}{Interval method}
+\item{predictions}{Data frame with x, pred, lower, upper}
+\item{calibration}{Data frame with x, y, compound}
+\item{stats}{List with median_ci_width, median_error, build_time}
 }
 }
 \description{
-Retrieves a specific model with CI grid and calibration data.
+Retrieves a pre-built model with its prediction grid and calibration data.
 }
 \examples{
 \dontrun{
-model_info <- rePredRet_model("0001", "0002")
+model <- rePredRet_model("0001", "0002")
 }
 }

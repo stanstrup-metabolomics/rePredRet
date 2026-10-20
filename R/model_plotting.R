@@ -7,7 +7,7 @@ NULL
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_minimal theme element_text
 #' @importFrom plotly ggplotly
 #' @noRd
-plot_model <- function(model, dataset1 = NULL, dataset2 = NULL) {
+.plot_model_interactive <- function(model, dataset1 = NULL, dataset2 = NULL) {
 
   if (model$status != "success") {
     stop("Cannot plot model with status: ", model$status)
@@ -163,7 +163,7 @@ save_model_plot <- function(model,
   output_path <- file.path(output_dir, filename)
 
   # Create plot
-  p <- plot_model(model, dataset1, dataset2)
+  p <- .plot_model_interactive(model, dataset1, dataset2)
 
   # Save as self-contained HTML
   htmlwidgets::saveWidget(

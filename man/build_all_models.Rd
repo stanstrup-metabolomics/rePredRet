@@ -9,7 +9,7 @@ build_all_models(
   min_compounds = 10,
   n_boot = 200,
   alpha = 0.05,
-  n_cores = parallel::detectCores(),
+  n_cores = parallelly::availableCores(),
   method_match = TRUE,
   export_dir = NULL,
   method = c("fast_ci", "bootstrap"),

@@ -10,7 +10,7 @@ plot_model(
   interactive = FALSE,
   show_ci = TRUE,
   show_calibration = TRUE,
-  data_path = NULL
+  refresh = FALSE
 )
 }
 \arguments{
@@ -25,8 +25,7 @@ returns a ggplot2 static plot.}
 
 \item{show_calibration}{If TRUE (default), shows calibration points.}
 
-\item{data_path}{Optional path to local rePredRet-data directory. If NULL,
-downloads/uses cached data.}
+\item{refresh}{If TRUE, download fresh copies instead of using the cache.}
 }
 \value{
 A ggplot2 object (if interactive = FALSE) or a plotly object

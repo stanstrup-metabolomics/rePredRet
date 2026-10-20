@@ -4,17 +4,19 @@
 \alias{rePredRet_plot_network}
 \title{Plot System Network}
 \usage{
-rePredRet_plot_network(min_compounds = 20, data_path = NULL)
+rePredRet_plot_network(min_compounds = 20, show_labels = TRUE, refresh = FALSE)
 }
 \arguments{
 \item{min_compounds}{Minimum compounds to show edge (default 20).}
 
-\item{data_path}{Path to rePredRet-data (or NULL to use cache).}
+\item{show_labels}{If TRUE (default), label each system with its ID.}
+
+\item{refresh}{If TRUE, download a fresh model index instead of using the cache.}
 }
 \value{
-A ggplot object or network diagram.
+A ggplot object.
 }
 \description{
 Creates a network visualization showing connections between chromatographic
-systems based on model availability.
+systems based on pre-built model availability.
 }
