@@ -10,7 +10,7 @@ build_user_models(
   system_type = c("RP", "HILIC"),
   report_data = NULL,
   min_compounds = 10,
-  method = c("fast_ci", "bootstrap"),
+  method = c("adaptive_pi", "bootstrap"),
   alpha = 0.05,
   n_boot = 200,
   n_workers = parallelly::availableCores(),
@@ -31,8 +31,8 @@ downloads and loads the latest RepoRT data.}
 \item{min_compounds}{Minimum number of common compounds required to build
 a model (default 10).}
 
-\item{method}{Method for CI calculation: "fast_ci" (default, fast) or
-"bootstrap" (slower, more accurate).}
+\item{method}{Method for prediction intervals: "adaptive_pi" (default) or
+"bootstrap" (slower). See \code{\link[=build_model]{build_model()}}.}
 
 \item{alpha}{Significance level for CI (default 0.05 for 95\% CI).}
 

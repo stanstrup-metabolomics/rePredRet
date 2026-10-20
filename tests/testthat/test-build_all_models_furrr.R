@@ -131,3 +131,26 @@ test_that("read_model_index reads the older from_id/to_id format", {
   expect_equal(idx$sys1_id, "0001")
   expect_equal(idx$n_compounds, 67)
 })
+
+
+test_that("models built with another interval method are rebuilt", {
+  export_dir <- withr::local_tempdir()
+  rd <- make_report_data()
+  build_quietly(rd, export_dir)
+
+  # Pretend the existing models were built with an older method
+  cache_file <- file.path(export_dir, "build_cache.rds")
+  cache <- readRDS(cache_file)
+  cache$models <- lapply(cache$models, function(m) {
+    m$method <- "fast_ci"
+    m
+  })
+  saveRDS(cache, cache_file)
+
+  run <- build_quietly(rd, export_dir)
+  expect_equal(run$stats$built, 6)
+  expect_true(all(vapply(readRDS(cache_file)$models, `[[`, "", "method") == "adaptive_pi"))
+
+  # Same settings again: nothing to rebuild
+  expect_equal(build_quietly(rd, export_dir)$stats$built, 0)
+})

@@ -38,75 +38,122 @@ NULL
 #' Direct Mapping between Multiple Chromatographic Systems"
 #' Anal. Chem. 87:9421-9428
 #'
+#' @keywords internal
+gam_mono_con_fun <- function(in_data, inds, newdata) {
+  fit <- fit_gam_mono(in_data[inds, 1], in_data[inds, 2], y_max = max(in_data[, 2]))
+  predict_gam_mono(fit, newdata)
+}
+
+
+#' Fit a Monotonically Constrained GAM
+#'
+#' The monotone fit shared by all interval methods.
+#'
+#' @param x RTs in the source system.
+#' @param y RTs in the target system.
+#' @param y_max Value the absolute residuals are divided by before the
+#'   sigmoid weighting (default `max(y)`).
+#'
+#' @return A list with the (possibly jittered) data `x` and `y`, the basis
+#'   dimension `k`, the unconstrained fit `fit_unc`, the sigmoid weights `w`,
+#'   the constrained smooth `sm` and its coefficients `p`.
+#'
+#' @details
+#' 1. If there are fewer than 4 unique source RTs (rounded to 0.01), the
+#'    source RTs are jittered by up to 0.01 with a fixed seed, so identical
+#'    data always give the same model.
+#' 2. An unconstrained thin plate regression spline GAM gives the smoothing
+#'    parameter.
+#' 3. Observations are weighted by a sigmoid of their unconstrained residual
+#'    relative to `y_max`, which down-weights outliers.
+#' 4. A cubic regression spline is fitted with monotonic increasing
+#'    constraints by penalized constrained least squares. If the weighted fit
+#'    fails it is refitted without weights.
+#'
 #' @importFrom mgcv gam smoothCon mono.con pcls Predict.matrix s
 #' @importFrom pracma sigmoid
 #' @keywords internal
-gam_mono_con_fun <- function(in_data, inds, newdata) {
-  x <- NULL  # Avoid R CMD check note
-
-  # Resample data for this bootstrap iteration
-  x.star <- in_data[, 1][inds]
-  y.star <- in_data[, 2][inds]
-
+fit_gam_mono <- function(x, y, y_max = max(y)) {
   # We need at least 4 unique x-values to do the fit
-  # Add small jitter if not the case
-
-  if (length(unique(round(x.star, 2))) < 4) {
-    x.star <- jitter(x.star, amount = 0.01)
+  if (length(unique(round(x, 2))) < 4) {
+    x <- withr::with_seed(42, jitter(x, amount = 0.01))
   }
 
-  dat <- data.frame(x = x.star, y = y.star)
+  dat <- data.frame(x = x, y = y)
 
   # Fit initial unconstrained GAM to get smoothing parameter
-  k_val <- min(length(unique(round(x.star, 2))), 10)
-  f.ug <- mgcv::gam(y ~ s(x, k = k_val, bs = "tp"), data = dat)
+  k_val <- min(length(unique(round(x, 2))), 10)
+  fit_unc <- mgcv::gam(y ~ s(x, k = k_val, bs = "tp"), data = dat)
 
   # Weight by residuals using sigmoid function
   # This downweights observations with large residuals (outliers)
-  w <- abs(f.ug$residuals) / max(in_data[, 2])
+  w <- abs(fit_unc$residuals) / y_max
   w <- pracma::sigmoid(w, a = -30, b = 0.1)
 
   # Build constrained spline basis
-  sm <- mgcv::smoothCon(
-    mgcv::s(x, k = k_val, bs = "cr"),
-    dat,
-    knots = NULL
-  )[[1]]
+  sm <- mgcv::smoothCon(mgcv::s(x, k = k_val, bs = "cr"), dat, knots = NULL)[[1]]
 
-  # Get monotonic constraints
+  list(
+    x = x,
+    y = y,
+    k = k_val,
+    fit_unc = fit_unc,
+    w = w,
+    sm = sm,
+    p = fit_mono_spline(sm, y, w, fit_unc$sp)
+  )
+}
+
+
+#' Penalized Monotone Spline Coefficients
+#'
+#' @param sm A smooth from `mgcv::smoothCon()`.
+#' @param y Response.
+#' @param w Observation weights. If the weighted fit fails, it is refitted
+#'   without weights.
+#' @param sp Smoothing parameter.
+#'
+#' @return Coefficient vector.
+#' @keywords internal
+fit_mono_spline <- function(sm, y, w, sp) {
   con <- mgcv::mono.con(sm$xp)
 
-  # Set up penalized constrained least squares problem
   G <- list(
     X = sm$X,
     C = matrix(0, 0, 0),
-    sp = f.ug$sp,
+    sp = sp,
     p = sm$xp,
-    y = y.star,
-    w = w
+    y = y,
+    w = w,
+    Ain = con$A,
+    bin = con$b,
+    S = sm$S,
+    off = 0
   )
-  G$Ain <- con$A
-  G$bin <- con$b
-  G$S <- sm$S
-  G$off <- 0
 
-  # Fit constrained spline
   p <- mgcv::pcls(G)
 
   # Some models fail when weighted - retry without weights
-
-if (any(is.na(p))) {
+  if (any(is.na(p))) {
     G$w <- rep(1, length(G$w))
     p <- mgcv::pcls(G)
   }
 
-  # Predict at newdata points
-  fv <- mgcv::Predict.matrix(sm, data.frame(x = newdata)) %*% p
+  p
+}
 
-  y_pred <- as.numeric(fv)
+
+#' Predict from a Monotone GAM Fit
+#'
+#' @param fit Output of [fit_gam_mono()].
+#' @param newdata Numeric vector of source RTs.
+#'
+#' @return Predicted target RTs, truncated at 0.
+#' @keywords internal
+predict_gam_mono <- function(fit, newdata) {
+  y_pred <- as.numeric(mgcv::Predict.matrix(fit$sm, data.frame(x = newdata)) %*% fit$p)
   y_pred[y_pred < 0] <- 0  # RTs cannot be negative
-
-  return(y_pred)
+  y_pred
 }
 
 

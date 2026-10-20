@@ -29,7 +29,6 @@ Imports:
     ggplot2,
     htmlwidgets,
     jsonlite,
-    MASS,
     Matrix,
     methods,
     mgcv,
@@ -41,11 +40,11 @@ Imports:
     readr,
     stats,
     tibble,
-    utils
+    utils,
+    withr
 Suggests:
     curl,
     testthat (>= 3.0.0),
-    withr,
     writexl
 Config/testthat/edition: 3
 URL: https://stanstrup-metabolomics.github.io/rePredRet,

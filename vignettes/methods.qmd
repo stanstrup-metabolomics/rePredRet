@@ -22,18 +22,43 @@ where $f$ is a monotonically increasing function.
 1. **Identify Common Compounds**: Find compounds present in both source and target systems using standardized InChI identifiers (with stereochemistry stripped for better matching).
 
 2. **Fit Monotonic GAM** (using `mgcv`):
+   - If there are fewer than 4 distinct source RTs, they are jittered by up
+     to 0.01 with a fixed seed, so the same data always give the same model
    - An unconstrained thin plate regression spline GAM gives the smoothing
-     parameter and standard errors
+     parameter
    - Compounds with large residuals are down-weighted with a sigmoid weight
    - A cubic regression spline is refitted with monotonic increasing
      constraints (`mgcv::mono.con()` and `mgcv::pcls()`)
 
-3. **Prediction Intervals** (`method = "fast_ci"`, default):
-   - 95% prediction intervals: fit ± z · sqrt(SE² + σ²), where σ² is the
-     residual variance of the constrained fit
-   - Interval bounds are made monotonic with a cumulative maximum
-   - `method = "bootstrap"` instead refits the model on bootstrap resamples
-     of the calibration compounds (slower)
+3. **Prediction Intervals** (`method = "adaptive_pi"`, default): the width of
+   the interval follows the local scatter of the calibration compounds, and its
+   level is calibrated by cross-validated conformal prediction.
+   - *Cross-validated residuals*: the compounds are split into 5 folds,
+     interleaved along the source RT. Each fold is predicted by the monotone
+     spline refitted on the other folds (with the smoothing parameter and
+     weights of the full fit). These residuals include the uncertainty of
+     the fitted curve.
+   - *Local scale* s(x): a Gamma GAM (log link, REML, at most 5 basis
+     functions) of the absolute residuals, weighted by the sigmoid outlier
+     weights so that a single outlier does not widen the band around it.
+     s(x) is floored at 30% of the global scale.
+   - *Calibration*: the multiplier q is the conformal quantile of the
+     normalized residuals |e| / s(x): the ⌈(n + 1) · 0.95⌉-th smallest. With
+     fewer than 19 compounds this is the largest one.
+   - *Interval*: fit ± q · s(x). Each bound is made non-decreasing by isotonic
+     regression, which keeps lower ≤ fit ≤ upper, and the lower bound is
+     truncated at 0.
+   - `method = "bootstrap"` instead refits the model on 200 bootstrap resamples
+     of the calibration compounds (about 40 times slower)
+
+   On held-out compounds from 135 RepoRT system pairs (cross-validation) the
+   95% intervals covered 94.6% of compounds, and 94.8% / 94.5% in the regions
+   with the least / most scatter. The previous interval
+   (fit ± z · sqrt(SE² + σ²) with one global σ) had almost constant width
+   and covered 96.5% / 91.2% in the same regions (87.6% in the most scattered
+   regions of pairs selected for unequal scatter). With 10–15 shared compounds
+   coverage is lower for all methods (86% here, 83% for the previous
+   interval).
 
 4. **Quality Filters**: Predictions are only made where:
    - CI width < 2 minutes OR relative CI width < 20%
@@ -42,7 +67,7 @@ where $f$ is a monotonically increasing function.
 ### GAM Specification
 
 ```r
-# Unconstrained fit for smoothing parameter and standard errors
+# Unconstrained fit for the smoothing parameter
 fit <- mgcv::gam(y ~ s(x, k = k, bs = "tp"), data = calibration_data)
 
 # Monotonic constrained refit
@@ -81,8 +106,8 @@ Compounds are matched between systems using standardized InChI:
 rePredRet/
 ├── R/
 │   ├── data_loading.R           # RepoRT data loading
-│   ├── gam_fast_ci.R            # Default GAM fit and prediction intervals
-│   ├── gam_fitting.R            # Bootstrap GAM functions
+│   ├── gam_fitting.R            # Monotone GAM fit and bootstrap intervals
+│   ├── gam_adaptive_pi.R        # Default (locally adaptive) prediction intervals
 │   ├── model_building.R         # Model construction
 │   ├── build_all_models_furrr.R # Incremental parallel pipeline
 │   ├── build_user_models.R      # Models from user RT data
@@ -145,6 +170,9 @@ Based on the original PredRet paper (Stanstrup et al. 2015):
 
 3. **Generalized Additive Models**:
    Wood, S. N. (2017). *Generalized Additive Models: An Introduction with R* (2nd ed.). Chapman and Hall/CRC.
+
+4. **Conformal Prediction Intervals**:
+   Lei, J., G'Sell, M., Rinaldo, A., Tibshirani, R. J., & Wasserman, L. (2018). Distribution-free predictive inference for regression. *Journal of the American Statistical Association*, 113(523), 1094-1111.
 
 ## Source Code
 

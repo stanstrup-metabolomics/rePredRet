@@ -70,7 +70,7 @@ start_time <- Sys.time()
 results <- build_all_models_furrr(
   report_data = report_data,
   min_compounds = 10,
-  method = "fast_ci",
+  method = "adaptive_pi",
   alpha = 0.05,
   n_workers = n_workers,
   export_dir = output_dir,

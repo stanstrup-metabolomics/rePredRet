@@ -11,7 +11,7 @@ build_model(
   n_boot = 200,
   alpha = 0.05,
   n_cores = parallelly::availableCores(),
-  method = c("fast_ci", "bootstrap"),
+  method = c("adaptive_pi", "bootstrap"),
   save_plot = FALSE,
   plot_dir = NULL,
   dataset1 = NULL,
@@ -34,8 +34,8 @@ method = "bootstrap".}
 \item{n_cores}{Number of CPU cores for parallel computation.
 Default uses all available cores.}
 
-\item{method}{Method for confidence intervals: "fast_ci" (72x faster, default)
-or "bootstrap" (accurate, slower).}
+\item{method}{Method for prediction intervals: "adaptive_pi" (default,
+locally adaptive width, see \code{\link[=gam_adaptive_pi]{gam_adaptive_pi()}}) or "bootstrap" (slower).}
 
 \item{save_plot}{Logical, whether to save an interactive plot (default FALSE).}
 
@@ -48,7 +48,7 @@ or "bootstrap" (accurate, slower).}
 \value{
 A list with model information:
 \describe{
-\item{status}{"success" or "insufficient_data"}
+\item{status}{"success", "insufficient_data" or "fit_failed"}
 \item{sys1_id}{Source system ID}
 \item{sys2_id}{Target system ID}
 \item{n_points}{Number of calibration compounds}

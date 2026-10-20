@@ -104,7 +104,7 @@ my_models <- build_user_models(
   rts = my_rts,
   system_type = "RP",
   min_compounds = 10,  # Minimum compounds needed for a model
-  method = "fast_ci",  # Use fast CI calculation
+  method = "adaptive_pi",  # Default prediction intervals
   verbose = TRUE
 )
 ```
@@ -114,7 +114,7 @@ my_models <- build_user_models(
   build_user_models
   System type: RP
   User compounds: 13
-  Method: fast_ci
+  Method: adaptive_pi
 ================================================
 
 Step 1/3: Standardizing InChIs...
@@ -319,16 +319,16 @@ Models are only built between systems of the same type.
 
 The `min_compounds` parameter (default: 10) sets the minimum number of compounds that must be shared between your data and a repository system to build a model. Lower values allow more models but with potentially lower quality.
 
-### CI Calculation Methods
+### Prediction Interval Methods
 
-- **`fast_ci`** (default): Uses analytical confidence intervals. Fast (~0.02 sec/model).
-- **`bootstrap`**: Uses bootstrap resampling. More accurate but slower (~1.5 sec/model).
+- **`adaptive_pi`** (default): Prediction intervals whose width follows the local scatter of the calibration compounds, calibrated by cross-validation. About 0.05 sec/model.
+- **`bootstrap`**: Bootstrap resampling with 200 refits. Much slower.
 
 ### Filtering Predictions
 
 After generating predictions, filter based on:
 
-- **CI width**: Narrower intervals indicate more confident predictions
+- **Interval width**: Narrower intervals indicate more confident predictions
 - **Model R²**: Higher values indicate better calibration fit
 - **Number of calibration compounds**: More compounds = more reliable model
 

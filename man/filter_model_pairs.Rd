@@ -4,7 +4,14 @@
 \alias{filter_model_pairs}
 \title{Filter Model Pairs Based on Changes}
 \usage{
-filter_model_pairs(model_pairs, changes, cache, export_dir)
+filter_model_pairs(
+  model_pairs,
+  changes,
+  cache,
+  export_dir,
+  method = NULL,
+  alpha = NULL
+)
 }
 \arguments{
 \item{model_pairs}{List of all potential model pairs}
@@ -14,11 +21,18 @@ filter_model_pairs(model_pairs, changes, cache, export_dir)
 \item{cache}{Build cache object}
 
 \item{export_dir}{Directory for model outputs}
+
+\item{method}{Interval method of this build. Cached models built with
+another method are rebuilt. NULL skips the check.}
+
+\item{alpha}{Significance level of this build. Cached models built with
+another alpha are rebuilt. NULL skips the check.}
 }
 \value{
 Filtered list of pairs that need building
 }
 \description{
 Determines which model pairs need to be built based on dataset changes
+and on the interval method and alpha recorded for each cached model.
 }
 \keyword{internal}

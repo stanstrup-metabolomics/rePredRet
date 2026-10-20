@@ -19,8 +19,8 @@ NULL
 #' @param alpha Significance level for PI (default 0.05 for 95% PI).
 #' @param n_cores Number of CPU cores for parallel computation.
 #'   Default uses all available cores.
-#' @param method Method for confidence intervals: "fast_ci" (72x faster, default)
-#'   or "bootstrap" (accurate, slower).
+#' @param method Method for prediction intervals: "adaptive_pi" (default,
+#'   locally adaptive width, see [gam_adaptive_pi()]) or "bootstrap" (slower).
 #' @param save_plot Logical, whether to save an interactive plot (default FALSE).
 #' @param plot_dir Directory to save plot HTML files (required if save_plot = TRUE).
 #' @param dataset1 Optional dataset object for compound names in plots.
@@ -28,7 +28,7 @@ NULL
 #'
 #' @return A list with model information:
 #'   \describe{
-#'     \item{status}{"success" or "insufficient_data"}
+#'     \item{status}{"success", "insufficient_data" or "fit_failed"}
 #'     \item{sys1_id}{Source system ID}
 #'     \item{sys2_id}{Target system ID}
 #'     \item{n_points}{Number of calibration compounds}
@@ -50,7 +50,7 @@ build_model <- function(rt_matrix,
                         n_boot = 200,
                         alpha = 0.05,
                         n_cores = parallelly::availableCores(),
-                        method = c("fast_ci", "bootstrap"),
+                        method = c("adaptive_pi", "bootstrap"),
                         save_plot = FALSE,
                         plot_dir = NULL,
                         dataset1 = NULL,
@@ -79,15 +79,15 @@ build_model <- function(rt_matrix,
   message("Building model ", sys1_id, " -> ", sys2_id,
           " (", nrow(rt_matrix), " compounds, method=", method, ")...")
 
-  # Calculate confidence intervals using selected method
-  if (method == "fast_ci") {
-    # Fast: Single fit + predict SE + cummax (72x faster)
-    ci <- gam_fast_ci(
+  # Calculate prediction intervals using selected method
+  if (method == "adaptive_pi") {
+    # Single fit + cross-validated residuals with a local scale model
+    ci <- gam_adaptive_pi(
       rt_matrix,
       newdata,
       alpha = alpha
     )
-    boot_object <- NULL  # No bootstrap object for fast method
+    boot_object <- NULL  # No bootstrap object for this method
 
   } else {
     # Bootstrap: Fit model many times (more accurate)
@@ -103,6 +103,16 @@ build_model <- function(rt_matrix,
     # Calculate prediction intervals (includes both parameter + observation variance)
     ci <- boot2ci_PI(loess_boot, newdata = newdata, alpha = alpha)
     boot_object <- prune_boot_object(loess_boot)
+  }
+
+  if (any(!is.finite(ci))) {
+    return(list(
+      status = "fit_failed",
+      sys1_id = sys1_id,
+      sys2_id = sys2_id,
+      n_points = nrow(rt_matrix),
+      message = "Model fit gave non-finite predictions or intervals"
+    ))
   }
 
   # Calculate error statistics at original calibration points
@@ -206,8 +216,8 @@ prune_boot_object <- function(boot_object) {
 #'   same method types (RP-RP, HILIC-HILIC).
 #' @param export_dir Optional directory to incrementally save models as
 #'   they're built. If NULL (default), models are only stored in memory.
-#' @param method Method for confidence intervals: "fast_ci" (default, fast) or
-#'   "bootstrap" (accurate, slower).
+#' @param method Method for prediction intervals: "adaptive_pi" (default) or
+#'   "bootstrap" (slower). See [build_model()].
 #' @param save_plots Logical, whether to save interactive HTML plots for each
 #'   model (default TRUE).
 #'
@@ -227,7 +237,7 @@ build_all_models <- function(report_data,
                              n_cores = parallelly::availableCores(),
                              method_match = TRUE,
                              export_dir = NULL,
-                             method = c("fast_ci", "bootstrap"),
+                             method = c("adaptive_pi", "bootstrap"),
                              save_plots = TRUE) {
 
   method <- match.arg(method)
@@ -297,11 +307,11 @@ build_all_models <- function(report_data,
   }
 
   # Intelligent parallelization based on method:
-  # - fast_ci: single-threaded, so use all cores for models (8x1)
+  # - adaptive_pi: single-threaded, so use all cores for models (8x1)
   # - bootstrap: needs cores for resampling, so use balanced (4x2)
-  if (method == "fast_ci") {
+  if (method == "adaptive_pi") {
     n_parallel <- n_cores               # All cores for parallel models
-    n_cores_per_model <- 1              # 1 core per model (fast_ci doesn't parallelize)
+    n_cores_per_model <- 1              # 1 core per model (adaptive_pi doesn't parallelize)
   } else {
     n_parallel <- min(4, n_cores)       # 4 models in parallel
     n_cores_per_model <- max(1, floor(n_cores / n_parallel))  # 2 cores per model for bootstrap
@@ -373,7 +383,8 @@ build_all_models <- function(report_data,
 
     # Filter model pairs based on dataset changes (skip unchanged models)
     if (!is.null(cache) && !is.null(changes)) {
-      model_pairs <- filter_model_pairs(model_pairs, changes, cache, export_dir)
+      model_pairs <- filter_model_pairs(model_pairs, changes, cache, export_dir,
+                                        method = method, alpha = alpha)
     }
 
     if (length(model_pairs) == 0) {

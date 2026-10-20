@@ -45,8 +45,9 @@
 #' \enumerate{
 #'   \item Thin plate regression splines for flexibility
 #'   \item Monotonic constraints to preserve elution order
-#'   \item Prediction intervals from the GAM standard errors and residual
-#'     variance (\code{method = "fast_ci"}, default) or bootstrap resampling
+#'   \item Locally adaptive prediction intervals calibrated by cross-validated
+#'     conformal prediction (\code{method = "adaptive_pi"}, default) or
+#'     bootstrap resampling
 #'   \item Sigmoid weighting to downweight outliers
 #' }
 #'

@@ -92,7 +92,7 @@ models <- build_user_models(
   rts = my_rts,                 # Numeric vector of retention times
   system_type = "RP",           # "RP" or "HILIC"
   min_compounds = 10,           # Minimum compounds for model building
-  method = "fast_ci",           # "fast_ci" (fast) or "bootstrap" (accurate)
+  method = "adaptive_pi",       # "adaptive_pi" (default) or "bootstrap" (slow)
   verbose = TRUE
 )
 ```

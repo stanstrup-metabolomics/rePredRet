@@ -124,10 +124,9 @@ reference:
   - title: Statistics & GAM Utilities
     desc: >
       Functions for computing model statistics, prediction statistics, and
-      GAM confidence/prediction intervals.
+      GAM prediction intervals.
     contents:
-      - gam_fast_ci
-      - gam_prediction_intervals
+      - gam_adaptive_pi
       - calculate_database_stats
       - calculate_model_stats
       - calculate_prediction_stats

@@ -1,5 +1,30 @@
 # rePredRet (development version)
 
+## Prediction intervals
+
+* New default interval method `method = "adaptive_pi"` (`gam_adaptive_pi()`) in
+  `build_model()`, `build_all_models()`, `build_all_models_furrr()` and
+  `build_user_models()`. The interval width follows the local scatter of the
+  calibration compounds (a Gamma GAM of cross-validated absolute residuals,
+  weighted to ignore outliers) and is calibrated by cross-validated conformal
+  prediction. On held-out compounds from 135 RepoRT system pairs it covered
+  94.6% (95% nominal), equally in low- and high-scatter regions, where the old
+  near-constant interval covered 96.5% and 91.2%. It takes about 60 ms per
+  model instead of 15 ms. The bounds are made monotone by isotonic regression
+  instead of a running maximum, and the lower bound is truncated at 0.
+* Removed `method = "fast_ci"` and `gam_fast_ci()`, and the unused
+  `gam_prediction_intervals()`, `gam_prediction_intervals_parallel()`,
+  `fit_gam_mono_once()` and `gam_fast_pi()`.
+* `build_all_models_furrr()` and `build_all_models()` rebuild cached models that
+  were built with another interval method or alpha, so the next pipeline run
+  rebuilds all models.
+* Small source-RT jitter (fewer than 4 distinct RTs) uses a fixed seed, so the
+  same data always give the same model.
+* `build_model()` returns status `"fit_failed"` instead of a model with
+  non-finite predictions or intervals.
+* The monotone GAM fit is shared by all interval methods (`fit_gam_mono()`).
+* `withr` moved from Suggests to Imports; `MASS` is no longer needed.
+
 ## Breaking changes
 
 * Removed `rePredRet_download()`, `rePredRet_predict()`,

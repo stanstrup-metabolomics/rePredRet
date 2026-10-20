@@ -207,14 +207,20 @@ model_is_complete <- function(model_key, export_dir) {
 #' Filter Model Pairs Based on Changes
 #'
 #' Determines which model pairs need to be built based on dataset changes
+#' and on the interval method and alpha recorded for each cached model.
 #'
 #' @param model_pairs List of all potential model pairs
 #' @param changes Dataset change analysis
 #' @param cache Build cache object
 #' @param export_dir Directory for model outputs
+#' @param method Interval method of this build. Cached models built with
+#'   another method are rebuilt. NULL skips the check.
+#' @param alpha Significance level of this build. Cached models built with
+#'   another alpha are rebuilt. NULL skips the check.
 #' @return Filtered list of pairs that need building
 #' @keywords internal
-filter_model_pairs <- function(model_pairs, changes, cache, export_dir) {
+filter_model_pairs <- function(model_pairs, changes, cache, export_dir,
+                               method = NULL, alpha = NULL) {
   changed_ids <- changes$changed_ids
 
   pairs_to_build <- list()
@@ -222,18 +228,25 @@ filter_model_pairs <- function(model_pairs, changes, cache, export_dir) {
 
   for (pair in model_pairs) {
     model_key <- paste0(pair$id1, "_to_", pair$id2)
+    cached <- cache$models[[model_key]]
 
     # Must rebuild if either dataset CHANGED (data modified)
     data_changed <- pair$id1 %in% changed_ids || pair$id2 %in% changed_ids
 
-    if (data_changed) {
-      # Data changed, must rebuild
+    # Must rebuild if the model was built with other interval settings
+    settings_changed <- !is.null(cached) && (
+      (!is.null(method) && !identical(cached$method, method)) ||
+        (!is.null(alpha) && !isTRUE(all.equal(cached$alpha, alpha)))
+    )
+
+    if (data_changed || settings_changed) {
+      # Data or interval settings changed, must rebuild
       pairs_to_build[[length(pairs_to_build) + 1]] <- pair
     } else {
       # Data unchanged or new - check if model files exist (enables resume).
       # Models that failed on unchanged data would fail again, so skip them too.
       if (model_is_complete(model_key, export_dir) ||
-          identical(cache$models[[model_key]]$status, "failed")) {
+          identical(cached$status, "failed")) {
         pairs_skipped <- pairs_skipped + 1
       } else {
         # Model incomplete or missing, need to build

@@ -10,8 +10,8 @@
 #'   downloads and loads the latest RepoRT data.
 #' @param min_compounds Minimum number of common compounds required to build
 #'   a model (default 10).
-#' @param method Method for CI calculation: "fast_ci" (default, fast) or
-#'   "bootstrap" (slower, more accurate).
+#' @param method Method for prediction intervals: "adaptive_pi" (default) or
+#'   "bootstrap" (slower). See [build_model()].
 #' @param alpha Significance level for CI (default 0.05 for 95% CI).
 #' @param n_boot Number of bootstrap iterations if method = "bootstrap" (default 200).
 #' @param n_workers Number of parallel workers (default = available cores).
@@ -81,7 +81,7 @@ build_user_models <- function(inchis,
                                system_type = c("RP", "HILIC"),
                                report_data = NULL,
                                min_compounds = 10,
-                               method = c("fast_ci", "bootstrap"),
+                               method = c("adaptive_pi", "bootstrap"),
                                alpha = 0.05,
                                n_boot = 200,
                                n_workers = parallelly::availableCores(),
