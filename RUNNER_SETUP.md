@@ -49,13 +49,11 @@ ORG_NAME=stanstrup-metabolomics
 RUNNER_NAME_PREFIX=docker-runner
 RUNNER_GROUP=default
 LABELS=docker,linux,ubuntu
-
-# Optional: Make runner ephemeral (auto-removes after each job)
-EPHEMERAL=false
-
-# Optional: Disable auto-update (useful in restricted environments)
-DISABLE_AUTO_UPDATE=false
 ```
+
+Do not set `EPHEMERAL` or `DISABLE_AUTO_UPDATE`, not even to `false`: the image turns
+them on when they have any value. An ephemeral runner is deregistered after its first
+job and then fails to start with "runner registration has been deleted".
 
 **Note**: The `github_runner.yml` automatically loads `.github_runner.env` into the container - no need to pass `--env-file` in the command!
 
@@ -227,8 +225,7 @@ Each runner will be available to the organization and can handle jobs in paralle
 - **Organization**: `stanstrup-metabolomics` - all runners serve all repos in this org
 - **Scope**: `RUNNER_SCOPE: 'org'` makes this runner available to all organization repositories
 - **Allow Public Repositories**: Must be enabled in runner settings (https://github.com/organizations/stanstrup-metabolomics/settings/actions/runners) for the runner to accept jobs from organization repositories
-- **Persistent mode**: `EPHEMERAL=false` (default) - runner stays online for multiple jobs
-- **Ephemeral mode**: `EPHEMERAL=true` - runner auto-removes after each job (more secure)
+- **Persistent mode**: the runner stays registered between jobs as long as `EPHEMERAL` is unset (see Step 2)
 - **Storage**: host directories set in `.env` - runner configuration, workspace and the rePredRet cache (local disks)
 - **Resource limits**: Adjust based on your system capacity in `github_runner.yml`
 - **Docker-in-Docker**: Runner can build and run containers via mounted docker.sock

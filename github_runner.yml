@@ -20,9 +20,8 @@ services:
       RUNNER_WORKDIR: /tmp/runner/work
       CONFIGURED_ACTIONS_RUNNER_FILES_DIR: /runner/data
 
-      # Optional settings
-      EPHEMERAL: ${EPHEMERAL:-false}
-      DISABLE_AUTO_UPDATE: ${DISABLE_AUTO_UPDATE:-false}
+      # Do not set EPHEMERAL or DISABLE_AUTO_UPDATE: the image enables them when
+      # they have any value, including "false"
 
       DISABLE_AUTOMATIC_DEREGISTRATION: true
 
