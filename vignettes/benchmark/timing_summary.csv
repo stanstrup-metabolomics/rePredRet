@@ -1,0 +1,5 @@
+"method","models","mean_ms","median_ms","max_ms","hours_50k_1core","hours_50k_4cores"
+"adaptive_pi",120,54.3,50,330,0.75,0.19
+"bootstrap",40,1332.7,1275,3160,18.51,4.63
+"fast_ci",120,15.7,20,40,0.22,0.05
+"fast_ci (old)",120,10.5,10,140,0.15,0.04

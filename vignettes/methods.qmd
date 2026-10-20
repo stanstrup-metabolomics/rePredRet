@@ -27,12 +27,18 @@ where $f$ is a monotonically increasing function.
    - An unconstrained thin plate regression spline GAM gives the smoothing
      parameter
    - Compounds with large residuals are down-weighted with a sigmoid weight
+     (0.5 at a residual of 10% of the maximum target RT, steepness 30). These
+     two values were set by eye for the original PredRet and have never been
+     optimized
    - A cubic regression spline is refitted with monotonic increasing
      constraints (`mgcv::mono.con()` and `mgcv::pcls()`)
 
-3. **Prediction Intervals** (`method = "adaptive_pi"`, default): the width of
-   the interval follows the local scatter of the calibration compounds, and its
-   level is calibrated by cross-validated conformal prediction.
+3. **Prediction Intervals**: three methods share the fit above. See the
+   [benchmark article](benchmark.html) for their coverage and speed.
+
+   **`method = "adaptive_pi"`** (default): the width of the interval follows
+   the local scatter of the calibration compounds, and its level is calibrated
+   by cross-validated conformal prediction.
    - *Cross-validated residuals*: the compounds are split into 5 folds,
      interleaved along the source RT. Each fold is predicted by the monotone
      spline refitted on the other folds (with the smoothing parameter and
@@ -48,17 +54,32 @@ where $f$ is a monotonically increasing function.
    - *Interval*: fit ± q · s(x). Each bound is made non-decreasing by isotonic
      regression, which keeps lower ≤ fit ≤ upper, and the lower bound is
      truncated at 0.
-   - `method = "bootstrap"` instead refits the model on 200 bootstrap resamples
-     of the calibration compounds (about 40 times slower)
 
-   On held-out compounds from 135 RepoRT system pairs (cross-validation) the
-   95% intervals covered 94.6% of compounds, and 94.8% / 94.5% in the regions
-   with the least / most scatter. The previous interval
-   (fit ± z · sqrt(SE² + σ²) with one global σ) had almost constant width
-   and covered 96.5% / 91.2% in the same regions (87.6% in the most scattered
-   regions of pairs selected for unequal scatter). With 10–15 shared compounds
-   coverage is lower for all methods (86% here, 83% for the previous
-   interval).
+   **`method = "fast_ci"`**: about 4 times faster, with an interval of nearly
+   constant width.
+   - fit ± z · sqrt(SE² + σ²), where SE is the pointwise standard error of the
+     unconstrained GAM and σ² the mean squared leave-one-out residual (the
+     constrained fit's residuals divided by 1 − leverage)
+   - Bounds are made monotone and truncated at 0 as above
+
+   **`method = "bootstrap"`**: about 40 times slower than `adaptive_pi`.
+   - The monotone fit is repeated on 200 bootstrap resamples. Each compound is
+     predicted by the refits whose resample did not include it (out-of-bag),
+     which gives out-of-sample residuals
+   - These residuals go through the same local scale and conformal calibration
+     as `adaptive_pi` (jackknife+-after-bootstrap)
+
+   On held-out compounds from 135 RepoRT system pairs the 95% intervals
+   covered 94.6% (`adaptive_pi`), 95.5% (`fast_ci`) and 94.8% (`bootstrap`) of
+   the compounds. In the regions with the least / most scatter `adaptive_pi`
+   covered 94.8% / 94.5%, while `fast_ci` covered 97.4% / 93.4%: a constant
+   width is too wide where compounds agree and too narrow where they scatter.
+
+   **Few compounds**: with only 10–15 shared compounds no method reaches the
+   nominal level. Coverage was 86% (`adaptive_pi`), 90% (`fast_ci`) and 89%
+   (`bootstrap`). With so few compounds, a 95% interval would have to be
+   very wide to hold. Treat intervals from models with fewer than about 20
+   compounds as roughly 85–90% intervals.
 
 4. **Quality Filters**: Predictions are only made where:
    - CI width < 2 minutes OR relative CI width < 20%
@@ -108,6 +129,7 @@ rePredRet/
 │   ├── data_loading.R           # RepoRT data loading
 │   ├── gam_fitting.R            # Monotone GAM fit and bootstrap intervals
 │   ├── gam_adaptive_pi.R        # Default (locally adaptive) prediction intervals
+│   ├── gam_fast_ci.R            # Faster prediction intervals of nearly constant width
 │   ├── model_building.R         # Model construction
 │   ├── build_all_models_furrr.R # Incremental parallel pipeline
 │   ├── build_user_models.R      # Models from user RT data

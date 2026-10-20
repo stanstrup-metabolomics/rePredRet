@@ -34,6 +34,8 @@ navbar:
         - text: "Background"
         - text: Methods
           href: articles/methods.html
+        - text: Prediction Interval Benchmark
+          href: articles/benchmark.html
     viewer:
       text: Model Viewer
       href: model_viewer.html
@@ -55,6 +57,7 @@ articles:
   - title: Background
     contents:
       - methods
+      - benchmark
 
 reference:
   - title: Package
@@ -127,6 +130,7 @@ reference:
       GAM prediction intervals.
     contents:
       - gam_adaptive_pi
+      - gam_fast_ci
       - calculate_database_stats
       - calculate_model_stats
       - calculate_prediction_stats
