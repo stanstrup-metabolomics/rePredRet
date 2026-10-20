@@ -102,6 +102,9 @@
 * The number of workers defaults to `parallelly::availableCores()`, which respects
   container CPU limits (`parallel::detectCores()` reports all host cores).
 * A failing model no longer aborts the whole build.
+* Models whose build settings are unknown (no build cache entry, e.g. from an older
+  pipeline) are rebuilt when an interval method is given, instead of being recorded
+  as built with the current method.
 * CI: tracks RepoRT master commits instead of releases and only pushes to the data
   repository when models changed. `max_systems` test runs no longer touch the
   published models.

@@ -267,12 +267,14 @@ build_all_models_furrr <- function(report_data,
     }, logical(1))]
 
     # Models present on disk but unknown to the cache were built elsewhere
-    # (e.g. restored from a runner cache) and count as additions
+    # and count as additions. How they were built is unknown, so no build time,
+    # method or alpha is recorded and filter_model_pairs() rebuilds them when
+    # interval settings are given.
     unknown_keys <- setdiff(skipped_ok, names(cache$models))
     for (k in unknown_keys) {
-      cache$models[[k]] <- list(built = NA_character_, method = method,
-                                method_version = pi_method_version(method),
-                                alpha = alpha, status = "success")
+      cache$models[[k]] <- list(built = NA_character_, method = NA_character_,
+                                method_version = NA_integer_,
+                                alpha = NA_real_, status = "success")
     }
     n_added <- length(unknown_keys)
 

@@ -160,3 +160,28 @@ test_that("models built with another interval method are rebuilt", {
   saveRDS(cache, cache_file)
   expect_equal(build_quietly(rd, export_dir)$stats$built, 1)
 })
+
+
+test_that("models of unknown provenance are rebuilt", {
+  export_dir <- withr::local_tempdir()
+  rd <- make_report_data()
+  build_quietly(rd, export_dir)
+  cache_file <- file.path(export_dir, "build_cache.rds")
+
+  # Model files without cache entries, e.g. built by an older pipeline
+  cache <- readRDS(cache_file)
+  cache$models <- list()
+  saveRDS(cache, cache_file)
+  expect_equal(build_quietly(rd, export_dir)$stats$built, 6)
+
+  # Entries recorded for unknown model files (no build time), as older
+  # versions wrote them with the current method
+  cache <- readRDS(cache_file)
+  cache$models[1:2] <- lapply(cache$models[1:2], function(m) {
+    m$built <- NA_character_
+    m
+  })
+  saveRDS(cache, cache_file)
+  expect_equal(build_quietly(rd, export_dir)$stats$built, 2)
+  expect_equal(build_quietly(rd, export_dir)$stats$built, 0)
+})

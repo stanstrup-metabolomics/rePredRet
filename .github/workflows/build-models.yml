@@ -122,6 +122,9 @@ jobs:
           git lfs pull --include="build_cache.rds"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Automatic gc/repack after each commit takes minutes on the host mount
+          git config gc.auto 0
+          git config maintenance.auto false
           echo "Published models: $(find models -mindepth 1 -maxdepth 1 -type d | wc -l)"
 
           # The pipeline reads and writes its metadata inside models/
@@ -152,10 +155,16 @@ jobs:
           git config http.postBuffer 524288000
           git config http.lowSpeedLimit 1000
           git config http.lowSpeedTime 600
-          PUSH_URL="https://x-access-token:${MODELS_REPO_PAT}@github.com/stanstrup-metabolomics/rePredRet-models.git"
+          # Authenticate with a header passed through the environment, which
+          # (unlike a token in the URL or a -c option) does not show up in the
+          # process list. git-lfs reads the same configuration.
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+          GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$MODELS_REPO_PAT" | base64 -w0)"
+          export GIT_CONFIG_VALUE_0
           push() {
             for attempt in 1 2 3; do
-              if git push "$PUSH_URL" HEAD:main; then return 0; fi
+              if git push origin HEAD:main; then return 0; fi
               echo "Push attempt $attempt failed, retrying in 30 seconds..."
               sleep 30
             done

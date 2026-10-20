@@ -248,10 +248,14 @@ filter_model_pairs <- function(model_pairs, changes, cache, export_dir,
     # Must rebuild if either dataset CHANGED (data modified)
     data_changed <- pair$id1 %in% changed_ids || pair$id2 %in% changed_ids
 
-    # Must rebuild if the model was built with other interval settings
-    settings_changed <- !is.null(cached) && (
-      (!is.null(method) && (!identical(cached$method, method) ||
-                              !identical(cached$method_version, pi_method_version(method)))) ||
+    # Must rebuild if the model was built with other interval settings, or if
+    # it is not known how it was built (no cache entry, or one recorded for
+    # model files found on disk, which has no build time)
+    provenance_unknown <- is.null(cached) || is.na(cached$built %||% NA)
+    settings_changed <- (!is.null(method) || !is.null(alpha)) && (
+      provenance_unknown ||
+        (!is.null(method) && (!identical(cached$method, method) ||
+                                !identical(cached$method_version, pi_method_version(method)))) ||
         (!is.null(alpha) && !isTRUE(all.equal(cached$alpha, alpha)))
     )
 
