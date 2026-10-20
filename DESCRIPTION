@@ -9,7 +9,7 @@ Authors@R: c(
 Description: Predicts retention times (RTs) by directly mapping between
     chromatographic systems using monotonically constrained GAMs. This is a
     reimplementation of PredRet that uses RepoRT data as input and publishes
-    predictions to GitHub. Unlike QSRR models that use molecular descriptors,
+    pre-built models to GitHub. Unlike QSRR models that use molecular descriptors,
     rePredRet uses experimentally measured RTs from one system to predict RTs
     in another system.
 License: GPL (>= 3)
@@ -17,7 +17,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends:
-    R (>= 4.1.0)
+    R (>= 4.4.0)
 Imports:
     boot,
     cli,
@@ -34,6 +34,7 @@ Imports:
     methods,
     mgcv,
     parallel,
+    parallelly,
     plotly,
     pracma,
     rappdirs,
@@ -44,7 +45,9 @@ Imports:
 Suggests:
     curl,
     testthat (>= 3.0.0),
+    withr,
     writexl
 Config/testthat/edition: 3
-URL: https://stanstrup.github.io/rePredRet, https://github.com/stanstrup/rePredRet
-BugReports: https://github.com/stanstrup/rePredRet/issues
+URL: https://stanstrup-metabolomics.github.io/rePredRet,
+    https://github.com/stanstrup-metabolomics/rePredRet
+BugReports: https://github.com/stanstrup-metabolomics/rePredRet/issues

@@ -230,8 +230,10 @@ filter_model_pairs <- function(model_pairs, changes, cache, export_dir) {
       # Data changed, must rebuild
       pairs_to_build[[length(pairs_to_build) + 1]] <- pair
     } else {
-      # Data unchanged or new - check if model files exist (enables resume)
-      if (model_is_complete(model_key, export_dir)) {
+      # Data unchanged or new - check if model files exist (enables resume).
+      # Models that failed on unchanged data would fail again, so skip them too.
+      if (model_is_complete(model_key, export_dir) ||
+          identical(cache$models[[model_key]]$status, "failed")) {
         pairs_skipped <- pairs_skipped + 1
       } else {
         # Model incomplete or missing, need to build

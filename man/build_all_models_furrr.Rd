@@ -9,10 +9,11 @@ build_all_models_furrr(
   min_compounds = 10,
   method = c("fast_ci", "bootstrap"),
   alpha = 0.05,
-  n_workers = parallel::detectCores(),
+  n_workers = parallelly::availableCores(),
   save_json = TRUE,
   export_dir = NULL,
   batch_size = NULL,
+  report_version = NULL,
   verbose = TRUE
 )
 }
@@ -25,22 +26,28 @@ build_all_models_furrr(
 
 \item{alpha}{Significance level (default 0.05 for 95\% intervals)}
 
-\item{n_workers}{Number of parallel workers (default = available cores)}
+\item{n_workers}{Number of parallel workers (default = cores available to
+this process, respecting container/cgroup CPU limits)}
 
-\item{save_json}{Save model data as JSON (default TRUE, much faster than HTML)}
+\item{save_json}{Kept for backwards compatibility. \code{export_model_fast()}
+always writes model.json.}
 
 \item{export_dir}{Directory to save models (required for caching)}
 
 \item{batch_size}{Number of models to send to each worker at once (NULL = auto, 1 = dynamic, large = upfront)}
+
+\item{report_version}{RepoRT version identifier (e.g. commit SHA) to record
+in the build cache. NULL leaves the recorded version unchanged.}
 
 \item{verbose}{Print progress messages (default TRUE)}
 }
 \value{
 List with:
 \itemize{
-\item models: list of all built models
-\item index: data.frame with model metadata
+\item models: list of results for the models built in this run
+\item index: data.frame with metadata for all current models
 \item stats: summary statistics
+\item changed: TRUE if any model was built, added or removed in this run
 }
 }
 \description{
@@ -51,5 +58,8 @@ parallelization with support for incremental builds and scheduling tuning.
 This function uses furrr::future_map for outer-level parallelization,
 avoiding nested parallelization overhead. Each worker builds models sequentially.
 
-Caching: Detects changed datasets and skips unchanged models (requires export_dir)
+Caching (requires export_dir): models are only rebuilt when one of their
+datasets changed or their files are missing. Models whose datasets were
+removed, or that no longer have enough common compounds, are deleted.
+The build cache and \code{model_index.csv} are updated in export_dir.
 }
