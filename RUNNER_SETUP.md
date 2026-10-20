@@ -1,6 +1,6 @@
 # Self-Hosted GitHub Actions Runner Setup
 
-This guide sets up a self-hosted GitHub Actions runner using Docker Compose with the **myoung34/github-runner** image to bypass GitHub's job time limits.
+This guide sets up a self-hosted GitHub Actions runner using Docker Compose with the **myoung34/github-runner** image. rePredRet's model build (`.github/workflows/build-models.yml`) runs on it because a full build can take longer than GitHub-hosted runners allow (6 hours) and needs a persistent cache.
 
 ## Runner Scope Options
 
@@ -16,6 +16,7 @@ This is equivalent to **GitLab's group-level runners** - just register once at t
 
 - Docker and Docker Compose installed
 - Access to `/var/run/docker.sock` on your host
+- Local disk space for the runner workspace and the rePredRet cache (the cache holds a clone of rePredRet-models, several GB)
 - GitHub account with organization `stanstrup-metabolomics` (already done)
 
 ## Step 1: Create a GitHub Personal Access Token (PAT)
@@ -56,13 +57,28 @@ EPHEMERAL=false
 DISABLE_AUTO_UPDATE=false
 ```
 
-**Note**: The `github_runner.yml` automatically loads `.github_runner.env` - no need to pass `--env-file` in the command!
+**Note**: The `github_runner.yml` automatically loads `.github_runner.env` into the container - no need to pass `--env-file` in the command!
+
+### Host paths
+
+The host directories mounted into the container are set in a `.env` file next to `github_runner.yml` (Docker Compose reads `.env` for the `${...}` variables in the compose file; `.github_runner.env` only sets variables inside the container). All three are required:
+
+```bash
+# Runner configuration and state
+RUNNER_DATA_DIR=/path/on/local/disk/github-runner/data
+# Runner workspace (/tmp/runner/work in the container; may be cleaned between jobs)
+RUNNER_WORK_DIR=/path/on/local/disk/github-runner/work
+# Persistent rePredRet cache (/opt/repredret-cache in the container)
+REPREDRET_CACHE_DIR=/path/on/local/disk/repredret-cache
+```
+
+Use local disks, not network shares: the model build creates ~150k small files and runs git on them, which is very slow over the network.
 
 ## Step 3: Start the Runner
 
 ```bash
-# Navigate to the directory with github_runner.yml and .github_runner.env
-cd /mnt/z/docker/compose
+# Navigate to the directory with github_runner.yml, .github_runner.env and .env
+cd /path/to/compose
 
 # Start the runner with docker-compose (automatically loads .github_runner.env)
 docker-compose --file github_runner.yml up -d
@@ -85,20 +101,23 @@ github-runner    | Listening for Jobs
 4. **Important**: Enable "Allow Public Repositories" - this allows the runner to accept jobs from repositories in the organization
 5. The runner is now available to ALL repos in the `stanstrup-metabolomics` organization
 
-## Step 5: Update Workflows to Use Your Runner
+## Step 5: Workflows Using the Runner
 
-Your repositories (rePredRet and rePredRet-models) are already in the organization.
-
-Edit `.github/workflows/build-models.yml` in rePredRet and change:
+Jobs select the runner by its labels. rePredRet's model build already does:
 
 ```yaml
 jobs:
   build:
-    # Change from: runs-on: ubuntu-latest
     runs-on: [self-hosted, docker, linux]
 ```
 
 The same runner handles jobs from **all repos in the organization**. This is equivalent to GitLab's group-level runners!
+
+### What rePredRet's model build needs from the runner
+
+- **`/opt/repredret-cache`** mounted from local disk (`REPREDRET_CACHE_DIR`). The workflow keeps a clone of rePredRet-models in `/opt/repredret-cache/rePredRet-models`, builds models directly in it, and pushes only the changes. The clone is reset to the published state at the start of every run, so a job that died halfway leaves nothing behind.
+- **Jobs run directly in the runner container.** The mount is not visible to jobs that use a `container:` image.
+- **Git and Git LFS** in the runner image (included in myoung34/github-runner).
 
 ## Step 6: Test the Workflow
 
@@ -106,7 +125,9 @@ The same runner handles jobs from **all repos in the organization**. This is equ
 2. Go to: https://github.com/stanstrup-metabolomics/rePredRet/actions
 3. Click **Run workflow**
 
-You should see the job run on your self-hosted runner with no time limit!
+You should see the job run on your self-hosted runner.
+
+To test the model build without touching the published models, run **Build and Update Models** manually with `max_systems` set to e.g. 20. Test runs never update rePredRet-models.
 
 ## Troubleshooting
 
@@ -170,10 +191,7 @@ docker-compose --file github_runner.yml restart
 docker-compose --file github_runner.yml down
 ```
 
-2. (Optional) Remove the volume:
-```bash
-docker volume rm runner-work
-```
+2. (Optional) Delete the host directories set in `.env` (`RUNNER_DATA_DIR`, `RUNNER_WORK_DIR`, `REPREDRET_CACHE_DIR`)
 
 3. Go to https://github.com/organizations/stanstrup-metabolomics/settings/actions/runners
 4. Click the three dots next to your runner and select "Remove"
@@ -191,7 +209,7 @@ cp .github_runner.env .github_runner_2.env
 
 # Edit .github_runner_2.env and update:
 # - RUNNER_NAME_PREFIX=docker-runner-2
-# - Optionally use different directory: /mnt/z/docker/config_dirs/github-runner-2
+# - Use different host directories in a separate .env (RUNNER_DATA_DIR, RUNNER_WORK_DIR)
 ```
 
 Start both:
@@ -211,8 +229,9 @@ Each runner will be available to the organization and can handle jobs in paralle
 - **Allow Public Repositories**: Must be enabled in runner settings (https://github.com/organizations/stanstrup-metabolomics/settings/actions/runners) for the runner to accept jobs from organization repositories
 - **Persistent mode**: `EPHEMERAL=false` (default) - runner stays online for multiple jobs
 - **Ephemeral mode**: `EPHEMERAL=true` - runner auto-removes after each job (more secure)
-- **Storage**: `/mnt/z/docker/config_dirs/github-runner` - persistent configuration and workspace
+- **Storage**: host directories set in `.env` - runner configuration, workspace and the rePredRet cache (local disks)
 - **Resource limits**: Adjust based on your system capacity in `github_runner.yml`
 - **Docker-in-Docker**: Runner can build and run containers via mounted docker.sock
-- **No time limits**: Self-hosted runners have no job duration limits (unlike GitHub's 6-hour limit)
+- **Time limits**: Jobs on self-hosted runners can run for up to 5 days (GitHub-hosted: 6 hours). A job that waits more than 24 hours for an available runner is cancelled, so an offline runner shows up as cancelled runs
+- **Inactivity**: GitHub disables scheduled workflows after 60 days without repository activity; re-enable them under Actions
 - **Cost**: Free with GitHub Free plan - unlimited runners, only pay for your infrastructure

@@ -23,19 +23,26 @@ services:
       # Optional settings
       EPHEMERAL: ${EPHEMERAL:-false}
       DISABLE_AUTO_UPDATE: ${DISABLE_AUTO_UPDATE:-false}
-      
+
       DISABLE_AUTOMATIC_DEREGISTRATION: true
 
     security_opt:
       - label:disable
 
+    # Host paths are set in a .env file next to this file (see RUNNER_SETUP.md).
+    # Use local disks: the model build creates ~150k small files and runs git on
+    # them, which is very slow on network shares.
     volumes:
       # Docker socket for Docker-in-Docker
       - /var/run/docker.sock:/var/run/docker.sock
       # Runner configuration and state
-      - /mnt/z/docker/config_dirs/github-runner/data:/runner/data
-      # Runner workspace
-      - /mnt/z/docker/config_dirs/github-runner/work:/tmp/runner/work
+      - ${RUNNER_DATA_DIR:?Set RUNNER_DATA_DIR in .env}:/runner/data
+      # Runner workspace (may be cleaned between jobs)
+      - ${RUNNER_WORK_DIR:?Set RUNNER_WORK_DIR in .env}:/tmp/runner/work
+      # Persistent rePredRet cache: clone of rePredRet-models used by
+      # build-models.yml. Only visible to jobs that run directly in this
+      # container, not to jobs that use a container: image.
+      - ${REPREDRET_CACHE_DIR:?Set REPREDRET_CACHE_DIR in .env}:/opt/repredret-cache
 
     deploy:
       resources:

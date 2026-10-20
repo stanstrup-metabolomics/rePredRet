@@ -1,7 +1,7 @@
 name: Build and Update Models
 
 on:
-  # Run on RepoRT releases (check daily)
+  # Run when RepoRT master has new commits (check daily)
   schedule:
     - cron: '0 6 * * *'  # Daily at 6 AM UTC
 
@@ -9,13 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       max_systems:
-        description: 'Max systems to process (0 for all)'
+        description: 'Max systems to process (0 for all). Test runs (>0) never update the data repository.'
         required: false
         default: '0'
-      n_boot:
-        description: 'Bootstrap iterations'
-        required: false
-        default: '1000'
 
   # Run on push to main for testing
   push:
@@ -37,26 +33,16 @@ jobs:
       should_run: ${{ steps.check.outputs.should_run }}
       version: ${{ steps.check.outputs.version }}
     steps:
-      - name: Checkout main repository
-        uses: actions/checkout@v4
-
-      - name: Checkout data repository (sparse)
-        run: |
-          GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --no-checkout \
-            https://github.com/stanstrup-metabolomics/rePredRet-models.git data_repo
-          cd data_repo
-          git sparse-checkout set build_cache.rds model_index.csv
-          git checkout
-
-      - name: Check for new RepoRT release
+      - name: Check for RepoRT updates
         id: check
         run: |
-          # Get latest RepoRT release
-          LATEST=$(curl -s https://api.github.com/repos/michaelwitting/RepoRT/releases/latest | jq -r .tag_name)
-          echo "Latest RepoRT release: $LATEST"
+          # The pipeline builds from RepoRT master, so track its latest commit
+          # (RepoRT releases are rare and not what download_report() fetches)
+          LATEST=$(curl -sf https://api.github.com/repos/michaelwitting/RepoRT/commits/master | jq -r .sha)
+          echo "Latest RepoRT master commit: $LATEST"
 
-          # Check if we've processed this version (from build cache)
-          PROCESSED=$(Rscript -e "cache <- readRDS('data_repo/build_cache.rds'); cat(cache\$report_version %||% 'none')" 2>/dev/null || echo "none")
+          # Version of the published models (written by run_pipeline.R)
+          PROCESSED=$(curl -sfL https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main/report_version.txt || echo "none")
           echo "Last processed version: $PROCESSED"
 
           # Decide if we should run
@@ -73,19 +59,19 @@ jobs:
     if: needs.check-release.outputs.should_run == 'true'
     runs-on: [self-hosted, docker, linux]
     timeout-minutes: 2880  # 48 hours
+    permissions:
+      contents: write  # repository_dispatch to rebuild the website
+    env:
+      # Persistent clone on the runner's local disk. Survives between jobs only
+      # because jobs run directly in the runner container (no container: image).
+      DATA_REPO: /opt/repredret-cache/rePredRet-models
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cleanup and Setup Git LFS
-        run: |
-          # Disable fsync - Docker/overlayfs doesn't support it and causes
-          # "fsync error: Permission denied" on pack files
-          git config --global core.fsync none
-          # Clean up git pack files to prevent corruption
-          git gc --aggressive --prune=now || true
-          git lfs install --skip-repo
+      - name: Setup Git LFS
+        run: git lfs install --skip-repo
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
@@ -102,8 +88,8 @@ jobs:
         run: |
           install.packages(c(
             "remotes", "boot", "cli", "data.table", "digest", "dplyr", "future", "furrr",
-            "ggplot2", "htmlwidgets", "jsonlite", "MASS", "Matrix", "mgcv", "plotly",
-            "pracma", "rappdirs", "readr", "tibble", "curl"
+            "ggplot2", "htmlwidgets", "jsonlite", "MASS", "Matrix", "mgcv", "parallelly",
+            "plotly", "pracma", "rappdirs", "readr", "tibble", "curl"
           ))
         shell: Rscript {0}
 
@@ -112,161 +98,111 @@ jobs:
           remotes::install_local(".", dependencies = FALSE)
         shell: Rscript {0}
 
-      - name: Download build cache
+      - name: Prepare data repository clone
+        if: (github.event.inputs.max_systems || '0') == '0'
         run: |
-          # Download build_cache.rds directly via GitHub API instead of git clone.
-          # Git clone fails on this Docker runner due to filesystem limitations.
-          mkdir -p website/data/models
-
-          echo "Downloading build_cache.rds from rePredRet-models..."
-          # Use raw.githubusercontent.com which properly resolves LFS files
-          if curl -sL -f \
-            -H "Authorization: token ${{ secrets.MODELS_REPO_PAT }}" \
-            "https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main/build_cache.rds" \
-            -o website/data/models/build_cache.rds; then
-            FILE_SIZE=$(wc -c < website/data/models/build_cache.rds)
-            echo "Downloaded build_cache.rds ($FILE_SIZE bytes)"
-            # Sanity check: LFS pointer files are ~130 bytes, real cache is larger
-            if [ "$FILE_SIZE" -lt 200 ]; then
-              echo "WARNING: File too small, likely LFS pointer. Removing."
-              rm website/data/models/build_cache.rds
-            fi
+          set -euo pipefail
+          # A persistent clone of rePredRet-models on the runner's local disk is
+          # both the model cache and the push target. Reset it to the published
+          # state first, so a job that died halfway leaves nothing behind.
+          # model.rds files are LFS objects; the pipeline only needs them to exist,
+          # so they stay pointer files instead of downloading ~50k objects.
+          export GIT_LFS_SKIP_SMUDGE=1
+          if [ -d "$DATA_REPO/.git" ] &&
+             git -C "$DATA_REPO" fetch --depth=1 origin main &&
+             git -C "$DATA_REPO" reset --hard origin/main &&
+             git -C "$DATA_REPO" clean -fdx; then
+            echo "Reset existing clone to origin/main"
           else
-            echo "No build_cache.rds found or download failed, starting fresh"
+            echo "Cloning data repository"
+            rm -rf /opt/repredret-cache/rePredRet-models
+            git clone --depth=1 --branch main \
+              https://github.com/stanstrup-metabolomics/rePredRet-models.git "$DATA_REPO"
           fi
 
-      - name: Restore models from runner cache
-        run: |
-          mkdir -p website/data/models
-          RUNNER_CACHE="/opt/repredret-cache/models"
+          cd "$DATA_REPO"
+          git lfs install --local
+          git lfs pull --include="build_cache.rds"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Published models: $(find models -mindepth 1 -maxdepth 1 -type d | wc -l)"
 
-          # Restore models from runner-local cache (survives across CI runs)
-          # This enables resume after a failed push without rebuilding
-          if [ -d "$RUNNER_CACHE" ] && [ "$(ls -A "$RUNNER_CACHE" 2>/dev/null)" ]; then
-            echo "Restoring models from runner cache..."
-            cp -a "$RUNNER_CACHE"/. website/data/models/
-            echo "Restored $(find website/data/models -name 'model.rds' | wc -l) models from runner cache"
-          fi
+          # The pipeline reads and writes its metadata inside models/
+          for f in build_cache.rds model_index.csv; do
+            if [ -f "$f" ]; then cp "$f" models/; fi
+          done
 
       - name: Run pipeline with build cache
         env:
           MAX_SYSTEMS: ${{ github.event.inputs.max_systems || '0' }}
-          N_BOOT: ${{ github.event.inputs.n_boot || '1000' }}
-        run: |
-          max_sys <- as.integer(Sys.getenv("MAX_SYSTEMS", "0"))
-          n_boot <- as.integer(Sys.getenv("N_BOOT", "1000"))
-
-          # Convert 0 to Inf for "all systems"
-          if (max_sys == 0) max_sys <- Inf
-
-          source("inst/scripts/run_pipeline.R")
-        shell: Rscript {0}
-
-      - name: Save models to runner cache
-        if: always()
-        run: |
-          # Persist built models on the self-hosted runner so they survive
-          # across CI runs. This avoids rebuilding after a failed push.
-          RUNNER_CACHE="/opt/repredret-cache/models"
-          if [ -d website/data/models ]; then
-            mkdir -p "$RUNNER_CACHE"
-            rsync -a --delete website/data/models/ "$RUNNER_CACHE"/
-            echo "Saved $(find "$RUNNER_CACHE" -name 'model.rds' | wc -l) models to runner cache"
-          fi
+          MODELS_DIR: ${{ env.DATA_REPO }}/models
+          REPORT_VERSION: ${{ needs.check-release.outputs.version }}
+        run: Rscript inst/scripts/run_pipeline.R
 
       - name: Update data repository
+        if: env.models_changed == 'true' && (github.event.inputs.max_systems || '0') == '0'
+        env:
+          MODELS_REPO_PAT: ${{ secrets.MODELS_REPO_PAT }}
         run: |
-          # Create a fresh git repo from scratch instead of cloning.
-          # This avoids all pack corruption issues on Docker/overlayfs.
-          mkdir -p push_repo
-          cd push_repo
-          git init -b main
-          git lfs install
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          set -euo pipefail
+          cd "$DATA_REPO"
+
+          # Move metadata from models/ back to the repo root
+          for f in build_cache.rds model_index.csv report_version.txt; do
+            if [ -f "models/$f" ]; then mv "models/$f" .; fi
+          done
+
           git config http.postBuffer 524288000
           git config http.lowSpeedLimit 1000
           git config http.lowSpeedTime 600
-          git remote add origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
-
-          # Set up LFS tracking (same rules as rePredRet-models repo)
-          printf 'models/**/*.rds filter=lfs diff=lfs merge=lfs -text\n*.rds filter=lfs diff=lfs merge=lfs -text\n' > .gitattributes
-
-          # Copy pipeline output
-          echo "Copying models..."
-          cp -a ../website/data/models/ models/
-
-          # Copy metadata to repo root (may be inside models/ or website/)
-          for f in build_cache.rds model_index.csv; do
-            if [ -f "../website/data/models/$f" ]; then
-              cp "../website/data/models/$f" .
-            elif [ -f "models/$f" ]; then
-              cp "models/$f" .
-            fi
-          done
-
-          echo "has_changes=true" >> $GITHUB_ENV
-
-          # Collect model directories for batching
-          cd models/
-          MODEL_DIRS=($(ls -d */ 2>/dev/null))
-          cd ..
-          TOTAL=${#MODEL_DIRS[@]}
-          echo "Total model directories: $TOTAL"
-
-          # Commit metadata + repo files first
-          git add .gitattributes .gitignore README.md build_cache.rds model_index.csv 2>/dev/null || true
-          git commit -m "Update models (automated build)" \
-            -m "RepoRT version: ${{ needs.check-release.outputs.version }}" \
-            -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --allow-empty
-
-          # Batch add model directories
-          BATCH_SIZE=2000
-          BATCH_NUM=0
-          for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
-            BATCH_NUM=$((BATCH_NUM + 1))
-            END=$((i + BATCH_SIZE))
-            if [ $END -gt $TOTAL ]; then END=$TOTAL; fi
-
-            echo "=== Batch $BATCH_NUM: directories $((i+1))-$END of $TOTAL ==="
-
-            for ((j=i; j<END; j++)); do
-              git add "models/${MODEL_DIRS[$j]}"
+          PUSH_URL="https://x-access-token:${MODELS_REPO_PAT}@github.com/stanstrup-metabolomics/rePredRet-models.git"
+          push() {
+            for attempt in 1 2 3; do
+              if git push "$PUSH_URL" HEAD:main; then return 0; fi
+              echo "Push attempt $attempt failed, retrying in 30 seconds..."
+              sleep 30
             done
+            return 1
+          }
 
-            git commit -m "Add models batch $BATCH_NUM" --allow-empty
+          # Commit and push changed model directories (built, rebuilt or removed)
+          # in chunks, so a full rebuild does not become one huge push
+          mapfile -t DIRS < <(git ls-files --modified --others --deleted --exclude-standard -- models |
+                              cut -d/ -f2 | sort -u)
+          echo "Changed model directories: ${#DIRS[@]}"
+          CHUNK=5000
+          for ((i = 0; i < ${#DIRS[@]}; i += CHUNK)); do
+            printf 'models/%s\n' "${DIRS[@]:i:CHUNK}" | git add -A --pathspec-from-file=-
+            git commit -q -m "Update models (part $((i / CHUNK + 1)))"
+            push
           done
 
-          # Force push everything (replaces remote history)
-          # LFS objects already on the server won't be re-uploaded
-          echo "Pushing all commits..."
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "Push attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
-            if git push --force origin main 2>&1; then
-              echo "Push successful"
-              break
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "Push failed, retrying in 30 seconds..."
-                git remote set-url origin "https://${{ secrets.MODELS_REPO_PAT }}@github.com/stanstrup-metabolomics/rePredRet-models.git"
-                sleep 30
-              else
-                echo "Push failed after $MAX_RETRIES attempts"
-                exit 1
-              fi
-            fi
-          done
+          # Index, cache and version last: the published version only changes
+          # once all models are pushed
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Update model index and build cache" \
+              -m "RepoRT version: ${{ needs.check-release.outputs.version }}" \
+              -m "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            push
+          fi
+          echo "Data repository updated"
 
-          echo "All models pushed successfully"
+      - name: Rebuild website statistics
+        if: env.models_changed == 'true' && (github.event.inputs.max_systems || '0') == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sSf -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/dispatches" \
+            -d '{"event_type": "models-updated"}'
 
       - name: Report status
         if: always()
         run: |
-          if [ "${{ env.has_changes }}" == "true" ]; then
+          if [ "${{ env.models_changed }}" == "true" ]; then
             echo "Models updated and pushed to rePredRet-models repository"
           else
             echo "No model updates needed"
