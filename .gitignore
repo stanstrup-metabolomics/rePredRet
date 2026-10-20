@@ -7,22 +7,17 @@
 # Downloaded RepoRT data (cached locally, don't commit)
 RepoRT_data/
 
-# Model files (stored in separate rePredRet-models repository)
-website/data/models/
+# Pipeline output (models are published to the rePredRet-models repository)
+/output/
 
-# Large generated files (remove by_compound, keep by_system with LFS)
-website/data/predictions/by_compound/
-website/data/test_data.rds
-
-# Keep model_index.csv for metadata
-!website/data/model_index.csv
+# Legacy local pipeline output from before output/ was used
+/website/
 
 # pkgdown output
 docs/
 
 # Output files
 *.log
-pipeline_output.log
 
 # Environment files (contain sensitive tokens)
 .github_runner.env

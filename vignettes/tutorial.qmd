@@ -20,7 +20,7 @@ This tutorial shows how to use rePredRet to predict retention times for compound
 ```{r}
 #| eval: false
 # Install the package (if not already installed)
-devtools::install_github("stanstrup/rePredRet")
+devtools::install_github("stanstrup-metabolomics/rePredRet")
 ```
 
 ```{r}

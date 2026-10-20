@@ -1,3 +1,69 @@
+# rePredRet (development version)
+
+## Breaking changes
+
+* Removed `rePredRet_download()`, `rePredRet_predict()`,
+  `rePredRet_system_predictions()` and `rePredRet_plot_errors()`. They depended on a
+  `rePredRet-data` repository with pre-computed predictions that does not exist.
+  Use `build_user_models()` and `predict_rt_user()` to predict RTs.
+* Removed `rePredRet_plot_model()`; use `plot_model()`.
+* `rePredRet_systems()`, `rePredRet_models()`, `rePredRet_model()`, `plot_model()` and
+  `rePredRet_plot_network()` now fetch files on demand from the rePredRet-models
+  repository and cache them locally. Their `data_path` argument is replaced by
+  `refresh`. `rePredRet_model()` returns the contents of `model.json`.
+* Requires R >= 4.4.0.
+
+## Bug fixes
+
+* `save_model_plot()` (and `build_all_models(save_plots = TRUE)`) failed because the
+  internal plot function was masked by the exported `plot_model()`.
+* `plot_model()` read model statistics from the wrong index columns.
+* `search_compound()` and `get_system_info()` looked for RepoRT data in the wrong
+  directory when downloading it.
+* Model viewer: loads the index from the right location, parses it correctly, plots the
+  model data and draws the interval band between the bounds. It is now part of the
+  website.
+* `build_user_models()`, `build_model()` and `build_all_models()` default to
+  `parallelly::availableCores()`.
+
+## Website
+
+* The Overview, Model Statistics and Network articles are computed from the published
+  model index when the site is built, instead of from statistics files committed in
+  January (a 642-model test run). The site is rebuilt after each model update.
+* Removed the Predictions article and the committed prediction and statistics files;
+  pre-computed predictions are no longer produced.
+* Removed the old standalone Quarto site in `website/`; the pkgdown site replaces it.
+
+## Other
+
+* `rePredRet_plot_network()` gains `show_labels`.
+* `inst/scripts/run_pipeline.R` writes to `output/` by default (was `website/data/`).
+* Runner setup (`github_runner.yml`, `RUNNER_SETUP.md`): host paths are set in `.env`
+  and must be on local disks; adds the `/opt/repredret-cache` mount.
+
+## Pipeline
+
+* `build_all_models_furrr()` now builds incrementally: only models whose datasets
+  changed or whose files are missing are rebuilt. Previously the build cache was
+  loaded but never applied or saved, so every run rebuilt all models.
+* `build_all_models_furrr()` removes models for removed datasets and pairs that no
+  longer have enough common compounds, keeps `model_index.csv` complete across
+  incremental runs, records `report_version` in the build cache and returns `changed`.
+* Model pairs are found with a sparse overlap matrix and RT matrices come from a
+  per-dataset lookup, instead of calling `get_common_compounds()` for every
+  ordered pair (minutes to seconds on the full RepoRT data).
+* The number of workers defaults to `parallelly::availableCores()`, which respects
+  container CPU limits (`parallel::detectCores()` reports all host cores).
+* A failing model no longer aborts the whole build.
+* CI: tracks RepoRT master commits instead of releases and only pushes to the data
+  repository when models changed. `max_systems` test runs no longer touch the
+  published models.
+* CI: models are built directly in a persistent clone of rePredRet-models on the
+  runner (`/opt/repredret-cache`), which is reset to the published state at the
+  start of each run. Only changed model directories are committed and pushed, in
+  chunks, instead of force-pushing a freshly created repository with all models.
+
 # rePredRet 0.2.0
 
 ## New Features

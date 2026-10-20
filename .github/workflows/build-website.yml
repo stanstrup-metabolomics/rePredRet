@@ -16,7 +16,8 @@ on:
       - 'NEWS.md'
       - '.github/workflows/build-website.yml'
 
-  # Trigger when models are updated
+  # Sent by build-models.yml after the data repository was updated, so the
+  # statistics articles (computed from the published model index) refresh
   repository_dispatch:
     types: [models-updated]
 
@@ -55,13 +56,6 @@ jobs:
         with:
           extra-packages: any::pkgdown, any::quarto, any::devtools
           needs: website
-
-      - name: Fetch pipeline data for articles
-        run: |
-          # Download statistics/model data if available (for data-dependent articles)
-          mkdir -p website/data/models website/data/statistics
-          curl -f -L -o website/data/models/model_index.csv \
-            https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main/model_index.csv 2>/dev/null || true
 
       - name: Generate documentation
         run: devtools::document()

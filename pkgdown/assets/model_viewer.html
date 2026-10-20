@@ -223,11 +223,8 @@
 
     <script>
         // Configuration - Models fetched from separate data repository
-        const MODELS_PATH = 'https://raw.githubusercontent.com/stanstrup/rePredRet-models/main/models';
-
-        // Fallback for local development (try local first, then GitHub)
-        const USE_LOCAL_FALLBACK = window.location.protocol === 'file:';
-        const LOCAL_MODELS_PATH = '../data/models';
+        const DATA_URL = 'https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main';
+        const MODELS_PATH = `${DATA_URL}/models`;
 
         // Global state
         let modelIndex = {};
@@ -241,20 +238,25 @@
         // Load index of all available models
         async function loadModelIndex() {
             try {
-                const response = await fetch(`${MODELS_PATH}/model_index.csv`);
+                const response = await fetch(`${DATA_URL}/model_index.csv`);
                 if (!response.ok) {
-                    showMessage('error', 'Could not find model index. Make sure models are built in: ' + MODELS_PATH);
+                    showMessage('error', 'Could not find model index at: ' + DATA_URL);
                     return;
                 }
 
+                // Index is written by write.csv(): quoted strings, columns found by name
                 const csv = await response.text();
-                const lines = csv.trim().split('\n').slice(1); // Skip header
+                const parseLine = line => line.trim().split(',').map(v => v.replace(/^"|"$/g, ''));
+                const [header, ...lines] = csv.trim().split('\n').map(parseLine);
+                const sys1Col = header.indexOf('sys1_id');
+                const sys2Col = header.indexOf('sys2_id');
 
                 const systems = new Set();
                 const systemPairs = {};
 
-                lines.forEach(line => {
-                    const [sys1, sys2] = line.split(',').slice(0, 2);
+                lines.forEach(fields => {
+                    const sys1 = fields[sys1Col];
+                    const sys2 = fields[sys2Col];
                     if (sys1 && sys2) {
                         systems.add(sys1);
                         systems.add(sys2);
@@ -318,10 +320,17 @@
             }
         }
 
+        // model.json stores data frames as arrays of rows; convert to columns
+        function toColumns(rows) {
+            const cols = {};
+            Object.keys(rows[0] || {}).forEach(k => { cols[k] = rows.map(r => r[k]); });
+            return cols;
+        }
+
         // Create Plotly visualization
         function plotModel(data) {
-            const pred = data.predictions;
-            const calib = data.calibration;
+            const pred = toColumns(data.predictions);
+            const calib = toColumns(data.calibration);
 
             // Prediction line
             const tracePred = {
@@ -394,7 +403,8 @@
                 margin: { l: 80, r: 50, t: 80, b: 80 }
             };
 
-            Plotly.newPlot('plot', [traceLower, traceUpper, tracePred, traceCalib], layout, {responsive: true});
+            // Upper bound first: the lower trace fills up to it ('tonexty')
+            Plotly.newPlot('plot', [traceUpper, traceLower, tracePred, traceCalib], layout, {responsive: true});
         }
 
         // Display statistics
@@ -407,7 +417,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Median PI Width</div>
-                    <div class="stat-value">${stats.median_pi_width.toFixed(3)} RT</div>
+                    <div class="stat-value">${stats.median_ci_width.toFixed(3)} RT</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Median Error</div>

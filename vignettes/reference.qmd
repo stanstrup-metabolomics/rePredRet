@@ -7,42 +7,30 @@ subtitle: "Complete guide to rePredRet functions"
 
 rePredRet provides functions for three main use cases:
 
-1. **Query pre-built predictions** - Access predictions from the published model repository
+1. **Explore pre-built models** - Models between RepoRT systems from the published model repository
 2. **Build custom models** - Use your own RT data to build models
 3. **Explore the database** - Search compounds and systems
 
 ---
 
-## Querying Pre-built Predictions
+## Exploring Pre-built Models
 
-These functions access the published rePredRet-data repository.
-
-### `rePredRet_download()`
-
-Downloads the latest predictions and models from GitHub.
-
-```{r}
-#| eval: false
-# Download to default cache location
-rePredRet_download()
-
-# Force re-download
-rePredRet_download(force_download = TRUE)
-
-# Download to specific location
-rePredRet_download(cache_dir = "my_data")
-```
+These functions fetch files on demand from the
+[rePredRet-models](https://github.com/stanstrup-metabolomics/rePredRet-models)
+repository and cache them locally. Use `refresh = TRUE` to bypass the cache.
 
 ### `rePredRet_systems()`
 
-Lists all available chromatographic systems.
+Lists all chromatographic systems that have pre-built models, with their
+RepoRT study information.
+
 ```{r}
 #| eval: false
 systems <- rePredRet_systems()
-head(systems)
-#   id           name method.type n_compounds
-# 1 0001      FEM_short          RP          85
-# 2 0002       FEM_long          RP         112
+head(systems[, c("id", "name", "method.type")])
+#   id    name      method.type
+# 1 0001  FEM_short RP
+# 2 0002  FEM_long  RP
 ```
 
 ### `rePredRet_models()`
@@ -53,21 +41,20 @@ Lists all available models with quality metrics.
 #| eval: false
 models <- rePredRet_models()
 head(models)
-#   from_id to_id n_compounds median_error median_ci_width
-# 1    0001  0002          42        0.15            0.28
+#   sys1_id sys2_id n_compounds median_ci_width median_error
+# 1 0001    0002             67           15.99        0.336
 ```
 
-### `rePredRet_predict()`
+### `rePredRet_model()`
 
-Gets predictions for a specific compound.
+Gets a single model with its prediction grid, calibration data and statistics.
 
 ```{r}
 #| eval: false
-# Search by InChI
-preds <- rePredRet_predict("InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3")
-
-# Search by name (if indexed)
-preds <- rePredRet_predict("caffeine")
+model <- rePredRet_model("0001", "0002")
+head(model$predictions)   # x, pred, lower, upper
+head(model$calibration)   # x, y, compound
+model$stats
 ```
 
 ### `plot_model()`
@@ -260,11 +247,11 @@ common <- get_common_compounds(dataset1, dataset2)
 
 | Function | Purpose |
 |----------|---------|
-| `rePredRet_download()` | Download pre-built predictions |
-| `rePredRet_systems()` | List available systems |
-| `rePredRet_models()` | List available models |
-| `rePredRet_predict()` | Query predictions for a compound |
+| `rePredRet_systems()` | List systems with pre-built models |
+| `rePredRet_models()` | List pre-built models |
+| `rePredRet_model()` | Get a pre-built model |
 | `plot_model()` | Plot a pre-built model |
+| `rePredRet_plot_network()` | Plot the network of pre-built models |
 | `build_user_models()` | Build models from your data |
 | `predict_rt_user()` | Generate predictions |
 | `compare_systems()` | Find similar systems |

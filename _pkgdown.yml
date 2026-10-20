@@ -1,11 +1,11 @@
-url: https://stanstrup.github.io/rePredRet
+url: https://stanstrup-metabolomics.github.io/rePredRet
 
 template:
   bootstrap: 5
 
 navbar:
   structure:
-    left:  [intro, reference, articles, news]
+    left:  [intro, reference, articles, viewer, news]
     right: [search, github]
   components:
     intro:
@@ -28,14 +28,15 @@ navbar:
         - text: "Results & Statistics"
         - text: Model Statistics
           href: articles/models.html
-        - text: Predictions
-          href: articles/predictions.html
         - text: System Network
           href: articles/network.html
         - text: "---"
         - text: "Background"
         - text: Methods
           href: articles/methods.html
+    viewer:
+      text: Model Viewer
+      href: model_viewer.html
     news:
       text: News
       href: news/index.html
@@ -50,7 +51,6 @@ articles:
   - title: Results & Statistics
     contents:
       - models
-      - predictions
       - network
   - title: Background
     contents:
@@ -94,25 +94,20 @@ reference:
       - plot_compound_coverage
       - save_model_plot
 
-  - title: Pre-built Data Access
+  - title: Pre-built Models
     desc: >
-      Access pre-built models, predictions, and system information from the
-      latest rePredRet release on GitHub.
+      Explore the pre-built models between RepoRT systems. Files are fetched on
+      demand from the rePredRet-models repository and cached locally.
     contents:
-      - rePredRet_download
       - rePredRet_systems
       - rePredRet_models
       - rePredRet_model
-      - rePredRet_predict
-      - rePredRet_system_predictions
-      - rePredRet_plot_model
-      - rePredRet_plot_errors
       - rePredRet_plot_network
 
   - title: Core Pipeline
     desc: >
       Lower-level functions for the full model-building and prediction pipeline.
-      Most users should use the User Workflow or Pre-built Data Access functions
+      Most users should use the User Workflow or Pre-built Models functions
       instead.
     contents:
       - build_model

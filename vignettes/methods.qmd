@@ -21,15 +21,19 @@ where $f$ is a monotonically increasing function.
 
 1. **Identify Common Compounds**: Find compounds present in both source and target systems using standardized InChI identifiers (with stereochemistry stripped for better matching).
 
-2. **Fit Monotonic GAM**: Using the `scam` package in R, fit a shape-constrained additive model:
-   - Thin plate regression splines for flexibility
-   - Monotonic increasing constraint (`bs = "mpi"`)
-   - Automatic smoothness selection via GCV
+2. **Fit Monotonic GAM** (using `mgcv`):
+   - An unconstrained thin plate regression spline GAM gives the smoothing
+     parameter and standard errors
+   - Compounds with large residuals are down-weighted with a sigmoid weight
+   - A cubic regression spline is refitted with monotonic increasing
+     constraints (`mgcv::mono.con()` and `mgcv::pcls()`)
 
-3. **Bootstrap Confidence Intervals**:
-   - 1000 bootstrap iterations (resampling calibration compounds)
-   - 99% confidence intervals using the percentile method
-   - Parallel computation for efficiency
+3. **Prediction Intervals** (`method = "fast_ci"`, default):
+   - 95% prediction intervals: fit ± z · sqrt(SE² + σ²), where σ² is the
+     residual variance of the constrained fit
+   - Interval bounds are made monotonic with a cumulative maximum
+   - `method = "bootstrap"` instead refits the model on bootstrap resamples
+     of the calibration compounds (slower)
 
 4. **Quality Filters**: Predictions are only made where:
    - CI width < 2 minutes OR relative CI width < 20%
@@ -38,16 +42,18 @@ where $f$ is a monotonically increasing function.
 ### GAM Specification
 
 ```r
-scam::scam(
-  y ~ s(x, bs = "mpi", k = -1),
-  data = calibration_data,
-  family = gaussian()
-)
+# Unconstrained fit for smoothing parameter and standard errors
+fit <- mgcv::gam(y ~ s(x, k = k, bs = "tp"), data = calibration_data)
+
+# Monotonic constrained refit
+sm <- mgcv::smoothCon(mgcv::s(x, k = k, bs = "cr"), calibration_data)[[1]]
+con <- mgcv::mono.con(sm$xp)
+p <- mgcv::pcls(list(X = sm$X, y = y, w = w, sp = fit$sp, S = sm$S,
+                     Ain = con$A, bin = con$b, p = sm$xp, C = matrix(0, 0, 0), off = 0))
 ```
 
-- `bs = "mpi"`: Monotonically increasing P-spline
-- `k = -1`: Automatic basis dimension selection
-- `family = gaussian()`: Gaussian errors
+- `k`: number of unique source RTs, at most 10
+- `w`: sigmoid weights from the unconstrained residuals
 
 ## Data Source
 
@@ -74,15 +80,19 @@ Compounds are matched between systems using standardized InChI:
 ```
 rePredRet/
 ├── R/
-│   ├── data_loading.R      # RepoRT data loading
-│   ├── gam_fitting.R       # Core GAM functions
-│   ├── model_building.R    # Model construction
-│   ├── prediction.R        # RT predictions
-│   ├── statistics.R        # Performance metrics
-│   └── user_functions.R    # User convenience functions
+│   ├── data_loading.R           # RepoRT data loading
+│   ├── gam_fast_ci.R            # Default GAM fit and prediction intervals
+│   ├── gam_fitting.R            # Bootstrap GAM functions
+│   ├── model_building.R         # Model construction
+│   ├── build_all_models_furrr.R # Incremental parallel pipeline
+│   ├── build_user_models.R      # Models from user RT data
+│   ├── prediction.R             # RT predictions
+│   ├── statistics.R             # Performance metrics
+│   └── user_functions.R         # Access to pre-built models
+├── inst/scripts/run_pipeline.R  # Pipeline used by CI
 ├── tests/
-│   └── testthat/           # Unit tests
-└── website/                # This documentation
+│   └── testthat/                # Unit tests
+└── vignettes/                   # This documentation
 ```
 
 ### Key Functions
@@ -93,15 +103,15 @@ rePredRet/
 | `load_report_data()` | Load datasets from RepoRT |
 | `get_common_compounds()` | Find shared compounds |
 | `build_model()` | Build single pairwise model |
-| `build_all_models()` | Build all pairwise models |
+| `build_all_models_furrr()` | Build all pairwise models (incremental, parallel) |
 | `predict_rt()` | Predict RT for a compound |
 | `generate_all_predictions()` | Generate all predictions |
 
 ### Computational Considerations
 
-- **Parallel Processing**: Bootstrap uses all available CPU cores
+- **Parallel Processing**: Models are built in parallel with `furrr`, one worker per available CPU core
+- **Incremental Builds**: Only models whose datasets changed are rebuilt
 - **Model Pruning**: Boot objects are pruned to reduce storage by ~95%
-- **Memory Management**: Large datasets processed incrementally
 
 ## Validation
 
@@ -133,13 +143,13 @@ Based on the original PredRet paper (Stanstrup et al. 2015):
 2. **RepoRT Database**:
    Kretschmer, F., Witting, M., & al. (2024). RepoRT: a comprehensive repository for small molecule retention times. *Nature Methods*, 21, 153-155. doi:10.1038/s41592-023-02143-z
 
-3. **Shape-Constrained GAMs**:
-   Pya, N., & Wood, S. N. (2015). Shape constrained additive models. *Statistics and Computing*, 25, 543-559.
+3. **Generalized Additive Models**:
+   Wood, S. N. (2017). *Generalized Additive Models: An Introduction with R* (2nd ed.). Chapman and Hall/CRC.
 
 ## Source Code
 
 The complete source code is available on GitHub:
 
-- **rePredRet package**: [github.com/stanstrup/rePredRet](https://github.com/stanstrup/rePredRet)
-- **Published data**: [github.com/stanstrup/rePredRet-data](https://github.com/stanstrup/rePredRet-data)
+- **rePredRet package**: [github.com/stanstrup-metabolomics/rePredRet](https://github.com/stanstrup-metabolomics/rePredRet)
+- **Pre-built models**: [github.com/stanstrup-metabolomics/rePredRet-models](https://github.com/stanstrup-metabolomics/rePredRet-models)
 - **RepoRT**: [github.com/michaelwitting/RepoRT](https://github.com/michaelwitting/RepoRT)
