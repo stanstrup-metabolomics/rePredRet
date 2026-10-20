@@ -14,7 +14,7 @@ get_calibration_regression_data(model_results)
 - model_results:
 
   Output from
-  [`build_all_models()`](https://stanstrup.github.io/rePredRet/reference/build_all_models.md).
+  [`build_all_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models.md).
 
 ## Value
 

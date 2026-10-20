@@ -13,7 +13,7 @@ extract_plot_data(model)
 - model:
 
   A model object from
-  [`build_model()`](https://stanstrup.github.io/rePredRet/reference/build_model.md).
+  [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md).
 
 ## Value
 

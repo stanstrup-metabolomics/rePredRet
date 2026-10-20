@@ -14,7 +14,7 @@ export_models(model_results, output_dir = "models")
 - model_results:
 
   Output from
-  [`build_all_models()`](https://stanstrup.github.io/rePredRet/reference/build_all_models.md).
+  [`build_all_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models.md).
 
 - output_dir:
 

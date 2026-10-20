@@ -8,16 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/stanstrup/rePredRet/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/stanstrup-metabolomics/rePredRet/blob/master/DESCRIPTION)
 
 Stanstrup J (2026). *rePredRet: Retention Time Prediction by Direct
 System Mapping*. R package version 0.2.0,
-<https://stanstrup.github.io/rePredRet>.
+<https://stanstrup-metabolomics.github.io/rePredRet>.
 
     @Manual{,
       title = {rePredRet: Retention Time Prediction by Direct System Mapping},
       author = {Jan Stanstrup},
       year = {2026},
       note = {R package version 0.2.0},
-      url = {https://stanstrup.github.io/rePredRet},
+      url = {https://stanstrup-metabolomics.github.io/rePredRet},
     }

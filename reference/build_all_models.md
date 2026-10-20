@@ -11,10 +11,10 @@ build_all_models(
   min_compounds = 10,
   n_boot = 200,
   alpha = 0.05,
-  n_cores = parallel::detectCores(),
+  n_cores = parallelly::availableCores(),
   method_match = TRUE,
   export_dir = NULL,
-  method = c("fast_ci", "bootstrap"),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   save_plots = TRUE
 )
 ```
@@ -24,7 +24,7 @@ build_all_models(
 - report_data:
 
   Data from
-  [`load_report_data()`](https://stanstrup.github.io/rePredRet/reference/load_report_data.md).
+  [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md).
 
 - min_compounds:
 
@@ -54,8 +54,9 @@ build_all_models(
 
 - method:
 
-  Method for confidence intervals: "fast_ci" (default, fast) or
-  "bootstrap" (accurate, slower).
+  Method for prediction intervals: "adaptive_pi" (default), "fast_ci" or
+  "bootstrap". See
+  [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md).
 
 - save_plots:
 

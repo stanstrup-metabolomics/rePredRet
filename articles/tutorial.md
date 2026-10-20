@@ -18,7 +18,7 @@ systems in the database.
 
 ``` r
 # Install the package (if not already installed)
-devtools::install_github("stanstrup/rePredRet")
+devtools::install_github("stanstrup-metabolomics/rePredRet")
 ```
 
 ``` r
@@ -94,7 +94,7 @@ length(my_inchis) == length(my_rts)
 ### Step 2: Build Calibration Models
 
 Use
-[`build_user_models()`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md)
+[`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md)
 to build models from all compatible RepoRT systems to your system.
 Specify whether your system is RP (reversed-phase) or HILIC.
 
@@ -105,7 +105,7 @@ my_models <- build_user_models(
   rts = my_rts,
   system_type = "RP",
   min_compounds = 10,  # Minimum compounds needed for a model
-  method = "fast_ci",  # Use fast CI calculation
+  method = "adaptive_pi",  # Default prediction intervals
   verbose = TRUE
 )
 ```
@@ -114,7 +114,7 @@ my_models <- build_user_models(
       build_user_models
       System type: RP
       User compounds: 13
-      Method: fast_ci
+      Method: adaptive_pi
     ================================================
 
     Step 1/3: Standardizing InChIs...
@@ -188,7 +188,7 @@ plot(my_models, type = "calibration")
 ### Step 4: Generate Predictions
 
 Use
-[`predict_rt_user()`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md)
+[`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)
 to generate predictions for all compounds in the source systems.
 
 ``` r
@@ -313,30 +313,34 @@ compounds that must be shared between your data and a repository system
 to build a model. Lower values allow more models but with potentially
 lower quality.
 
-### CI Calculation Methods
+### Prediction Interval Methods
 
-- **`fast_ci`** (default): Uses analytical confidence intervals. Fast
-  (~0.02 sec/model).
-- **`bootstrap`**: Uses bootstrap resampling. More accurate but slower
-  (~1.5 sec/model).
+- **`adaptive_pi`** (default): Prediction intervals whose width follows
+  the local scatter of the calibration compounds, calibrated by
+  cross-validation. About 0.06-0.09 sec/model.
+- **`fast_ci`**: Prediction intervals of nearly constant width. About 4
+  times faster than `adaptive_pi`.
+- **`bootstrap`**: Bootstrap resampling with 200 refits, with the same
+  local width and calibration as `adaptive_pi`. About 40 times slower.
 
 ### Filtering Predictions
 
 After generating predictions, filter based on:
 
-- **CI width**: Narrower intervals indicate more confident predictions
+- **Interval width**: Narrower intervals indicate more confident
+  predictions
 - **Model R²**: Higher values indicate better calibration fit
 - **Number of calibration compounds**: More compounds = more reliable
   model
 
 ## Summary
 
-| Function                                                                                      | Purpose                                    |
-|-----------------------------------------------------------------------------------------------|--------------------------------------------|
-| [`build_user_models()`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md) | Build calibration models from your RT data |
-| [`predict_rt_user()`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md)     | Generate predictions using built models    |
-| [`plot()`](https://rdrr.io/r/graphics/plot.default.html)                                      | Visualize model diagnostics                |
-| [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)                                | Extract predictions as data.frame          |
+| Function                                                                                                   | Purpose                                    |
+|------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md) | Build calibration models from your RT data |
+| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)     | Generate predictions using built models    |
+| [`plot()`](https://rdrr.io/r/graphics/plot.default.html)                                                   | Visualize model diagnostics                |
+| [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)                                             | Extract predictions as data.frame          |
 
 This workflow allows you to get RT predictions for compounds you haven’t
 measured, without needing to submit your data to RepoRT.

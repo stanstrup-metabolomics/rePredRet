@@ -1,7 +1,7 @@
 # Generate RT Predictions from User Models
 
 Generates retention time predictions using models built with
-[`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
+[`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md).
 
 ## Usage
 
@@ -14,7 +14,7 @@ predict_rt_user(models, compounds = NULL, verbose = TRUE)
 - models:
 
   A UserRTModels object from
-  [`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
+  [`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md).
 
 - compounds:
 
@@ -58,9 +58,9 @@ prediction with the smallest confidence interval width is returned.
 
 ## See also
 
-[`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md)
+[`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md)
 for building models,
-[`UserRTPredictions-class`](https://stanstrup.github.io/rePredRet/reference/UserRTPredictions-class.md)
+[`UserRTPredictions-class`](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTPredictions-class.md)
 for the return object class
 
 ## Examples

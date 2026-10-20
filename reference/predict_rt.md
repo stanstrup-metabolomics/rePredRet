@@ -32,12 +32,12 @@ predict_rt(
 - models:
 
   Named list of models from
-  [`build_all_models()`](https://stanstrup.github.io/rePredRet/reference/build_all_models.md).
+  [`build_all_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models.md).
 
 - datasets:
 
   Named list of datasets from
-  [`load_report_data()`](https://stanstrup.github.io/rePredRet/reference/load_report_data.md).
+  [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md).
 
 - ci_width_limit:
 

@@ -16,9 +16,9 @@ plot_system_network(models, min_compounds = 10, interactive = FALSE)
 - models:
 
   A
-  [UserRTModels](https://stanstrup.github.io/rePredRet/reference/UserRTModels-class.md)
+  [UserRTModels](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTModels-class.md)
   object from
-  [`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
+  [`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md).
 
 - min_compounds:
 
@@ -48,8 +48,8 @@ excluded from the visualization.
 
 ## See also
 
-[`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md),
-[`compare_systems`](https://stanstrup.github.io/rePredRet/reference/compare_systems.md)
+[`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md),
+[`compare_systems`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md)
 
 ## Examples
 

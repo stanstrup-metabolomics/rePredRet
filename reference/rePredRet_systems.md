@@ -1,23 +1,24 @@
 # List Available Chromatographic Systems
 
-Returns information about all chromatographic systems with available
-predictions.
+Returns RepoRT study information for all chromatographic systems that
+have pre-built models.
 
 ## Usage
 
 ``` r
-rePredRet_systems(data_path = NULL)
+rePredRet_systems(refresh = FALSE)
 ```
 
 ## Arguments
 
-- data_path:
+- refresh:
 
-  Path to rePredRet-data (or NULL to use cache).
+  If TRUE, download fresh copies instead of using the cache.
 
 ## Value
 
-Tibble with system information.
+Tibble with system information from RepoRT (id, name, url, method.type,
+authors, ...).
 
 ## Examples
 

@@ -14,7 +14,7 @@ validate_models(models, method = c("loo"))
 - models:
 
   A UserRTModels object from
-  [`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
+  [`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md).
 
 - method:
 

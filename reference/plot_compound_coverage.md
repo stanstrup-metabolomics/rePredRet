@@ -16,9 +16,9 @@ plot_compound_coverage(models, top_n = 30)
 - models:
 
   A
-  [UserRTModels](https://stanstrup.github.io/rePredRet/reference/UserRTModels-class.md)
+  [UserRTModels](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTModels-class.md)
   object from
-  [`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md).
+  [`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md).
 
 - top_n:
 
@@ -42,8 +42,8 @@ showing the molecular formula layer for readability.
 
 ## See also
 
-[`build_user_models`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md),
-[`UserRTModels-class`](https://stanstrup.github.io/rePredRet/reference/UserRTModels-class.md)
+[`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md),
+[`UserRTModels-class`](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTModels-class.md)
 
 ## Examples
 

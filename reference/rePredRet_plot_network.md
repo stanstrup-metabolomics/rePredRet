@@ -1,12 +1,12 @@
 # Plot System Network
 
 Creates a network visualization showing connections between
-chromatographic systems based on model availability.
+chromatographic systems based on pre-built model availability.
 
 ## Usage
 
 ``` r
-rePredRet_plot_network(min_compounds = 20, data_path = NULL)
+rePredRet_plot_network(min_compounds = 20, show_labels = TRUE, refresh = FALSE)
 ```
 
 ## Arguments
@@ -15,10 +15,14 @@ rePredRet_plot_network(min_compounds = 20, data_path = NULL)
 
   Minimum compounds to show edge (default 20).
 
-- data_path:
+- show_labels:
 
-  Path to rePredRet-data (or NULL to use cache).
+  If TRUE (default), label each system with its ID.
+
+- refresh:
+
+  If TRUE, download a fresh model index instead of using the cache.
 
 ## Value
 
-A ggplot object or network diagram.
+A ggplot object.

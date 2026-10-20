@@ -7,12 +7,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Retention Time Prediction by Direct System Mapping • rePredRet</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Retention Time Prediction by Direct System Mapping">
-<meta name="description" content="Predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. This is a reimplementation of PredRet that uses RepoRT data as input and publishes predictions to GitHub. Unlike QSRR models that use molecular descriptors, rePredRet uses experimentally measured RTs from one system to predict RTs in another system.">
-<meta property="og:description" content="Predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. This is a reimplementation of PredRet that uses RepoRT data as input and publishes predictions to GitHub. Unlike QSRR models that use molecular descriptors, rePredRet uses experimentally measured RTs from one system to predict RTs in another system.">
+<meta name="description" content="Predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. This is a reimplementation of PredRet that uses RepoRT data as input and publishes pre-built models to GitHub. Unlike QSRR models that use molecular descriptors, rePredRet uses experimentally measured RTs from one system to predict RTs in another system.">
+<meta property="og:description" content="Predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained GAMs. This is a reimplementation of PredRet that uses RepoRT data as input and publishes pre-built models to GitHub. Unlike QSRR models that use molecular descriptors, rePredRet uses experimentally measured RTs from one system to predict RTs in another system.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -43,20 +43,21 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Results &amp; Statistics</h6></li>
     <li><a class="dropdown-item" href="articles/models.html">Model Statistics</a></li>
-    <li><a class="dropdown-item" href="articles/predictions.html">Predictions</a></li>
     <li><a class="dropdown-item" href="articles/network.html">System Network</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="articles/methods.html">Methods</a></li>
+    <li><a class="dropdown-item" href="articles/benchmark.html">Prediction Interval Benchmark</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="model_viewer.html">Model Viewer</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/stanstrup/rePredRet/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/stanstrup-metabolomics/rePredRet/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -69,64 +70,69 @@
 </h1></div>
 <p><strong>Retention Time Prediction by Direct System Mapping</strong></p>
 <p>rePredRet is a reimplementation of <a href="http://predret.org" class="external-link">PredRet</a> that uses data from the <a href="https://github.com/michaelwitting/RepoRT" class="external-link">RepoRT</a> community repository to build retention time prediction models.</p>
-<p><strong>Features:</strong> - ~50,000 pre-computed RT prediction models between LC-MS systems - Interactive web viewer for model exploration - Incremental model building with change detection - Bootstrap confidence intervals for predictions - Monotonically constrained GAMs for robust predictions</p>
-<p><strong>Links:</strong> - <strong>Website &amp; Model Viewer:</strong> <a href="https://stanstrup.github.io/rePredRet/" class="uri">https://stanstrup.github.io/rePredRet/</a> - <strong>Model Repository:</strong> <a href="https://github.com/stanstrup/rePredRet-models" class="external-link uri">https://github.com/stanstrup/rePredRet-models</a> (~3.7 GB, 49,570 models)</p>
+<p><strong>Features:</strong> - Predict retention times in your own chromatographic system from your measured RTs - ~50,000 pre-built models between RepoRT systems, with an interactive model viewer - Monotonically constrained GAMs with prediction intervals - Incremental, parallel model building with change detection</p>
+<p><strong>Links:</strong> - <strong>Website, tutorial &amp; model viewer:</strong> <a href="https://stanstrup-metabolomics.github.io/rePredRet/" class="uri">https://stanstrup-metabolomics.github.io/rePredRet/</a> - <strong>Pre-built models:</strong> <a href="https://github.com/stanstrup-metabolomics/rePredRet-models" class="external-link uri">https://github.com/stanstrup-metabolomics/rePredRet-models</a></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install from GitHub</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"stanstrup/rePredRet"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"stanstrup-metabolomics/rePredRet"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
 <div class="section level3">
-<h3 id="for-end-users-access-pre-computed-predictions">For End Users: Access Pre-computed Predictions<a class="anchor" aria-label="anchor" href="#for-end-users-access-pre-computed-predictions"></a>
+<h3 id="predict-rts-for-your-own-system">Predict RTs for Your Own System<a class="anchor" aria-label="anchor" href="#predict-rts-for-your-own-system"></a>
 </h3>
+<p>Provide compounds you have measured (InChI + RT). rePredRet builds models from all compatible RepoRT systems to your system and predicts RTs for the compounds measured in those systems.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://stanstrup.github.io/rePredRet">rePredRet</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://stanstrup-metabolomics.github.io/rePredRet">rePredRet</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Download the latest predictions</span></span>
-<span><span class="va">data_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_download.html">rePredRet_download</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># List available chromatographic systems</span></span>
-<span><span class="va">systems</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_systems.html">rePredRet_systems</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get predictions for a compound (by InChI or InChIKey)</span></span>
-<span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_predict.html">rePredRet_predict</a></span><span class="op">(</span><span class="st">"RYYVLZVUVIJVGH-UHFFFAOYSA-N"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get all predictions for a specific target system</span></span>
-<span><span class="va">system_preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_system_predictions.html">rePredRet_system_predictions</a></span><span class="op">(</span><span class="st">"0001"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Visualize a model</span></span>
-<span><span class="fu"><a href="reference/rePredRet_plot_model.html">rePredRet_plot_model</a></span><span class="op">(</span><span class="st">"0001"</span>, <span class="st">"0002"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="for-developers-build-your-own-models">For Developers: Build Your Own Models<a class="anchor" aria-label="anchor" href="#for-developers-build-your-own-models"></a>
-</h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://stanstrup.github.io/rePredRet">rePredRet</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Download RepoRT data</span></span>
-<span><span class="va">report_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_report.html">download_report</a></span><span class="op">(</span>dest_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Load datasets</span></span>
-<span><span class="va">report_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/load_report_data.html">load_report_data</a></span><span class="op">(</span><span class="va">report_path</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Build all pairwise models</span></span>
-<span><span class="va">model_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/build_all_models.html">build_all_models</a></span><span class="op">(</span><span class="va">report_data</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Generate predictions</span></span>
-<span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/generate_all_predictions.html">generate_all_predictions</a></span><span class="op">(</span></span>
-<span>  <span class="va">model_results</span><span class="op">$</span><span class="va">models</span>,</span>
-<span>  <span class="va">report_data</span><span class="op">$</span><span class="va">datasets</span>,</span>
-<span>  <span class="va">report_data</span><span class="op">$</span><span class="va">studies</span></span>
+<span><span class="co"># Build models from RepoRT systems to your system</span></span>
+<span><span class="va">models</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/build_user_models.html">build_user_models</a></span><span class="op">(</span></span>
+<span>  inchis <span class="op">=</span> <span class="va">my_inchis</span>,      <span class="co"># InChI strings of your measured compounds</span></span>
+<span>  rts <span class="op">=</span> <span class="va">my_rts</span>,            <span class="co"># Their retention times (minutes)</span></span>
+<span>  system_type <span class="op">=</span> <span class="st">"RP"</span>       <span class="co"># "RP" or "HILIC"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Export results</span></span>
-<span><span class="fu"><a href="reference/export_models.html">export_models</a></span><span class="op">(</span><span class="va">model_results</span>, <span class="st">"my_models"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/export_predictions.html">export_predictions</a></span><span class="op">(</span><span class="va">predictions</span>, <span class="st">"my_predictions"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Inspect model quality and find the most similar systems</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">models</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/compare_systems.html">compare_systems</a></span><span class="op">(</span><span class="va">models</span>, top_n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Predict RTs (one prediction per compound, narrowest interval)</span></span>
+<span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/predict_rt_user.html">predict_rt_user</a></span><span class="op">(</span><span class="va">models</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/export_predictions.html">export_predictions</a></span><span class="op">(</span><span class="va">predictions</span>, <span class="st">"my_predictions.csv"</span><span class="op">)</span></span></code></pre></div>
+<p>See the <a href="https://stanstrup-metabolomics.github.io/rePredRet/articles/tutorial.html">tutorial</a> for a full example.</p>
+</div>
+<div class="section level3">
+<h3 id="explore-the-pre-built-models">Explore the Pre-built Models<a class="anchor" aria-label="anchor" href="#explore-the-pre-built-models"></a>
+</h3>
+<p>Files are fetched on demand from the rePredRet-models repository and cached locally.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Systems and models</span></span>
+<span><span class="va">systems</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_systems.html">rePredRet_systems</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">models</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_models.html">rePredRet_models</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># A single model: prediction grid, calibration data and statistics</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rePredRet_model.html">rePredRet_model</a></span><span class="op">(</span><span class="st">"0001"</span>, <span class="st">"0002"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Visualize</span></span>
+<span><span class="fu"><a href="reference/plot_model.html">plot_model</a></span><span class="op">(</span><span class="st">"0001"</span>, <span class="st">"0002"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/plot_model.html">plot_model</a></span><span class="op">(</span><span class="st">"0001"</span>, <span class="st">"0002"</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/rePredRet_plot_network.html">rePredRet_plot_network</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="build-all-models-from-report">Build All Models from RepoRT<a class="anchor" aria-label="anchor" href="#build-all-models-from-report"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Download and load RepoRT data</span></span>
+<span><span class="va">report_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_report.html">download_report</a></span><span class="op">(</span>dest_dir <span class="op">=</span> <span class="st">"RepoRT_data"</span><span class="op">)</span></span>
+<span><span class="va">report_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/load_report_data.html">load_report_data</a></span><span class="op">(</span><span class="va">report_path</span>, method_types <span class="op">=</span> <span class="st">"RP"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Build all pairwise models (incremental: rerunning only rebuilds what changed)</span></span>
+<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/build_all_models_furrr.html">build_all_models_furrr</a></span><span class="op">(</span><span class="va">report_data</span>, export_dir <span class="op">=</span> <span class="st">"models"</span><span class="op">)</span></span></code></pre></div>
+<p>The production pipeline used by CI is <code>inst/scripts/run_pipeline.R</code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -134,13 +140,14 @@
 </h2>
 <p>rePredRet predicts retention times (RTs) by directly mapping between chromatographic systems using monotonically constrained Generalized Additive Models (GAMs).</p>
 <p><strong>Key assumptions:</strong> - Elution order is largely conserved between similar chromatographic systems - Compounds that elute early in one system tend to elute early in similar systems</p>
-<p><strong>The algorithm:</strong> 1. Find compounds measured in both source and target systems 2. Fit a monotonically constrained GAM to the RT pairs 3. Use bootstrap resampling (1000 iterations) to estimate confidence intervals 4. Predictions are filtered by CI width and calibration data density</p>
+<p><strong>The algorithm:</strong> 1. Find compounds measured in both source and target systems (InChI without stereochemistry) 2. Fit a monotonically constrained GAM to the RT pairs, down-weighting outliers 3. Compute 95% prediction intervals whose width follows the local scatter of the compounds, calibrated by cross-validation (<code>method = "adaptive_pi"</code>, default). <code>method = "fast_ci"</code> gives faster intervals of nearly constant width and <code>method = "bootstrap"</code> a slower bootstrap version</p>
+<p>See the <a href="https://stanstrup-metabolomics.github.io/rePredRet/articles/methods.html">methods article</a> for details.</p>
 </div>
 <div class="section level2">
 <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a>
 </h2>
 <div class="section level3">
-<h3 id="user-functions-for-accessing-pre-computed-data">User Functions (for accessing pre-computed data)<a class="anchor" aria-label="anchor" href="#user-functions-for-accessing-pre-computed-data"></a>
+<h3 id="your-own-data">Your Own Data<a class="anchor" aria-label="anchor" href="#your-own-data"></a>
 </h3>
 <table class="table">
 <colgroup>
@@ -153,46 +160,34 @@
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><code><a href="reference/rePredRet_download.html">rePredRet_download()</a></code></td>
-<td>Download latest predictions from GitHub</td>
+<td><code><a href="reference/check_input_data.html">check_input_data()</a></code></td>
+<td>Validate InChIs and RTs</td>
 </tr>
 <tr class="even">
-<td><code><a href="reference/rePredRet_systems.html">rePredRet_systems()</a></code></td>
-<td>List available chromatographic systems</td>
+<td><code><a href="reference/build_user_models.html">build_user_models()</a></code></td>
+<td>Build models from RepoRT systems to your system</td>
 </tr>
 <tr class="odd">
-<td><code><a href="reference/rePredRet_models.html">rePredRet_models()</a></code></td>
-<td>List all available models</td>
+<td><code><a href="reference/predict_rt_user.html">predict_rt_user()</a></code></td>
+<td>Predict RTs with those models</td>
 </tr>
 <tr class="even">
-<td><code>rePredRet_model(from, to)</code></td>
-<td>Get a specific model with details</td>
+<td><code><a href="reference/compare_systems.html">compare_systems()</a></code></td>
+<td>Rank RepoRT systems by similarity to yours</td>
 </tr>
 <tr class="odd">
-<td><code>rePredRet_predict(compound)</code></td>
-<td>Get predictions for a compound</td>
+<td><code><a href="reference/validate_models.html">validate_models()</a></code></td>
+<td>Cross-validate model quality</td>
 </tr>
 <tr class="even">
-<td><code>rePredRet_system_predictions(id)</code></td>
-<td>Get all predictions for a system</td>
-</tr>
-<tr class="odd">
-<td><code>rePredRet_plot_model(from, to)</code></td>
-<td>Visualize a model fit</td>
-</tr>
-<tr class="even">
-<td><code>rePredRet_plot_errors(id)</code></td>
-<td>Plot prediction error distribution</td>
-</tr>
-<tr class="odd">
-<td><code><a href="reference/rePredRet_plot_network.html">rePredRet_plot_network()</a></code></td>
-<td>Visualize system connections</td>
+<td><code><a href="reference/export_predictions.html">export_predictions()</a></code></td>
+<td>Export predictions to CSV or Excel</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section level3">
-<h3 id="developer-functions-for-building-models">Developer Functions (for building models)<a class="anchor" aria-label="anchor" href="#developer-functions-for-building-models"></a>
+<h3 id="pre-built-models">Pre-built Models<a class="anchor" aria-label="anchor" href="#pre-built-models"></a>
 </h3>
 <table class="table">
 <thead><tr class="header">
@@ -201,55 +196,88 @@
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td><code><a href="reference/rePredRet_systems.html">rePredRet_systems()</a></code></td>
+<td>List systems with pre-built models</td>
+</tr>
+<tr class="even">
+<td><code><a href="reference/rePredRet_models.html">rePredRet_models()</a></code></td>
+<td>List pre-built models with statistics</td>
+</tr>
+<tr class="odd">
+<td><code>rePredRet_model(from, to)</code></td>
+<td>Get a pre-built model</td>
+</tr>
+<tr class="even">
+<td><code>plot_model(from, to)</code></td>
+<td>Plot a pre-built model</td>
+</tr>
+<tr class="odd">
+<td><code><a href="reference/rePredRet_plot_network.html">rePredRet_plot_network()</a></code></td>
+<td>Plot the network of pre-built models</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="report-data">RepoRT Data<a class="anchor" aria-label="anchor" href="#report-data"></a>
+</h3>
+<table class="table">
+<thead><tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code><a href="reference/search_compound.html">search_compound()</a></code></td>
+<td>Find all systems where a compound was measured</td>
+</tr>
+<tr class="even">
+<td><code><a href="reference/get_system_info.html">get_system_info()</a></code></td>
+<td>Get system metadata (column, gradient, …)</td>
+</tr>
+<tr class="odd">
 <td><code><a href="reference/download_report.html">download_report()</a></code></td>
-<td>Download RepoRT repository</td>
+<td>Download RepoRT</td>
 </tr>
 <tr class="even">
 <td><code><a href="reference/load_report_data.html">load_report_data()</a></code></td>
 <td>Load datasets from RepoRT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="model-building">Model Building<a class="anchor" aria-label="anchor" href="#model-building"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="43%">
+<col width="56%">
+</colgroup>
+<thead><tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code><a href="reference/build_model.html">build_model()</a></code></td>
+<td>Build a single model</td>
+</tr>
+<tr class="even">
+<td><code><a href="reference/build_all_models_furrr.html">build_all_models_furrr()</a></code></td>
+<td>Build all pairwise models (incremental, parallel)</td>
 </tr>
 <tr class="odd">
 <td><code><a href="reference/get_common_compounds.html">get_common_compounds()</a></code></td>
 <td>Find compounds in both systems</td>
 </tr>
 <tr class="even">
-<td><code><a href="reference/build_model.html">build_model()</a></code></td>
-<td>Build a single model</td>
-</tr>
-<tr class="odd">
-<td><code><a href="reference/build_all_models.html">build_all_models()</a></code></td>
-<td>Build all pairwise models</td>
-</tr>
-<tr class="even">
-<td><code><a href="reference/predict_rt.html">predict_rt()</a></code></td>
-<td>Predict RT for a compound</td>
-</tr>
-<tr class="odd">
-<td><code><a href="reference/generate_all_predictions.html">generate_all_predictions()</a></code></td>
-<td>Generate all predictions</td>
-</tr>
-<tr class="even">
 <td><code><a href="reference/export_models.html">export_models()</a></code></td>
 <td>Save models to files</td>
-</tr>
-<tr class="odd">
-<td><code><a href="reference/export_predictions.html">export_predictions()</a></code></td>
-<td>Save predictions to files</td>
 </tr>
 </tbody>
 </table>
 </div>
-</div>
-<div class="section level2">
-<h2 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
-</h2>
-<ul>
-<li>mgcv (GAM fitting)</li>
-<li>boot (bootstrap resampling)</li>
-<li>pracma (sigmoid function)</li>
-<li>tidyverse (data manipulation)</li>
-<li>ggplot2 (visualization)</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -265,37 +293,23 @@
 <p>GPL (&gt;= 3)</p>
 </div>
 <div class="section level2">
-<h2 id="repository-structure">Repository Structure<a class="anchor" aria-label="anchor" href="#repository-structure"></a>
-</h2>
-<p>This project is split into two repositories:</p>
-<ul>
-<li>
-<strong>rePredRet</strong> (this repo): R package code, website, and documentation (~15 files)</li>
-<li>
-<strong><a href="https://github.com/stanstrup/rePredRet-models" class="external-link">rePredRet-models</a></strong>: Pre-computed models (~3.7 GB, 49,570 models)</li>
-</ul>
-<p>This separation keeps the main repository lightweight for fast cloning, while the model data is stored separately and accessed on-demand by the website.</p>
-</div>
-<div class="section level2">
 <h2 id="related">Related<a class="anchor" aria-label="anchor" href="#related"></a>
 </h2>
 <ul>
 <li>
-<strong><a href="https://github.com/stanstrup/rePredRet-models" class="external-link">rePredRet-models</a></strong> - Pre-computed model repository</li>
+<strong><a href="https://github.com/stanstrup-metabolomics/rePredRet-models" class="external-link">rePredRet-models</a></strong> - Pre-built models, kept in a separate repository so this one stays small</li>
 <li>
 <strong><a href="https://github.com/michaelwitting/RepoRT" class="external-link">RepoRT</a></strong> - Community retention time data source</li>
 <li>
 <strong><a href="http://predret.org" class="external-link">Original PredRet</a></strong> - Original web application</li>
-<li>
-<strong><a href="https://stanstrup.github.io/rePredRet/">Website</a></strong> - Interactive model viewer</li>
 </ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/stanstrup/rePredRet/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/stanstrup/rePredRet/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/stanstrup-metabolomics/rePredRet/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/stanstrup-metabolomics/rePredRet/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -332,7 +346,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

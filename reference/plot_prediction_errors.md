@@ -18,9 +18,9 @@ plot_prediction_errors(
 - predictions:
 
   A
-  [UserRTPredictions](https://stanstrup.github.io/rePredRet/reference/UserRTPredictions-class.md)
+  [UserRTPredictions](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTPredictions-class.md)
   object from
-  [`predict_rt_user`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md).
+  [`predict_rt_user`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md).
 
 - type:
 
@@ -49,8 +49,8 @@ readable.
 
 ## See also
 
-[`predict_rt_user`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md),
-[`UserRTPredictions-class`](https://stanstrup.github.io/rePredRet/reference/UserRTPredictions-class.md)
+[`predict_rt_user`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md),
+[`UserRTPredictions-class`](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTPredictions-class.md)
 
 ## Examples
 

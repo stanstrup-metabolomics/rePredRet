@@ -1,22 +1,23 @@
 # List Available Models
 
-Returns the model index with statistics for all available models.
+Returns the model index with statistics for all pre-built models.
 
 ## Usage
 
 ``` r
-rePredRet_models(data_path = NULL)
+rePredRet_models(refresh = FALSE)
 ```
 
 ## Arguments
 
-- data_path:
+- refresh:
 
-  Path to rePredRet-data (or NULL to use cache).
+  If TRUE, download a fresh copy instead of using the cache.
 
 ## Value
 
-Tibble with model index.
+Tibble with one row per model: sys1_id (source system), sys2_id (target
+system), n_compounds, median_ci_width and median_error.
 
 ## Examples
 

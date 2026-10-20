@@ -14,7 +14,7 @@ calculate_database_stats(report_data)
 - report_data:
 
   Output from
-  [`load_report_data()`](https://stanstrup.github.io/rePredRet/reference/load_report_data.md).
+  [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md).
 
 ## Value
 

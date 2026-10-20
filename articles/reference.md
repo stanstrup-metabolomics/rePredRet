@@ -4,42 +4,31 @@
 
 rePredRet provides functions for three main use cases:
 
-1.  **Query pre-built predictions** - Access predictions from the
-    published model repository
+1.  **Explore pre-built models** - Models between RepoRT systems from
+    the published model repository
 2.  **Build custom models** - Use your own RT data to build models
 3.  **Explore the database** - Search compounds and systems
 
 ------------------------------------------------------------------------
 
-## Querying Pre-built Predictions
+## Exploring Pre-built Models
 
-These functions access the published rePredRet-data repository.
-
-### `rePredRet_download()`
-
-Downloads the latest predictions and models from GitHub.
-
-``` r
-# Download to default cache location
-rePredRet_download()
-
-# Force re-download
-rePredRet_download(force_download = TRUE)
-
-# Download to specific location
-rePredRet_download(cache_dir = "my_data")
-```
+These functions fetch files on demand from the
+[rePredRet-models](https://github.com/stanstrup-metabolomics/rePredRet-models)
+repository and cache them locally. Use `refresh = TRUE` to bypass the
+cache.
 
 ### `rePredRet_systems()`
 
-Lists all available chromatographic systems.
+Lists all chromatographic systems that have pre-built models, with their
+RepoRT study information.
 
 ``` r
 systems <- rePredRet_systems()
-head(systems)
-#   id           name method.type n_compounds
-# 1 0001      FEM_short          RP          85
-# 2 0002       FEM_long          RP         112
+head(systems[, c("id", "name", "method.type")])
+#   id    name      method.type
+# 1 0001  FEM_short RP
+# 2 0002  FEM_long  RP
 ```
 
 ### `rePredRet_models()`
@@ -49,20 +38,20 @@ Lists all available models with quality metrics.
 ``` r
 models <- rePredRet_models()
 head(models)
-#   from_id to_id n_compounds median_error median_ci_width
-# 1    0001  0002          42        0.15            0.28
+#   sys1_id sys2_id n_compounds median_ci_width median_error
+# 1 0001    0002             67           15.99        0.336
 ```
 
-### `rePredRet_predict()`
+### `rePredRet_model()`
 
-Gets predictions for a specific compound.
+Gets a single model with its prediction grid, calibration data and
+statistics.
 
 ``` r
-# Search by InChI
-preds <- rePredRet_predict("InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3")
-
-# Search by name (if indexed)
-preds <- rePredRet_predict("caffeine")
+model <- rePredRet_model("0001", "0002")
+head(model$predictions)   # x, pred, lower, upper
+head(model$calibration)   # x, y, compound
+model$stats
 ```
 
 ### `plot_model()`
@@ -100,7 +89,7 @@ models <- build_user_models(
   rts = my_rts,                 # Numeric vector of retention times
   system_type = "RP",           # "RP" or "HILIC"
   min_compounds = 10,           # Minimum compounds for model building
-  method = "fast_ci",           # "fast_ci" (fast) or "bootstrap" (accurate)
+  method = "adaptive_pi",       # "adaptive_pi" (default), "fast_ci" or "bootstrap"
   verbose = TRUE
 )
 ```
@@ -246,15 +235,15 @@ common <- get_common_compounds(dataset1, dataset2)
 
 ## Summary Table
 
-| Function                                                                                        | Purpose                          |
-|-------------------------------------------------------------------------------------------------|----------------------------------|
-| [`rePredRet_download()`](https://stanstrup.github.io/rePredRet/reference/rePredRet_download.md) | Download pre-built predictions   |
-| [`rePredRet_systems()`](https://stanstrup.github.io/rePredRet/reference/rePredRet_systems.md)   | List available systems           |
-| [`rePredRet_models()`](https://stanstrup.github.io/rePredRet/reference/rePredRet_models.md)     | List available models            |
-| [`rePredRet_predict()`](https://stanstrup.github.io/rePredRet/reference/rePredRet_predict.md)   | Query predictions for a compound |
-| [`plot_model()`](https://stanstrup.github.io/rePredRet/reference/plot_model.md)                 | Plot a pre-built model           |
-| [`build_user_models()`](https://stanstrup.github.io/rePredRet/reference/build_user_models.md)   | Build models from your data      |
-| [`predict_rt_user()`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md)       | Generate predictions             |
-| [`compare_systems()`](https://stanstrup.github.io/rePredRet/reference/compare_systems.md)       | Find similar systems             |
-| [`search_compound()`](https://stanstrup.github.io/rePredRet/reference/search_compound.md)       | Search for compounds by InChI    |
-| [`get_system_info()`](https://stanstrup.github.io/rePredRet/reference/get_system_info.md)       | Get system details               |
+| Function                                                                                                             | Purpose                              |
+|----------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md)           | List systems with pre-built models   |
+| [`rePredRet_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md)             | List pre-built models                |
+| [`rePredRet_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.md)               | Get a pre-built model                |
+| [`plot_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_model.md)                         | Plot a pre-built model               |
+| [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md) | Plot the network of pre-built models |
+| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md)           | Build models from your data          |
+| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)               | Generate predictions                 |
+| [`compare_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md)               | Find similar systems                 |
+| [`search_compound()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md)               | Search for compounds by InChI        |
+| [`get_system_info()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.md)               | Get system details                   |

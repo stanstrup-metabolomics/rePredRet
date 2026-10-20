@@ -3,68 +3,65 @@
 rePredRet predicts retention times (RTs) by directly mapping between
 chromatographic systems using monotonically constrained GAMs. This is a
 reimplementation of PredRet that uses RepoRT data as input and publishes
-predictions to GitHub.
+pre-built models to GitHub.
 
 ## User Functions
 
-For accessing pre-computed predictions from rePredRet-data:
+For predicting RTs from your own data:
 
-- [`rePredRet_download`](https://stanstrup.github.io/rePredRet/reference/rePredRet_download.md):
-  Download latest predictions
+- [`build_user_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md):
+  Build models from your RT data to RepoRT systems
 
-- [`rePredRet_systems`](https://stanstrup.github.io/rePredRet/reference/rePredRet_systems.md):
+- [`predict_rt_user`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md):
+  Predict RTs with those models
+
+For exploring the pre-built models (fetched on demand from
+rePredRet-models):
+
+- [`rePredRet_systems`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md):
   List available systems
 
-- [`rePredRet_models`](https://stanstrup.github.io/rePredRet/reference/rePredRet_models.md):
+- [`rePredRet_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md):
   List available models
 
-- [`rePredRet_model`](https://stanstrup.github.io/rePredRet/reference/rePredRet_model.md):
+- [`rePredRet_model`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.md):
   Get specific model details
 
-- [`rePredRet_predict`](https://stanstrup.github.io/rePredRet/reference/rePredRet_predict.md):
-  Get predictions for a compound
-
-- [`rePredRet_system_predictions`](https://stanstrup.github.io/rePredRet/reference/rePredRet_system_predictions.md):
-  Get system predictions
-
-- [`rePredRet_plot_model`](https://stanstrup.github.io/rePredRet/reference/rePredRet_plot_model.md):
+- [`plot_model`](https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_model.md):
   Visualize model fit
 
-- [`rePredRet_plot_errors`](https://stanstrup.github.io/rePredRet/reference/rePredRet_plot_errors.md):
-  Plot error distribution
-
-- [`rePredRet_plot_network`](https://stanstrup.github.io/rePredRet/reference/rePredRet_plot_network.md):
+- [`rePredRet_plot_network`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md):
   Visualize system network
 
 ## Developer Functions
 
 For building your own models:
 
-- [`download_report`](https://stanstrup.github.io/rePredRet/reference/download_report.md):
+- [`download_report`](https://stanstrup-metabolomics.github.io/rePredRet/reference/download_report.md):
   Download RepoRT repository
 
-- [`load_report_data`](https://stanstrup.github.io/rePredRet/reference/load_report_data.md):
+- [`load_report_data`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md):
   Load datasets from RepoRT
 
-- [`get_common_compounds`](https://stanstrup.github.io/rePredRet/reference/get_common_compounds.md):
+- [`get_common_compounds`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.md):
   Find common compounds
 
-- [`build_model`](https://stanstrup.github.io/rePredRet/reference/build_model.md):
+- [`build_model`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md):
   Build a single model
 
-- [`build_all_models`](https://stanstrup.github.io/rePredRet/reference/build_all_models.md):
+- [`build_all_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models.md):
   Build all pairwise models
 
-- [`predict_rt`](https://stanstrup.github.io/rePredRet/reference/predict_rt.md):
+- [`predict_rt`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt.md):
   Predict RT for a compound
 
-- [`generate_all_predictions`](https://stanstrup.github.io/rePredRet/reference/generate_all_predictions.md):
+- [`generate_all_predictions`](https://stanstrup-metabolomics.github.io/rePredRet/reference/generate_all_predictions.md):
   Generate all predictions
 
-- [`export_models`](https://stanstrup.github.io/rePredRet/reference/export_models.md):
+- [`export_models`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_models.md):
   Export models to files
 
-- [`export_predictions`](https://stanstrup.github.io/rePredRet/reference/export_predictions.md):
+- [`export_predictions`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_predictions.md):
   Export predictions to files
 
 ## Scientific Background
@@ -79,7 +76,10 @@ The algorithm fits monotonically constrained GAMs using:
 
 2.  Monotonic constraints to preserve elution order
 
-3.  Bootstrap resampling (1000 iterations) for CI estimation
+3.  Locally adaptive prediction intervals calibrated by cross-validated
+    conformal prediction (`method = "adaptive_pi"`, default), faster
+    intervals of nearly constant width (`method = "fast_ci"`) or
+    bootstrap resampling
 
 4.  Sigmoid weighting to downweight outliers
 
@@ -96,7 +96,8 @@ small molecule retention times. *Nature Methods*, 21, 153-155.
 
 - RepoRT: <https://github.com/michaelwitting/RepoRT>
 
-- rePredRet-data: <https://github.com/stanstrup/rePredRet-data>
+- rePredRet-models:
+  <https://github.com/stanstrup-metabolomics/rePredRet-models>
 
 - Original PredRet: <http://predret.org>
 
@@ -104,3 +105,8 @@ small molecule retention times. *Nature Methods*, 21, 153-155.
 
 **Maintainer**: Jan Stanstrup <stanstrup@gmail.com>
 ([ORCID](https://orcid.org/0000-0003-0541-7369))
+
+Authors:
+
+- Jan Stanstrup <stanstrup@gmail.com>
+  ([ORCID](https://orcid.org/0000-0003-0541-7369))

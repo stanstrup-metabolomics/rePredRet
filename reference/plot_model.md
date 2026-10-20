@@ -12,7 +12,7 @@ plot_model(
   interactive = FALSE,
   show_ci = TRUE,
   show_calibration = TRUE,
-  data_path = NULL
+  refresh = FALSE
 )
 ```
 
@@ -39,10 +39,9 @@ plot_model(
 
   If TRUE (default), shows calibration points.
 
-- data_path:
+- refresh:
 
-  Optional path to local rePredRet-data directory. If NULL,
-  downloads/uses cached data.
+  If TRUE, download fresh copies instead of using the cache.
 
 ## Value
 
@@ -62,9 +61,9 @@ and creates a publication-ready plot showing:
 
 ## See also
 
-[`rePredRet_model`](https://stanstrup.github.io/rePredRet/reference/rePredRet_model.md)
+[`rePredRet_model`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.md)
 for getting model data,
-[`rePredRet_systems`](https://stanstrup.github.io/rePredRet/reference/rePredRet_systems.md)
+[`rePredRet_systems`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md)
 for listing available systems
 
 ## Examples

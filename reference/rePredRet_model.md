@@ -1,11 +1,12 @@
 # Get Model Details
 
-Retrieves a specific model with CI grid and calibration data.
+Retrieves a pre-built model with its prediction grid and calibration
+data.
 
 ## Usage
 
 ``` r
-rePredRet_model(from_id, to_id, data_path = NULL)
+rePredRet_model(from_id, to_id, refresh = FALSE)
 ```
 
 ## Arguments
@@ -18,30 +19,45 @@ rePredRet_model(from_id, to_id, data_path = NULL)
 
   Target system identifier.
 
-- data_path:
+- refresh:
 
-  Path to rePredRet-data (or NULL to use cache).
+  If TRUE, download a fresh copy instead of using the cache.
 
 ## Value
 
 A list with:
 
-- ci_grid:
+- sys1_id, sys2_id:
 
-  Tibble with x, pred, lower, upper
+  Source and target system
 
-- calibration_data:
+- n_compounds:
 
-  Tibble with rt_source, rt_target, compound
+  Number of calibration compounds
 
-- model:
+- method:
 
-  RDS model object if available
+  Interval method
+
+- predictions:
+
+  Data frame with x, pred, lower, upper
+
+- calibration:
+
+  Data frame with x, y, compound
+
+- stats:
+
+  List with median_ci_width, median_error, r_squared, coverage (fraction
+  of calibration compounds inside the PI), rel_mean_ci_width (mean PI
+  width / target RT range) and build_time. Models built before these
+  fields were added lack them.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-model_info <- rePredRet_model("0001", "0002")
+model <- rePredRet_model("0001", "0002")
 } # }
 ```

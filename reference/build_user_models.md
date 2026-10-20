@@ -13,10 +13,10 @@ build_user_models(
   system_type = c("RP", "HILIC"),
   report_data = NULL,
   min_compounds = 10,
-  method = c("fast_ci", "bootstrap"),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   alpha = 0.05,
   n_boot = 200,
-  n_workers = parallel::detectCores(),
+  n_workers = parallelly::availableCores(),
   verbose = TRUE
 )
 ```
@@ -49,8 +49,9 @@ build_user_models(
 
 - method:
 
-  Method for CI calculation: "fast_ci" (default, fast) or "bootstrap"
-  (slower, more accurate).
+  Method for prediction intervals: "adaptive_pi" (default), "fast_ci" or
+  "bootstrap". See
+  [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md).
 
 - alpha:
 
@@ -116,9 +117,9 @@ TARGET)
 
 ## See also
 
-[`predict_rt_user`](https://stanstrup.github.io/rePredRet/reference/predict_rt_user.md)
+[`predict_rt_user`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)
 for generating predictions from models,
-[`UserRTModels-class`](https://stanstrup.github.io/rePredRet/reference/UserRTModels-class.md)
+[`UserRTModels-class`](https://stanstrup-metabolomics.github.io/rePredRet/reference/UserRTModels-class.md)
 for the return object class
 
 ## Examples

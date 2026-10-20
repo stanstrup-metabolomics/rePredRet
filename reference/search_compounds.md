@@ -30,7 +30,7 @@ system_type, compound_name, rt, inchi.
 
 ## See also
 
-[`search_compound`](https://stanstrup.github.io/rePredRet/reference/search_compound.md)
+[`search_compound`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md)
 for single compound search
 
 ## Examples

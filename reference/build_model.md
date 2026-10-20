@@ -12,8 +12,8 @@ build_model(
   sys2_id,
   n_boot = 200,
   alpha = 0.05,
-  n_cores = parallel::detectCores(),
-  method = c("fast_ci", "bootstrap"),
+  n_cores = parallelly::availableCores(),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   save_plot = FALSE,
   plot_dir = NULL,
   dataset1 = NULL,
@@ -52,8 +52,13 @@ build_model(
 
 - method:
 
-  Method for confidence intervals: "fast_ci" (72x faster, default) or
-  "bootstrap" (accurate, slower).
+  Method for prediction intervals: "adaptive_pi" (default, width follows
+  the local scatter, see
+  [`gam_adaptive_pi()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/gam_adaptive_pi.md)),
+  "fast_ci" (nearly constant width, about 4x faster, see
+  [`gam_fast_ci()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/gam_fast_ci.md))
+  or "bootstrap" (width follows the local scatter, about 40x slower, see
+  [`boot2ci_PI()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/boot2ci_PI.md)).
 
 - save_plot:
 
@@ -77,7 +82,7 @@ A list with model information:
 
 - status:
 
-  "success" or "insufficient_data"
+  "success", "insufficient_data" or "fit_failed"
 
 - sys1_id:
 
@@ -113,7 +118,10 @@ A list with model information:
 
 - stats:
 
-  Error statistics (mean, median, q95, max error and CI width)
+  Error statistics (mean, median, q95, max error and PI width) and fit
+  quality: `r_squared` (of the fit at the calibration compounds),
+  `coverage` (fraction of calibration compounds inside the PI) and
+  `rel_mean_ci_width` (mean PI width divided by the target RT range)
 
 - method:
 

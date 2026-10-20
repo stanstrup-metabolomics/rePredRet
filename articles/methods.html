@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Methods • rePredRet</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="methods_files/libs/quarto-html/popper.min.js"></script><script src="methods_files/libs/quarto-html/tippy.umd.min.js"></script><link href="methods_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="methods_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -43,20 +43,21 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Results &amp; Statistics</h6></li>
     <li><a class="dropdown-item" href="../articles/models.html">Model Statistics</a></li>
-    <li><a class="dropdown-item" href="../articles/predictions.html">Predictions</a></li>
     <li><a class="dropdown-item" href="../articles/network.html">System Network</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/methods.html">Methods</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmark.html">Prediction Interval Benchmark</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../model_viewer.html">Model Viewer</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/stanstrup/rePredRet/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/stanstrup-metabolomics/rePredRet/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -71,7 +72,7 @@
 
 
 
-      <small class="dont-index">Source: <a href="https://github.com/stanstrup/rePredRet/blob/master/vignettes/methods.qmd" class="external-link"><code>vignettes/methods.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stanstrup-metabolomics/rePredRet/blob/master/vignettes/methods.qmd" class="external-link"><code>vignettes/methods.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -88,27 +89,46 @@
 <section class="level3"><h3 id="core-principle">Core Principle<a class="anchor" aria-label="anchor" href="#core-principle"></a>
 </h3>
 <p>If compound A elutes before compound B in chromatographic system 1, it will likely also elute before B in a similar system 2. This relationship can be modeled as a monotonic function:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><msub><mi>T</mi><mrow><mi>t</mi><mi>a</mi><mi>r</mi><mi>g</mi><mi>e</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>f</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>R</mi><msub><mi>T</mi><mrow><mi>s</mi><mi>o</mi><mi>u</mi><mi>r</mi><mi>c</mi><mi>e</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">RT_{target} = f(RT_{source})</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><msub><mi>T</mi><mrow><mi>t</mi><mi>a</mi><mi>r</mi><mi>g</mi><mi>e</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>f</mi><mo stretchy="false" form="prefix">(</mo><mi>R</mi><msub><mi>T</mi><mrow><mi>s</mi><mi>o</mi><mi>u</mi><mi>r</mi><mi>c</mi><mi>e</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">RT_{target} = f(RT_{source})</annotation></semantics></math></p>
 <p>where <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math> is a monotonically increasing function.</p>
 </section><section class="level3"><h3 id="model-fitting">Model Fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a>
 </h3>
 <ol type="1">
 <li><p><strong>Identify Common Compounds</strong>: Find compounds present in both source and target systems using standardized InChI identifiers (with stereochemistry stripped for better matching).</p></li>
 <li>
-<p><strong>Fit Monotonic GAM</strong>: Using the <code>scam</code> package in R, fit a shape-constrained additive model:</p>
+<p><strong>Fit Monotonic GAM</strong> (using <code>mgcv</code>):</p>
 <ul>
-<li>Thin plate regression splines for flexibility</li>
-<li>Monotonic increasing constraint (<code>bs = "mpi"</code>)</li>
-<li>Automatic smoothness selection via GCV</li>
+<li>If there are fewer than 4 distinct source RTs, they are jittered by up to 0.01 with a fixed seed, so the same data always give the same model</li>
+<li>An unconstrained thin plate regression spline GAM gives the smoothing parameter</li>
+<li>Compounds with large residuals are down-weighted with a sigmoid weight (0.5 at a residual of 10% of the maximum target RT, steepness 30). These two values were set by eye for the original PredRet and have never been optimized</li>
+<li>A cubic regression spline is refitted with monotonic increasing constraints (<code><a href="https://rdrr.io/pkg/mgcv/man/mono.con.html" class="external-link">mgcv::mono.con()</a></code> and <code><a href="https://rdrr.io/pkg/mgcv/man/pcls.html" class="external-link">mgcv::pcls()</a></code>)</li>
 </ul>
 </li>
 <li>
-<p><strong>Bootstrap Confidence Intervals</strong>:</p>
+<p><strong>Prediction Intervals</strong>: three methods share the fit above. See the <a href="benchmark.html">benchmark article</a> for their coverage and speed.</p>
+<p><strong><code>method = "adaptive_pi"</code></strong> (default): the width of the interval follows the local scatter of the calibration compounds, and its level is calibrated by cross-validated conformal prediction.</p>
 <ul>
-<li>1000 bootstrap iterations (resampling calibration compounds)</li>
-<li>99% confidence intervals using the percentile method</li>
-<li>Parallel computation for efficiency</li>
+<li>
+<em>Cross-validated residuals</em>: the compounds are split into 5 folds, interleaved along the source RT. Each fold is predicted by the monotone spline refitted on the other folds (with the smoothing parameter and weights of the full fit). These residuals include the uncertainty of the fitted curve.</li>
+<li>
+<em>Local scale</em> s(x): a Gamma GAM (log link, REML, at most 5 basis functions) of the absolute residuals, weighted by the sigmoid outlier weights so that a single outlier does not widen the band around it. s(x) is floored at 30% of the global scale.</li>
+<li>
+<em>Calibration</em>: the multiplier q is the conformal quantile of the normalized residuals |e| / s(x): the ⌈(n + 1) · 0.95⌉-th smallest. With fewer than 19 compounds this is the largest one.</li>
+<li>
+<em>Interval</em>: fit ± q · s(x). Each bound is made non-decreasing by isotonic regression, which keeps lower ≤ fit ≤ upper, and the lower bound is truncated at 0.</li>
 </ul>
+<p><strong><code>method = "fast_ci"</code></strong>: about 4 times faster, with an interval of nearly constant width.</p>
+<ul>
+<li>fit ± z · sqrt(SE² + σ²), where SE is the pointwise standard error of the unconstrained GAM and σ² the mean squared leave-one-out residual (the constrained fit’s residuals divided by 1 − leverage)</li>
+<li>Bounds are made monotone and truncated at 0 as above</li>
+</ul>
+<p><strong><code>method = "bootstrap"</code></strong>: about 40 times slower than <code>adaptive_pi</code>.</p>
+<ul>
+<li>The monotone fit is repeated on 200 bootstrap resamples. Each compound is predicted by the refits whose resample did not include it (out-of-bag), which gives out-of-sample residuals</li>
+<li>These residuals go through the same local scale and conformal calibration as <code>adaptive_pi</code> (jackknife+-after-bootstrap)</li>
+</ul>
+<p>On held-out compounds from 135 RepoRT system pairs the 95% intervals covered 94.6% (<code>adaptive_pi</code>), 95.5% (<code>fast_ci</code>) and 94.8% (<code>bootstrap</code>) of the compounds. In the regions with the least / most scatter <code>adaptive_pi</code> covered 94.8% / 94.5%, while <code>fast_ci</code> covered 97.4% / 93.4%: a constant width is too wide where compounds agree and too narrow where they scatter.</p>
+<p><strong>Few compounds</strong>: with only 10–15 shared compounds no method reaches the nominal level. Coverage was 86% (<code>adaptive_pi</code>), 90% (<code>fast_ci</code>) and 89% (<code>bootstrap</code>). With so few compounds, a 95% interval would have to be very wide to hold. Treat intervals from models with fewer than about 20 compounds as roughly 85–90% intervals.</p>
 </li>
 <li>
 <p><strong>Quality Filters</strong>: Predictions are only made where:</p>
@@ -120,18 +140,19 @@
 </ol></section><section class="level3"><h3 id="gam-specification">GAM Specification<a class="anchor" aria-label="anchor" href="#gam-specification"></a>
 </h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">scam</span><span class="fu">::</span><span class="fu">scam</span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, bs <span class="op">=</span> <span class="st">"mpi"</span>, k <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">calibration_data</span>,</span>
-<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Unconstrained fit for the smoothing parameter</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="va">k</span>, bs <span class="op">=</span> <span class="st">"tp"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">calibration_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Monotonic constrained refit</span></span>
+<span><span class="va">sm</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/smoothCon.html" class="external-link">smoothCon</a></span><span class="op">(</span><span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/s.html" class="external-link">s</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="va">k</span>, bs <span class="op">=</span> <span class="st">"cr"</span><span class="op">)</span>, <span class="va">calibration_data</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/mono.con.html" class="external-link">mono.con</a></span><span class="op">(</span><span class="va">sm</span><span class="op">$</span><span class="va">xp</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/pcls.html" class="external-link">pcls</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">sm</span><span class="op">$</span><span class="va">X</span>, y <span class="op">=</span> <span class="va">y</span>, w <span class="op">=</span> <span class="va">w</span>, sp <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">sp</span>, S <span class="op">=</span> <span class="va">sm</span><span class="op">$</span><span class="va">S</span>,</span>
+<span>                     Ain <span class="op">=</span> <span class="va">con</span><span class="op">$</span><span class="va">A</span>, bin <span class="op">=</span> <span class="va">con</span><span class="op">$</span><span class="va">b</span>, p <span class="op">=</span> <span class="va">sm</span><span class="op">$</span><span class="va">xp</span>, C <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, off <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <ul>
 <li>
-<code>bs = "mpi"</code>: Monotonically increasing P-spline</li>
+<code>k</code>: number of unique source RTs, at most 10</li>
 <li>
-<code>k = -1</code>: Automatic basis dimension selection</li>
-<li>
-<code>family = gaussian()</code>: Gaussian errors</li>
+<code>w</code>: sigmoid weights from the unconstrained residuals</li>
 </ul></section></section><section class="level2"><h2 id="data-source">Data Source<a class="anchor" aria-label="anchor" href="#data-source"></a>
 </h2>
 <section class="level3"><h3 id="report-repository">RepoRT Repository<a class="anchor" aria-label="anchor" href="#report-repository"></a>
@@ -154,18 +175,27 @@
 </h3>
 <pre><code>rePredRet/
 ├── R/
-│   ├── data_loading.R      # RepoRT data loading
-│   ├── gam_fitting.R       # Core GAM functions
-│   ├── model_building.R    # Model construction
-│   ├── prediction.R        # RT predictions
-│   ├── statistics.R        # Performance metrics
-│   └── user_functions.R    # User convenience functions
+│   ├── data_loading.R           # RepoRT data loading
+│   ├── gam_fitting.R            # Monotone GAM fit and bootstrap intervals
+│   ├── gam_adaptive_pi.R        # Default (locally adaptive) prediction intervals
+│   ├── gam_fast_ci.R            # Faster prediction intervals of nearly constant width
+│   ├── model_building.R         # Model construction
+│   ├── build_all_models_furrr.R # Incremental parallel pipeline
+│   ├── build_user_models.R      # Models from user RT data
+│   ├── prediction.R             # RT predictions
+│   ├── statistics.R             # Performance metrics
+│   └── user_functions.R         # Access to pre-built models
+├── inst/scripts/run_pipeline.R  # Pipeline used by CI
 ├── tests/
-│   └── testthat/           # Unit tests
-└── website/                # This documentation</code></pre>
+│   └── testthat/                # Unit tests
+└── vignettes/                   # This documentation</code></pre>
 </section><section class="level3"><h3 id="key-functions">Key Functions<a class="anchor" aria-label="anchor" href="#key-functions"></a>
 </h3>
 <table class="table caption-top">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
 <thead><tr class="header">
 <th>Function</th>
 <th>Purpose</th>
@@ -188,8 +218,8 @@
 <td>Build single pairwise model</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/build_all_models.html">build_all_models()</a></code></td>
-<td>Build all pairwise models</td>
+<td><code><a href="../reference/build_all_models_furrr.html">build_all_models_furrr()</a></code></td>
+<td>Build all pairwise models (incremental, parallel)</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/predict_rt.html">predict_rt()</a></code></td>
@@ -204,11 +234,11 @@
 </h3>
 <ul>
 <li>
-<strong>Parallel Processing</strong>: Bootstrap uses all available CPU cores</li>
+<strong>Parallel Processing</strong>: Models are built in parallel with <code>furrr</code>, one worker per available CPU core</li>
+<li>
+<strong>Incremental Builds</strong>: Only models whose datasets changed are rebuilt</li>
 <li>
 <strong>Model Pruning</strong>: Boot objects are pruned to reduce storage by ~95%</li>
-<li>
-<strong>Memory Management</strong>: Large datasets processed incrementally</li>
 </ul></section></section><section class="level2"><h2 id="validation">Validation<a class="anchor" aria-label="anchor" href="#validation"></a>
 </h2>
 <section class="level3"><h3 id="cross-validation">Cross-Validation<a class="anchor" aria-label="anchor" href="#cross-validation"></a>
@@ -254,16 +284,17 @@
 <ol type="1">
 <li><p><strong>PredRet Algorithm</strong>: Stanstrup, J., Neumann, S., &amp; Ivanova, I. V. (2015). PredRet: Prediction of Retention Time by Direct Mapping between Multiple Chromatographic Systems. <em>Analytical Chemistry</em>, 87(18), 9421-9428. doi:10.1021/acs.analchem.5b02287</p></li>
 <li><p><strong>RepoRT Database</strong>: Kretschmer, F., Witting, M., &amp; al. (2024). RepoRT: a comprehensive repository for small molecule retention times. <em>Nature Methods</em>, 21, 153-155. doi:10.1038/s41592-023-02143-z</p></li>
-<li><p><strong>Shape-Constrained GAMs</strong>: Pya, N., &amp; Wood, S. N. (2015). Shape constrained additive models. <em>Statistics and Computing</em>, 25, 543-559.</p></li>
+<li><p><strong>Generalized Additive Models</strong>: Wood, S. N. (2017). <em>Generalized Additive Models: An Introduction with R</em> (2nd ed.). Chapman and Hall/CRC.</p></li>
+<li><p><strong>Conformal Prediction Intervals</strong>: Lei, J., G’Sell, M., Rinaldo, A., Tibshirani, R. J., &amp; Wasserman, L. (2018). Distribution-free predictive inference for regression. <em>Journal of the American Statistical Association</em>, 113(523), 1094-1111.</p></li>
 </ol></section><section class="level2"><h2 id="source-code">Source Code<a class="anchor" aria-label="anchor" href="#source-code"></a>
 </h2>
 <p>The complete source code is available on GitHub:</p>
 <ul>
 <li>
-<strong>rePredRet package</strong>: <a href="https://github.com/stanstrup/rePredRet" class="external-link">github.com/stanstrup/rePredRet</a>
+<strong>rePredRet package</strong>: <a href="https://github.com/stanstrup-metabolomics/rePredRet" class="external-link">github.com/stanstrup-metabolomics/rePredRet</a>
 </li>
 <li>
-<strong>Published data</strong>: <a href="https://github.com/stanstrup/rePredRet-data" class="external-link">github.com/stanstrup/rePredRet-data</a>
+<strong>Pre-built models</strong>: <a href="https://github.com/stanstrup-metabolomics/rePredRet-models" class="external-link">github.com/stanstrup-metabolomics/rePredRet-models</a>
 </li>
 <li>
 <strong>RepoRT</strong>: <a href="https://github.com/michaelwitting/RepoRT" class="external-link">github.com/michaelwitting/RepoRT</a>
@@ -361,7 +392,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
