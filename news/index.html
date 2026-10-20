@@ -115,6 +115,7 @@
 <li>Model pairs are found with a sparse overlap matrix and RT matrices come from a per-dataset lookup, instead of calling <code><a href="../reference/get_common_compounds.html">get_common_compounds()</a></code> for every ordered pair (minutes to seconds on the full RepoRT data).</li>
 <li>The number of workers defaults to <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>, which respects container CPU limits (<code><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">parallel::detectCores()</a></code> reports all host cores).</li>
 <li>A failing model no longer aborts the whole build.</li>
+<li>Models whose build settings are unknown (no build cache entry, e.g. from an older pipeline) are rebuilt when an interval method is given, instead of being recorded as built with the current method.</li>
 <li>CI: tracks RepoRT master commits instead of releases and only pushes to the data repository when models changed. <code>max_systems</code> test runs no longer touch the published models.</li>
 <li>CI: models are built directly in a persistent clone of rePredRet-models on the runner (<code>/opt/repredret-cache</code>), which is reset to the published state at the start of each run. Only changed model directories are committed and pushed, in chunks, instead of force-pushing a freshly created repository with all models.</li>
 </ul></div>
