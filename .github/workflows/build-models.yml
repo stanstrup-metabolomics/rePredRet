@@ -79,24 +79,17 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-
+      # Installs the system libraries the R packages need and fails if any package
+      # does not install (install.packages() only warns). The runner image has no
+      # binary packages, so the first run compiles from source; the library is cached.
       - name: Install R dependencies
-        run: |
-          install.packages(c(
-            "remotes", "boot", "cli", "data.table", "digest", "dplyr", "future", "furrr",
-            "ggplot2", "htmlwidgets", "jsonlite", "MASS", "Matrix", "mgcv", "parallelly",
-            "plotly", "pracma", "rappdirs", "readr", "tibble", "curl"
-          ))
-        shell: Rscript {0}
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: any::curl
 
       - name: Install rePredRet package
-        run: |
-          remotes::install_local(".", dependencies = FALSE)
-        shell: Rscript {0}
+        run: R CMD INSTALL .
 
       - name: Prepare data repository clone
         if: (github.event.inputs.max_systems || '0') == '0'
