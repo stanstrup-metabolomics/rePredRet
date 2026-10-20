@@ -25,7 +25,7 @@ viewer](https://stanstrup-metabolomics.github.io/rePredRet/model_viewer.md).
 | Total Calibration Points         | 3,356,376 |
 | Median Compounds per Model       |        37 |
 | Median Absolute Error            | 0.142 min |
-| Median Prediction Interval Width | 2.576 min |
+| Median Prediction Interval Width | 2.698 min |
 
 Errors are the median absolute differences between fitted and measured
 RTs of the calibration compounds of each model; the table shows the
@@ -41,7 +41,8 @@ The original PredRet paper (Stanstrup et al. 2015) reported:
 
 ### Data Source
 
-**RepoRT version (commit):** unknown
+**RepoRT version (commit):**
+[9de8d60](https://github.com/michaelwitting/RepoRT/tree/9de8d603377bbb6cc0f74e250eb7533fd8874df1)
 
 ## Quick Links
 
