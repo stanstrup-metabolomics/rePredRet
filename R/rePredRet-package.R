@@ -67,7 +67,7 @@
 #'   \item Original PredRet: \url{http://predret.org}
 #' }
 #'
-#' @importFrom stats cor var vcov weighted.mean
+#' @importFrom stats cor quantile sd var vcov weighted.mean
 #' @importFrom utils head
 #' @docType package
 #' @name rePredRet
