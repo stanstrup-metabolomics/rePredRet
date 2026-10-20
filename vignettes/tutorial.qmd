@@ -321,7 +321,7 @@ The `min_compounds` parameter (default: 10) sets the minimum number of compounds
 
 ### Prediction Interval Methods
 
-- **`adaptive_pi`** (default): Prediction intervals whose width follows the local scatter of the calibration compounds, calibrated by cross-validation. About 0.05 sec/model.
+- **`adaptive_pi`** (default): Prediction intervals whose width follows the local scatter of the calibration compounds, calibrated by cross-validation. About 0.06-0.09 sec/model.
 - **`bootstrap`**: Bootstrap resampling with 200 refits. Much slower.
 
 ### Filtering Predictions

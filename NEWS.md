@@ -9,9 +9,10 @@
   weighted to ignore outliers) and is calibrated by cross-validated conformal
   prediction. On held-out compounds from 135 RepoRT system pairs it covered
   94.6% (95% nominal), equally in low- and high-scatter regions, where the old
-  near-constant interval covered 96.5% and 91.2%. It takes about 60 ms per
-  model instead of 15 ms. The bounds are made monotone by isotonic regression
-  instead of a running maximum, and the lower bound is truncated at 0.
+  near-constant interval covered 96.5% and 91.2%. It is about four times
+  slower (60-90 ms instead of 15-20 ms per model). The bounds are made
+  monotone by isotonic regression instead of a running maximum, and the lower
+  bound is truncated at 0.
 * Removed `method = "fast_ci"` and `gam_fast_ci()`, and the unused
   `gam_prediction_intervals()`, `gam_prediction_intervals_parallel()`,
   `fit_gam_mono_once()` and `gam_fast_pi()`.
