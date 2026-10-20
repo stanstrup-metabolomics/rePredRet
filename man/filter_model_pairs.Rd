@@ -23,7 +23,8 @@ filter_model_pairs(
 \item{export_dir}{Directory for model outputs}
 
 \item{method}{Interval method of this build. Cached models built with
-another method are rebuilt. NULL skips the check.}
+another method, or another version of it (\code{\link[=pi_method_version]{pi_method_version()}}), are
+rebuilt. NULL skips the check.}
 
 \item{alpha}{Significance level of this build. Cached models built with
 another alpha are rebuilt. NULL skips the check.}

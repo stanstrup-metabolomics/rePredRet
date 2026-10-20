@@ -38,6 +38,10 @@ NULL
 #'    isotonic regression, which keeps lower <= prediction <= upper. The
 #'    lower bound is truncated at 0.
 #'
+#' With few compounds the interval covers less than its nominal level: in a
+#' cross-validation benchmark on RepoRT pairs with 10-15 shared compounds a
+#' 95% interval covered about 86% (about 95% from 30 compounds up).
+#'
 #' Because the residuals are out-of-fold, q already includes the uncertainty
 #' of the fitted curve, so no separate standard error term is added.
 #'
@@ -51,22 +55,59 @@ NULL
 gam_adaptive_pi <- function(rt_matrix, newdata, alpha = 0.05, n_folds = 5) {
 
   fit <- fit_gam_mono(rt_matrix[, 1], rt_matrix[, 2])
-  n <- length(fit$y)
 
   # Step 2: cross-validated residuals
   e <- cv_residuals_gam_mono(fit, n_folds)
 
+  # Steps 3-5: local scale, conformal multiplier, monotone bounds
+  conformal_band(fit, e, predict_gam_mono(fit, newdata), newdata, alpha)
+}
+
+
+#' Conformal Band with Local Scale
+#'
+#' Turns out-of-sample residuals into a prediction interval: a local scale
+#' model of the residuals ([local_residual_scale()]), a split-conformal
+#' multiplier and monotone bounds. Shared by [gam_adaptive_pi()] and the
+#' bootstrap method ([boot2ci_PI()]).
+#'
+#' @param fit Output of [fit_gam_mono()] (gives x, weights and k).
+#' @param e Out-of-sample residuals at `fit$x`.
+#' @param mu Predictions at `newdata`.
+#' @param newdata Numeric vector of source RTs.
+#' @param alpha Significance level.
+#'
+#' @return A matrix with 3 columns: `[predicted, lower, upper]`.
+#' @keywords internal
+conformal_band <- function(fit, e, mu, newdata, alpha) {
+  n <- length(e)
+
   # Step 3: local scale of the residuals
   scale_fun <- local_residual_scale(fit$x, e, fit$w, fit$k)
-  s_obs <- scale_fun(fit$x)
 
   # Step 4: conformal multiplier
-  scores <- sort(abs(e) / s_obs)
+  scores <- sort(abs(e) / scale_fun(fit$x))
   q <- scores[min(ceiling((n + 1) * (1 - alpha)), n)]
 
   # Step 5: interval with monotone bounds
-  mu <- predict_gam_mono(fit, newdata)
-  half_width <- q * scale_fun(newdata)
+  monotone_interval(newdata, mu, q * scale_fun(newdata))
+}
+
+
+#' Monotone Interval from a Fit and Half-Widths
+#'
+#' Each bound (`mu -/+ half_width`) is made non-decreasing in `newdata` by
+#' isotonic regression, which keeps lower <= mu <= upper when `mu` is
+#' monotone. The lower bound is truncated at 0.
+#'
+#' @param newdata Numeric vector of source RTs.
+#' @param mu Monotone predictions at `newdata`.
+#' @param half_width Half-widths at `newdata`.
+#'
+#' @return A matrix with 3 columns: `[predicted, lower, upper]`.
+#' @importFrom stats isoreg
+#' @keywords internal
+monotone_interval <- function(newdata, mu, half_width) {
   ord <- order(newdata)
   lower <- upper <- numeric(length(newdata))
   lower[ord] <- stats::isoreg(newdata[ord], (mu - half_width)[ord])$yf

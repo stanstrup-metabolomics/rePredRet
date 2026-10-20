@@ -204,6 +204,20 @@ model_is_complete <- function(model_key, export_dir) {
 }
 
 
+#' Interval Method Version
+#'
+#' Version of each interval method's implementation. Bump it when a method's
+#' intervals change, so that cached models built with the old version are
+#' rebuilt by [build_all_models_furrr()].
+#'
+#' @param method Interval method name.
+#' @return Integer version.
+#' @keywords internal
+pi_method_version <- function(method) {
+  c(adaptive_pi = 1L, fast_ci = 2L, bootstrap = 2L)[[method]]
+}
+
+
 #' Filter Model Pairs Based on Changes
 #'
 #' Determines which model pairs need to be built based on dataset changes
@@ -214,7 +228,8 @@ model_is_complete <- function(model_key, export_dir) {
 #' @param cache Build cache object
 #' @param export_dir Directory for model outputs
 #' @param method Interval method of this build. Cached models built with
-#'   another method are rebuilt. NULL skips the check.
+#'   another method, or another version of it ([pi_method_version()]), are
+#'   rebuilt. NULL skips the check.
 #' @param alpha Significance level of this build. Cached models built with
 #'   another alpha are rebuilt. NULL skips the check.
 #' @return Filtered list of pairs that need building
@@ -235,7 +250,8 @@ filter_model_pairs <- function(model_pairs, changes, cache, export_dir,
 
     # Must rebuild if the model was built with other interval settings
     settings_changed <- !is.null(cached) && (
-      (!is.null(method) && !identical(cached$method, method)) ||
+      (!is.null(method) && (!identical(cached$method, method) ||
+                              !identical(cached$method_version, pi_method_version(method)))) ||
         (!is.null(alpha) && !isTRUE(all.equal(cached$alpha, alpha)))
     )
 

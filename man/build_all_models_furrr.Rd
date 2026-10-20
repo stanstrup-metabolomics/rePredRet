@@ -7,7 +7,7 @@
 build_all_models_furrr(
   report_data,
   min_compounds = 10,
-  method = c("adaptive_pi", "bootstrap"),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   alpha = 0.05,
   n_workers = parallelly::availableCores(),
   save_json = TRUE,
@@ -22,9 +22,9 @@ build_all_models_furrr(
 
 \item{min_compounds}{Minimum overlapping compounds for a pair (default 10)}
 
-\item{method}{"adaptive_pi" (default) or "bootstrap" (slow). See
-\code{\link[=build_model]{build_model()}}. Cached models built with another method or alpha are
-rebuilt.}
+\item{method}{"adaptive_pi" (default), "fast_ci" or "bootstrap" (slow).
+See \code{\link[=build_model]{build_model()}}. Cached models built with another method, method
+version or alpha are rebuilt.}
 
 \item{alpha}{Significance level (default 0.05 for 95\% intervals)}
 

@@ -40,6 +40,9 @@ export_model_json <- function(model, output_file) {
     stats = list(
       median_ci_width = model$stats$median_ci_width,
       median_error = model$stats$median_error,
+      r_squared = model$stats$r_squared,
+      coverage = model$stats$coverage,
+      rel_mean_ci_width = model$stats$rel_mean_ci_width,
       build_time = as.character(model$build_time)
     )
   )

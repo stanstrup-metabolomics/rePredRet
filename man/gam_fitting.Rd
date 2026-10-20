@@ -5,6 +5,6 @@
 \title{Core GAM Fitting Functions}
 \description{
 Internal functions for monotonically constrained GAM fitting
-used in bootstrap confidence interval estimation.
+used by all prediction interval methods.
 }
 \keyword{internal}

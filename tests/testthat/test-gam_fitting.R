@@ -24,37 +24,26 @@ test_that("gam_mono_con_fun returns correct output", {
 })
 
 
-test_that("boot2ci returns correct structure", {
+test_that("boot2ci_PI gives calibrated, ordered intervals", {
   skip_if_not_installed("boot")
 
-  # Create simple test data
   set.seed(456)
-  n <- 30
+  n <- 40
   x <- sort(runif(n, 1, 15))
   y <- 0.8 * x + rnorm(n, sd = 0.3)
-
   rt_matrix <- cbind(x, y)
   newdata <- seq(min(x), max(x), length.out = 50)
 
-  # Run bootstrap with few iterations for speed
-  loess_boot <- boot::boot(
-    rt_matrix,
-    gam_mono_con_fun,
-    R = 50,  # Few iterations for testing
-    newdata = newdata
-  )
+  set.seed(1)
+  loess_boot <- boot::boot(rt_matrix, gam_mono_con_fun, R = 50, newdata = c(newdata, x))
+  ci <- boot2ci_PI(loess_boot, fit_gam_mono(x, y), newdata, alpha = 0.05)
 
-  # Calculate CIs
-  ci <- boot2ci(loess_boot, alpha = 0.05)
-
-  # Check output structure
-  expect_equal(nrow(ci), 50)
-  expect_equal(ncol(ci), 3)
-
-  # Check CI properties
-  expect_true(all(ci[, 2] <= ci[, 1]))  # Lower <= predicted
-
-  expect_true(all(ci[, 1] <= ci[, 3]))  # Predicted <= upper
+  expect_equal(dim(ci), c(50, 3))
+  expect_true(all(ci[, 2] <= ci[, 1] + 1e-8))
+  expect_true(all(ci[, 1] <= ci[, 3] + 1e-8))
+  # A prediction interval must cover the observation scatter (sd 0.3),
+  # unlike a confidence interval of the curve
+  expect_gt(stats::median(ci[, 3] - ci[, 2]), 2 * 1.96 * 0.3 * 0.8)
 })
 
 
@@ -182,4 +171,39 @@ test_that("build_model uses adaptive_pi by default", {
   expect_equal(model$method, "adaptive_pi")
   expect_equal(dim(model$ci), c(1000, 3))
   expect_true(model$stats$median_ci_width > 0)
+})
+
+
+test_that("gam_fast_ci returns ordered, monotone intervals", {
+  rt_matrix <- make_het_data(60)
+  newdata <- seq(min(rt_matrix[, 1]), max(rt_matrix[, 1]), length.out = 200)
+
+  pi <- gam_fast_ci(rt_matrix, newdata)
+
+  expect_equal(dim(pi), c(200, 3))
+  expect_true(all(is.finite(pi)))
+  expect_true(all(pi[, "lower"] >= 0))
+  expect_true(all(pi[, "lower"] <= pi[, "predicted"] + 1e-8))
+  expect_true(all(pi[, "predicted"] <= pi[, "upper"] + 1e-8))
+  expect_true(all(diff(pi[, "lower"]) >= -1e-8))
+  expect_true(all(diff(pi[, "upper"]) >= -1e-8))
+})
+
+
+test_that("build_model supports all interval methods and reports fit statistics", {
+  rt_matrix <- make_het_data(30)
+
+  for (method in c("fast_ci", "bootstrap")) {
+    model <- suppressMessages(build_model(rt_matrix, "a", "b", method = method,
+                                          n_boot = 30, n_cores = 1))
+    expect_equal(model$status, "success")
+    expect_equal(model$method, method)
+    expect_true(all(is.finite(model$ci)))
+  }
+
+  stats <- suppressMessages(build_model(rt_matrix, "a", "b"))$stats
+  expect_gt(stats$r_squared, 0.9)
+  expect_gte(stats$coverage, 0.8)
+  expect_lte(stats$coverage, 1)
+  expect_gt(stats$rel_mean_ci_width, 0)
 })

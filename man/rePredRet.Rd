@@ -56,7 +56,8 @@ The algorithm fits monotonically constrained GAMs using:
 \item Thin plate regression splines for flexibility
 \item Monotonic constraints to preserve elution order
 \item Locally adaptive prediction intervals calibrated by cross-validated
-conformal prediction (\code{method = "adaptive_pi"}, default) or
+conformal prediction (\code{method = "adaptive_pi"}, default), faster
+intervals of nearly constant width (\code{method = "fast_ci"}) or
 bootstrap resampling
 \item Sigmoid weighting to downweight outliers
 }

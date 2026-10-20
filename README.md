@@ -90,7 +90,7 @@ rePredRet predicts retention times (RTs) by directly mapping between chromatogra
 **The algorithm:**
 1. Find compounds measured in both source and target systems (InChI without stereochemistry)
 2. Fit a monotonically constrained GAM to the RT pairs, down-weighting outliers
-3. Compute 95% prediction intervals whose width follows the local scatter of the compounds, calibrated by cross-validation (`method = "adaptive_pi"`, default), or by bootstrap resampling (`method = "bootstrap"`)
+3. Compute 95% prediction intervals whose width follows the local scatter of the compounds, calibrated by cross-validation (`method = "adaptive_pi"`, default). `method = "fast_ci"` gives faster intervals of nearly constant width and `method = "bootstrap"` a slower bootstrap version
 
 See the [methods article](https://stanstrup-metabolomics.github.io/rePredRet/articles/methods.html) for details.
 

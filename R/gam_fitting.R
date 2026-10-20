@@ -1,6 +1,6 @@
 #' @title Core GAM Fitting Functions
 #' @description Internal functions for monotonically constrained GAM fitting
-#'   used in bootstrap confidence interval estimation.
+#'   used by all prediction interval methods.
 #' @name gam_fitting
 #' @keywords internal
 NULL
@@ -65,7 +65,10 @@ gam_mono_con_fun <- function(in_data, inds, newdata) {
 #' 2. An unconstrained thin plate regression spline GAM gives the smoothing
 #'    parameter.
 #' 3. Observations are weighted by a sigmoid of their unconstrained residual
-#'    relative to `y_max`, which down-weights outliers.
+#'    relative to `y_max`, which down-weights outliers: weights fall to 0.5
+#'    at a residual of 10% of `y_max`, with steepness 30. These two values
+#'    were set by eye for the original PredRet (2015) and have never been
+#'    optimized.
 #' 4. A cubic regression spline is fitted with monotonic increasing
 #'    constraints by penalized constrained least squares. If the weighted fit
 #'    fails it is refitted without weights.
@@ -157,168 +160,50 @@ predict_gam_mono <- function(fit, newdata) {
 }
 
 
-#' Calculate Bootstrap Confidence Intervals
-#'
-#' Computes percentile bootstrap confidence intervals from a boot object.
-#'
-#' @param loess_boot A boot object from `boot::boot()`.
-#' @param alpha Significance level for CI (default 0.01 for 99% CI).
-#'
-#' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
-#'   newdata point.
-#'
-#' @importFrom boot boot.ci
-#' @keywords internal
-boot2ci <- function(loess_boot, alpha = 0.01) {
-  # For each prediction point, calculate percentile CI
-  temp <- list()
-  for (i2 in seq_len(length(loess_boot$t0))) {
-    temp[[i2]] <- list()
-    temp[[i2]][[1]] <- i2
-    temp[[i2]][[2]] <- loess_boot
-  }
-
-  ci <- lapply(temp, function(x) {
-    # Get bootstrap estimates for this point, removing NAs
-    boot_vals <- x[[2]]$t[, x[[1]]]
-    boot_vals_clean <- boot_vals[!is.na(boot_vals)]
-
-    # If too few valid bootstrap values, return NA
-    if (length(boot_vals_clean) < 10) {
-      return(c(NA, NA, NA))
-    }
-
-    # Check if there's any variance in bootstrap estimates
-    diff_to_mean <- (mean(boot_vals_clean) - boot_vals_clean) / boot_vals_clean
-
-    # If all bootstrap estimates are identical, return mean with no CI width
-    if (all(abs(diff_to_mean) < 1e-10, na.rm = TRUE)) {
-      ci <- rep(mean(boot_vals_clean), 3)
-      return(ci)
-    }
-
-    # Calculate percentile CI using boot.ci
-    # boot.ci handles NAs internally
-    temp2 <- tryCatch({
-      boot::boot.ci(
-        x[[2]],
-        index = x[[1]],
-        type = "perc",
-        conf = 1 - alpha
-      )
-    }, error = function(e) NULL)
-
-    # If boot.ci failed, calculate percentile CI manually
-    if (is.null(temp2)) {
-      ci <- c(
-        x[[2]]$t0[x[[1]]],
-        quantile(boot_vals_clean, alpha/2),
-        quantile(boot_vals_clean, 1 - alpha/2)
-      )
-      return(ci)
-    }
-
-    ci <- vector(mode = "numeric", length = 3)
-    ci[1] <- temp2$t0
-    ci[c(2, 3)] <- temp2$percent[, c(4, 5)]
-    return(ci)
-  })
-
-  ci <- do.call(rbind, ci)
-  return(ci)
-}
-
-
 #' Calculate Bootstrap Prediction Intervals
 #'
-#' Computes prediction intervals that account for both model uncertainty
-#' and residual variance.
+#' Prediction intervals from bootstrap refits of the monotone GAM, using the
+#' out-of-bag predictions as out-of-sample residuals.
 #'
-#' @param loess_boot A boot object from `boot::boot()`.
-#' @param newdata Numeric vector of x-values used for prediction.
+#' @param loess_boot A boot object from `boot::boot()` with [gam_mono_con_fun()],
+#'   run with `newdata = c(newdata, rt_source)`, i.e. predicting at the grid
+#'   followed by the calibration compounds. It must not be pruned yet.
+#' @param fit Output of [fit_gam_mono()] on the full data.
+#' @param newdata Numeric vector of x-values for the prediction grid.
 #' @param alpha Significance level for PI (default 0.05 for 95% PI).
 #'
 #' @return A matrix with 3 columns: `[predicted, lower, upper]` at each
 #'   newdata point.
 #'
 #' @details
-#' Prediction intervals are wider than confidence intervals because they
-#' account for:
-#' 1. Uncertainty in the model fit (from bootstrap)
-#' 2. Residual variance (deviation of individual points from the fit)
+#' Each compound is predicted by the refits whose resample did not contain
+#' it (out-of-bag, on average 37% of the refits). Its residual from the mean
+#' out-of-bag prediction is an out-of-sample error that includes the
+#' uncertainty of the fitted curve. A compound that is in every resample
+#' gets the leave-one-out residual of the unconstrained GAM instead. These
+#' residuals then go through the same local scale model and conformal
+#' calibration as [gam_adaptive_pi()] ([conformal_band()]), around the
+#' full-data fit. This is the jackknife+-after-bootstrap idea of Kim, Xu &
+#' Barber (2020).
 #'
-#' @importFrom stats qnorm approx
+#' @references
+#' Kim, B., Xu, C. & Barber, R. F. (2020). Predictive inference is free with
+#' the jackknife+-after-bootstrap. *Advances in Neural Information Processing
+#' Systems*, 33, 4138-4149.
+#'
 #' @keywords internal
-boot2ci_PI <- function(loess_boot, newdata, alpha = 0.05) {
-  # SD at each x values (newdata) between all bootstrap iterations
-  loess_sd_newdata <- apply(loess_boot$t, 2, sd)
+boot2ci_PI <- function(loess_boot, fit, newdata, alpha = 0.05) {
+  n_new <- length(newdata)
+  n <- nrow(loess_boot$data)
 
-  # Interpolate from newdata x values to values used for model building
-  loess_sd <- numeric(length = nrow(loess_boot$data))
-  res_sd <- numeric(length = nrow(loess_boot$data))
+  # Out-of-bag predictions at the calibration compounds
+  pred_obs <- loess_boot$t[, n_new + seq_len(n), drop = FALSE]
+  pred_obs[boot::boot.array(loess_boot) > 0] <- NA
+  e <- loess_boot$data[, 2] - colMeans(pred_obs, na.rm = TRUE)
 
-  for (i in seq_len(nrow(loess_boot$data))) {
-    # Check if predicted points match model building x values
-    if (any(newdata == loess_boot$data[i, 1])) {
-      loc <- which(newdata == loess_boot$data[i, 1])
-      res <- loess_boot$t[, loc] - loess_boot$data[i, 2]
-      res_sd[i] <- sd(res)
-    } else {
-      # Interpolate linearly between two nearest prediction x values
-      lower_idx <- which(newdata < loess_boot$data[i, 1])
-      lower_idx <- lower_idx[length(lower_idx)]
-      higher_idx <- which(newdata > loess_boot$data[i, 1])[1]
+  # Compounds in every resample: leave-one-out residual of the unconstrained fit
+  no_oob <- !is.finite(e)
+  e[no_oob] <- (fit$fit_unc$residuals / pmax(1 - fit$fit_unc$hat, 0.05))[no_oob]
 
-      pred_y <- numeric(length = nrow(loess_boot$t))
-      for (i2 in seq_len(nrow(loess_boot$t))) {
-        pred_y[i2] <- stats::approx(
-          x = c(newdata[lower_idx], newdata[higher_idx]),
-          y = c(loess_boot$t[i2, lower_idx], loess_boot$t[i2, higher_idx]),
-          xout = loess_boot$data[i, 1]
-        )$y
-      }
-
-      res <- pred_y - loess_boot$data[i, 2]
-      res_sd[i] <- sd(res)
-
-      loess_sd[i] <- stats::approx(
-        x = c(newdata[lower_idx], newdata[higher_idx]),
-        y = c(loess_sd_newdata[lower_idx], loess_sd_newdata[higher_idx]),
-        xout = loess_boot$data[i, 1]
-      )$y
-    }
-  }
-
-  # Combine SDs (model uncertainty + residual variance)
-  SD_combined <- sqrt(loess_sd^2 + res_sd^2)
-
-  # Interpolate back to prediction points (newdata)
-  SD_combined_newdata <- numeric(length = length(newdata))
-
-  for (i in seq_len(length(newdata))) {
-    if (any(newdata[i] == loess_boot$data[, 1])) {
-      loc <- which(newdata[i] == loess_boot$data[, 1])
-      # Take first if multiple identical x values
-      SD_combined_newdata[i] <- SD_combined[loc][1]
-    } else {
-      lower_idx <- which(newdata[i] > loess_boot$data[, 1])
-      lower_idx <- lower_idx[length(lower_idx)]
-      higher_idx <- which(newdata[i] < loess_boot$data[, 1])[1]
-
-      SD_combined_newdata[i] <- stats::approx(
-        x = c(loess_boot$data[lower_idx, 1], loess_boot$data[higher_idx, 1]),
-        y = c(SD_combined[lower_idx], SD_combined[higher_idx]),
-        xout = newdata[i]
-      )$y
-    }
-  }
-
-  # Build CI matrix: [predicted, lower, upper]
-  ci <- cbind(
-    loess_boot$t0,
-    loess_boot$t0 - SD_combined_newdata * stats::qnorm(1 - alpha / 2),
-    loess_boot$t0 + SD_combined_newdata * stats::qnorm(1 - alpha / 2)
-  )
-
-  return(ci)
+  conformal_band(fit, e, loess_boot$t0[seq_len(n_new)], newdata, alpha)
 }

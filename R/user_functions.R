@@ -116,7 +116,10 @@ rePredRet_models <- function(refresh = FALSE) {
 #'     \item{method}{Interval method}
 #'     \item{predictions}{Data frame with x, pred, lower, upper}
 #'     \item{calibration}{Data frame with x, y, compound}
-#'     \item{stats}{List with median_ci_width, median_error, build_time}
+#'     \item{stats}{List with median_ci_width, median_error, r_squared,
+#'       coverage (fraction of calibration compounds inside the PI),
+#'       rel_mean_ci_width (mean PI width / target RT range) and build_time.
+#'       Models built before these fields were added lack them.}
 #'   }
 #'
 #' @export

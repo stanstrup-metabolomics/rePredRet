@@ -12,7 +12,7 @@ build_all_models(
   n_cores = parallelly::availableCores(),
   method_match = TRUE,
   export_dir = NULL,
-  method = c("adaptive_pi", "bootstrap"),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   save_plots = TRUE
 )
 }
@@ -33,8 +33,8 @@ same method types (RP-RP, HILIC-HILIC).}
 \item{export_dir}{Optional directory to incrementally save models as
 they're built. If NULL (default), models are only stored in memory.}
 
-\item{method}{Method for prediction intervals: "adaptive_pi" (default) or
-"bootstrap" (slower). See \code{\link[=build_model]{build_model()}}.}
+\item{method}{Method for prediction intervals: "adaptive_pi" (default),
+"fast_ci" or "bootstrap". See \code{\link[=build_model]{build_model()}}.}
 
 \item{save_plots}{Logical, whether to save interactive HTML plots for each
 model (default TRUE).}

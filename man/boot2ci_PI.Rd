@@ -4,12 +4,16 @@
 \alias{boot2ci_PI}
 \title{Calculate Bootstrap Prediction Intervals}
 \usage{
-boot2ci_PI(loess_boot, newdata, alpha = 0.05)
+boot2ci_PI(loess_boot, fit, newdata, alpha = 0.05)
 }
 \arguments{
-\item{loess_boot}{A boot object from \code{boot::boot()}.}
+\item{loess_boot}{A boot object from \code{boot::boot()} with \code{\link[=gam_mono_con_fun]{gam_mono_con_fun()}},
+run with \code{newdata = c(newdata, rt_source)}, i.e. predicting at the grid
+followed by the calibration compounds. It must not be pruned yet.}
 
-\item{newdata}{Numeric vector of x-values used for prediction.}
+\item{fit}{Output of \code{\link[=fit_gam_mono]{fit_gam_mono()}} on the full data.}
+
+\item{newdata}{Numeric vector of x-values for the prediction grid.}
 
 \item{alpha}{Significance level for PI (default 0.05 for 95\% PI).}
 }
@@ -18,15 +22,23 @@ A matrix with 3 columns: \verb{[predicted, lower, upper]} at each
 newdata point.
 }
 \description{
-Computes prediction intervals that account for both model uncertainty
-and residual variance.
+Prediction intervals from bootstrap refits of the monotone GAM, using the
+out-of-bag predictions as out-of-sample residuals.
 }
 \details{
-Prediction intervals are wider than confidence intervals because they
-account for:
-\enumerate{
-\item Uncertainty in the model fit (from bootstrap)
-\item Residual variance (deviation of individual points from the fit)
+Each compound is predicted by the refits whose resample did not contain
+it (out-of-bag, on average 37\% of the refits). Its residual from the mean
+out-of-bag prediction is an out-of-sample error that includes the
+uncertainty of the fitted curve. A compound that is in every resample
+gets the leave-one-out residual of the unconstrained GAM instead. These
+residuals then go through the same local scale model and conformal
+calibration as \code{\link[=gam_adaptive_pi]{gam_adaptive_pi()}} (\code{\link[=conformal_band]{conformal_band()}}), around the
+full-data fit. This is the jackknife+-after-bootstrap idea of Kim, Xu &
+Barber (2020).
 }
+\references{
+Kim, B., Xu, C. & Barber, R. F. (2020). Predictive inference is free with
+the jackknife+-after-bootstrap. \emph{Advances in Neural Information Processing
+Systems}, 33, 4138-4149.
 }
 \keyword{internal}

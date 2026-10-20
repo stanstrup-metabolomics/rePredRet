@@ -11,7 +11,7 @@ build_model(
   n_boot = 200,
   alpha = 0.05,
   n_cores = parallelly::availableCores(),
-  method = c("adaptive_pi", "bootstrap"),
+  method = c("adaptive_pi", "fast_ci", "bootstrap"),
   save_plot = FALSE,
   plot_dir = NULL,
   dataset1 = NULL,
@@ -35,7 +35,10 @@ method = "bootstrap".}
 Default uses all available cores.}
 
 \item{method}{Method for prediction intervals: "adaptive_pi" (default,
-locally adaptive width, see \code{\link[=gam_adaptive_pi]{gam_adaptive_pi()}}) or "bootstrap" (slower).}
+width follows the local scatter, see \code{\link[=gam_adaptive_pi]{gam_adaptive_pi()}}), "fast_ci"
+(nearly constant width, about 4x faster, see \code{\link[=gam_fast_ci]{gam_fast_ci()}}) or
+"bootstrap" (width follows the local scatter, about 40x slower, see
+\code{\link[=boot2ci_PI]{boot2ci_PI()}}).}
 
 \item{save_plot}{Logical, whether to save an interactive plot (default FALSE).}
 
@@ -57,7 +60,11 @@ A list with model information:
 \item{calibration}{Original RT matrix used for training}
 \item{compounds}{InChI strings of calibration compounds}
 \item{build_time}{Timestamp when model was built}
-\item{stats}{Error statistics (mean, median, q95, max error and CI width)}
+\item{stats}{Error statistics (mean, median, q95, max error and PI
+width) and fit quality: \code{r_squared} (of the fit at the calibration
+compounds), \code{coverage} (fraction of calibration compounds inside the
+PI) and \code{rel_mean_ci_width} (mean PI width divided by the target RT
+range)}
 \item{method}{Method used for PI calculation}
 \item{plot_path}{Path to saved plot HTML (if save_plot = TRUE)}
 }

@@ -20,7 +20,10 @@ NULL
 #' @param n_cores Number of CPU cores for parallel computation.
 #'   Default uses all available cores.
 #' @param method Method for prediction intervals: "adaptive_pi" (default,
-#'   locally adaptive width, see [gam_adaptive_pi()]) or "bootstrap" (slower).
+#'   width follows the local scatter, see [gam_adaptive_pi()]), "fast_ci"
+#'   (nearly constant width, about 4x faster, see [gam_fast_ci()]) or
+#'   "bootstrap" (width follows the local scatter, about 40x slower, see
+#'   [boot2ci_PI()]).
 #' @param save_plot Logical, whether to save an interactive plot (default FALSE).
 #' @param plot_dir Directory to save plot HTML files (required if save_plot = TRUE).
 #' @param dataset1 Optional dataset object for compound names in plots.
@@ -37,7 +40,11 @@ NULL
 #'     \item{calibration}{Original RT matrix used for training}
 #'     \item{compounds}{InChI strings of calibration compounds}
 #'     \item{build_time}{Timestamp when model was built}
-#'     \item{stats}{Error statistics (mean, median, q95, max error and CI width)}
+#'     \item{stats}{Error statistics (mean, median, q95, max error and PI
+#'       width) and fit quality: `r_squared` (of the fit at the calibration
+#'       compounds), `coverage` (fraction of calibration compounds inside the
+#'       PI) and `rel_mean_ci_width` (mean PI width divided by the target RT
+#'       range)}
 #'     \item{method}{Method used for PI calculation}
 #'     \item{plot_path}{Path to saved plot HTML (if save_plot = TRUE)}
 #'   }
@@ -50,7 +57,7 @@ build_model <- function(rt_matrix,
                         n_boot = 200,
                         alpha = 0.05,
                         n_cores = parallelly::availableCores(),
-                        method = c("adaptive_pi", "bootstrap"),
+                        method = c("adaptive_pi", "fast_ci", "bootstrap"),
                         save_plot = FALSE,
                         plot_dir = NULL,
                         dataset1 = NULL,
@@ -89,19 +96,29 @@ build_model <- function(rt_matrix,
     )
     boot_object <- NULL  # No bootstrap object for this method
 
+  } else if (method == "fast_ci") {
+    # Single fit + global residual variance (nearly constant width)
+    ci <- gam_fast_ci(
+      rt_matrix,
+      newdata,
+      alpha = alpha
+    )
+    boot_object <- NULL
+
   } else {
-    # Bootstrap: Fit model many times (more accurate)
+    # Bootstrap: refit on resamples, predicting at the grid and at the
+    # calibration compounds (for out-of-bag residuals)
     loess_boot <- boot::boot(
       rt_matrix,
       gam_mono_con_fun,
       R = n_boot,
-      newdata = newdata,
+      newdata = c(newdata, rt_matrix[, 1]),
       parallel = "multicore",
       ncpus = n_cores
     )
 
-    # Calculate prediction intervals (includes both parameter + observation variance)
-    ci <- boot2ci_PI(loess_boot, newdata = newdata, alpha = alpha)
+    fit <- fit_gam_mono(rt_matrix[, 1], rt_matrix[, 2])
+    ci <- boot2ci_PI(loess_boot, fit, newdata = newdata, alpha = alpha)
     boot_object <- prune_boot_object(loess_boot)
   }
 
@@ -122,6 +139,8 @@ build_model <- function(rt_matrix,
   )
   errors <- abs(rt_matrix[, 2] - ci[predicted_at_orig_x, 1])
   ci_widths <- ci[, 3] - ci[, 2]
+  ss_tot <- sum((rt_matrix[, 2] - mean(rt_matrix[, 2]))^2)
+  y_range <- diff(range(rt_matrix[, 2]))
 
   # Store compound identifiers if available
   compounds <- attr(rt_matrix, "compounds")
@@ -146,7 +165,11 @@ build_model <- function(rt_matrix,
       mean_ci_width = mean(ci_widths, na.rm = TRUE),
       median_ci_width = median(ci_widths, na.rm = TRUE),
       q95_ci_width = as.numeric(stats::quantile(ci_widths, 0.95, na.rm = TRUE)),
-      max_ci_width = max(ci_widths, na.rm = TRUE)
+      max_ci_width = max(ci_widths, na.rm = TRUE),
+      r_squared = if (ss_tot > 0) 1 - sum(errors^2) / ss_tot else NA_real_,
+      coverage = mean(rt_matrix[, 2] >= ci[predicted_at_orig_x, 2] &
+                        rt_matrix[, 2] <= ci[predicted_at_orig_x, 3]),
+      rel_mean_ci_width = if (y_range > 0) mean(ci_widths) / y_range else NA_real_
     ),
     boot_object = boot_object
   )
@@ -216,8 +239,8 @@ prune_boot_object <- function(boot_object) {
 #'   same method types (RP-RP, HILIC-HILIC).
 #' @param export_dir Optional directory to incrementally save models as
 #'   they're built. If NULL (default), models are only stored in memory.
-#' @param method Method for prediction intervals: "adaptive_pi" (default) or
-#'   "bootstrap" (slower). See [build_model()].
+#' @param method Method for prediction intervals: "adaptive_pi" (default),
+#'   "fast_ci" or "bootstrap". See [build_model()].
 #' @param save_plots Logical, whether to save interactive HTML plots for each
 #'   model (default TRUE).
 #'
@@ -237,7 +260,7 @@ build_all_models <- function(report_data,
                              n_cores = parallelly::availableCores(),
                              method_match = TRUE,
                              export_dir = NULL,
-                             method = c("adaptive_pi", "bootstrap"),
+                             method = c("adaptive_pi", "fast_ci", "bootstrap"),
                              save_plots = TRUE) {
 
   method <- match.arg(method)
@@ -307,11 +330,11 @@ build_all_models <- function(report_data,
   }
 
   # Intelligent parallelization based on method:
-  # - adaptive_pi: single-threaded, so use all cores for models (8x1)
+  # - adaptive_pi, fast_ci: single-threaded, so use all cores for models (8x1)
   # - bootstrap: needs cores for resampling, so use balanced (4x2)
-  if (method == "adaptive_pi") {
+  if (method != "bootstrap") {
     n_parallel <- n_cores               # All cores for parallel models
-    n_cores_per_model <- 1              # 1 core per model (adaptive_pi doesn't parallelize)
+    n_cores_per_model <- 1              # 1 core per model (no inner parallelization)
   } else {
     n_parallel <- min(4, n_cores)       # 4 models in parallel
     n_cores_per_model <- max(1, floor(n_cores / n_parallel))  # 2 cores per model for bootstrap
@@ -535,7 +558,10 @@ build_all_models <- function(report_data,
                 median_error = model$stats$median_error,
                 q95_error = model$stats$q95_error,
                 mean_ci_width = model$stats$mean_ci_width,
-                median_ci_width = model$stats$median_ci_width
+                median_ci_width = model$stats$median_ci_width,
+                r_squared = model$stats$r_squared,
+                coverage = model$stats$coverage,
+                rel_mean_ci_width = model$stats$rel_mean_ci_width
               ),
               calibration = list(
                 rt_source = as.numeric(model$calibration[, 1]),
@@ -556,6 +582,7 @@ build_all_models <- function(report_data,
               cache$models[[model$model_key]] <- list(
                 built = as.character(Sys.time()),
                 method = method,
+                method_version = pi_method_version(method),
                 alpha = alpha,
                 n_compounds = model$n_points
               )

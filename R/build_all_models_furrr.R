@@ -5,9 +5,9 @@
 #'
 #' @param report_data Report data from load_report_data()
 #' @param min_compounds Minimum overlapping compounds for a pair (default 10)
-#' @param method "adaptive_pi" (default) or "bootstrap" (slow). See
-#'   [build_model()]. Cached models built with another method or alpha are
-#'   rebuilt.
+#' @param method "adaptive_pi" (default), "fast_ci" or "bootstrap" (slow).
+#'   See [build_model()]. Cached models built with another method, method
+#'   version or alpha are rebuilt.
 #' @param alpha Significance level (default 0.05 for 95% intervals)
 #' @param n_workers Number of parallel workers (default = cores available to
 #'   this process, respecting container/cgroup CPU limits)
@@ -39,7 +39,7 @@
 #' @export
 build_all_models_furrr <- function(report_data,
                                   min_compounds = 10,
-                                  method = c("adaptive_pi", "bootstrap"),
+                                  method = c("adaptive_pi", "fast_ci", "bootstrap"),
                                   alpha = 0.05,
                                   n_workers = parallelly::availableCores(),
                                   save_json = TRUE,
@@ -254,6 +254,7 @@ build_all_models_furrr <- function(report_data,
       cache$models[[paste0(r$sys1_id, "_to_", r$sys2_id)]] <- list(
         built = built_at,
         method = method,
+        method_version = pi_method_version(method),
         alpha = alpha,
         n_compounds = r$n_compounds %||% NA_integer_,
         status = if (r$status == "success") "success" else "failed"
@@ -270,6 +271,7 @@ build_all_models_furrr <- function(report_data,
     unknown_keys <- setdiff(skipped_ok, names(cache$models))
     for (k in unknown_keys) {
       cache$models[[k]] <- list(built = NA_character_, method = method,
+                                method_version = pi_method_version(method),
                                 alpha = alpha, status = "success")
     }
     n_added <- length(unknown_keys)

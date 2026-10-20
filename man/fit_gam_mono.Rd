@@ -30,7 +30,10 @@ data always give the same model.
 \item An unconstrained thin plate regression spline GAM gives the smoothing
 parameter.
 \item Observations are weighted by a sigmoid of their unconstrained residual
-relative to \code{y_max}, which down-weights outliers.
+relative to \code{y_max}, which down-weights outliers: weights fall to 0.5
+at a residual of 10\% of \code{y_max}, with steepness 30. These two values
+were set by eye for the original PredRet (2015) and have never been
+optimized.
 \item A cubic regression spline is fitted with monotonic increasing
 constraints by penalized constrained least squares. If the weighted fit
 fails it is refitted without weights.

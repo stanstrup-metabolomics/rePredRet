@@ -8,22 +8,42 @@
   calibration compounds (a Gamma GAM of cross-validated absolute residuals,
   weighted to ignore outliers) and is calibrated by cross-validated conformal
   prediction. On held-out compounds from 135 RepoRT system pairs it covered
-  94.6% (95% nominal), equally in low- and high-scatter regions, where the old
-  near-constant interval covered 96.5% and 91.2%. It is about four times
-  slower (60-90 ms instead of 15-20 ms per model). The bounds are made
-  monotone by isotonic regression instead of a running maximum, and the lower
-  bound is truncated at 0.
-* Removed `method = "fast_ci"` and `gam_fast_ci()`, and the unused
-  `gam_prediction_intervals()`, `gam_prediction_intervals_parallel()`,
-  `fit_gam_mono_once()` and `gam_fast_pi()`.
+  94.6% (95% nominal), equally in low- and high-scatter regions (94.8% /
+  94.5%). It takes 60-90 ms per model.
+* `method = "fast_ci"` (`gam_fast_ci()`) is kept as the fast option (15-20 ms per
+  model), with fixes: the residual variance comes from leave-one-out residuals
+  instead of in-sample residuals (coverage 93.9% -> 95.5%; with 10-15
+  compounds 83% -> 90%), and the bounds are made monotone by isotonic
+  regression instead of a running maximum, which narrowed the lower side. Its
+  width is still nearly constant (97.4% / 93.4% coverage in low- / high-scatter
+  regions).
+* `method = "bootstrap"` was a confidence interval of the curve, not a
+  prediction interval (59% coverage; 53% with 200+ compounds). It now uses the
+  out-of-bag predictions as out-of-sample residuals with the same local scale
+  and conformal calibration as `adaptive_pi` (94.8% coverage).
+  `boot2ci_PI()` has a new signature and the unused `boot2ci()` was removed.
+* With 10-15 compounds no method reaches the nominal coverage (86-90%); this is
+  now documented.
+* All methods truncate the lower bound at 0.
+* Model statistics (`model.json` `stats` and `model$stats`) gain `r_squared`,
+  `coverage` (fraction of calibration compounds inside the PI) and
+  `rel_mean_ci_width` (mean PI width / target RT range).
+* Removed the unused `gam_prediction_intervals()`,
+  `gam_prediction_intervals_parallel()`, `fit_gam_mono_once()` and
+  `gam_fast_pi()`.
 * `build_all_models_furrr()` and `build_all_models()` rebuild cached models that
-  were built with another interval method or alpha, so the next pipeline run
-  rebuilds all models.
+  were built with another interval method, method version
+  (`pi_method_version()`) or alpha, so the next pipeline run rebuilds all
+  models.
 * Small source-RT jitter (fewer than 4 distinct RTs) uses a fixed seed, so the
   same data always give the same model.
 * `build_model()` returns status `"fit_failed"` instead of a model with
   non-finite predictions or intervals.
-* The monotone GAM fit is shared by all interval methods (`fit_gam_mono()`).
+* The monotone GAM fit is shared by all interval methods (`fit_gam_mono()`). Its
+  sigmoid outlier weights (0.1, 30) were set by eye for the original PredRet
+  and have never been optimized; this is now documented.
+* New article "Prediction interval benchmark", and the benchmark script
+  `inst/benchmark/pi_benchmark.R`.
 * `withr` moved from Suggests to Imports; `MASS` is no longer needed.
 
 ## Breaking changes

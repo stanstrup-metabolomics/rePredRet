@@ -153,4 +153,10 @@ test_that("models built with another interval method are rebuilt", {
 
   # Same settings again: nothing to rebuild
   expect_equal(build_quietly(rd, export_dir)$stats$built, 0)
+
+  # An older version of the same method is rebuilt too
+  cache <- readRDS(cache_file)
+  cache$models[[1]]$method_version <- 0L
+  saveRDS(cache, cache_file)
+  expect_equal(build_quietly(rd, export_dir)$stats$built, 1)
 })
