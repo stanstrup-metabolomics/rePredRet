@@ -130,8 +130,10 @@ build_user_models <- function(inchis,
     stringsAsFactors = FALSE
   )
 
-  user_data_agg <- stats::aggregate(rt ~ inchi_clean, data = user_data, FUN = stats::median)
-  names(user_data_agg) <- c("inchi_clean", "rt")
+  user_data_agg <- user_data |>
+    dplyr::filter(!is.na(inchi_clean), !is.na(rt)) |>
+    dplyr::group_by(inchi_clean) |>
+    dplyr::summarize(rt = stats::median(rt), .groups = "drop")
 
   # Store input data for the result object
   input_data <- data.frame(
@@ -234,7 +236,7 @@ build_user_models <- function(inchis,
       models[[sys_id]] <- model
 
       # Calculate diagnostics
-      pred_at_cal <- sapply(model$calibration[, 1], function(x) {
+      pred_at_cal <- purrr::map_dbl(model$calibration[, 1], function(x) {
         idx <- which.min(abs(x - model$newdata))
         model$ci[idx, 1]
       })

@@ -29,7 +29,7 @@ NULL
     common <- intersect(inchi1, inchi2)
 
     if (length(common) == nrow(calib)) {
-      compound_names <- sapply(common, function(ic) {
+      compound_names <- purrr::map_chr(common, function(ic) {
         idx <- which(inchi1 == ic)[1]
         name <- dataset1$rtdata$name[idx]
         if (is.null(name) || is.na(name) || name == "") {

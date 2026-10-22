@@ -28,7 +28,7 @@ search_compounds <- function(inchis,
     return(data.frame())
   }
 
-  results_list <- lapply(inchis, function(inchi) {
+  results_list <- purrr::map(inchis, function(inchi) {
     result <- tryCatch(
       search_compound(inchi, system_type = system_type, data_path = data_path),
       error = function(e) data.frame()

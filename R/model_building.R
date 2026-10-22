@@ -133,7 +133,7 @@ build_model <- function(rt_matrix,
   }
 
   # Calculate error statistics at original calibration points
-  predicted_at_orig_x <- sapply(
+  predicted_at_orig_x <- purrr::map_int(
     rt_matrix[, 1],
     function(x) which.min(abs(x - newdata))
   )
@@ -344,6 +344,13 @@ build_all_models <- function(report_data,
           " cores = ", n_parallel * n_cores_per_model, " total cores")
   message("(Optimized for ", method, " method)\n")
 
+  if (n_parallel > 1) {
+    future::plan(future::multisession, workers = n_parallel)
+  } else {
+    future::plan(future::sequential)
+  }
+  on.exit(future::plan(future::sequential), add = TRUE)
+
   # Build models within each method group
   for (method_type in names(method_groups)) {
     ids <- method_groups[[method_type]]
@@ -356,9 +363,8 @@ build_all_models <- function(report_data,
     message("Fast overlap detection for ", n_ids, " systems using sparse matrices...")
 
     # Extract standardized InChI for each system
-    system_compounds <- lapply(ids, function(id) {
-      inchi <- datasets[[id]]$rtdata$inchi.std
-      gsub("/(t|b|m|s)[^/]*.*$", "", inchi)  # Remove stereochemistry
+    system_compounds <- purrr::map(datasets[ids], function(d) {
+      gsub("/(t|b|m|s)[^/]*.*$", "", d$rtdata$inchi.std)  # Remove stereochemistry
     })
     names(system_compounds) <- ids
 
@@ -450,60 +456,31 @@ build_all_models <- function(report_data,
                 " (models ", start_idx, "-", end_idx, ")")
       }
 
-      # Build models in this batch
-      if (n_parallel > 1) {
-        cl <- parallel::makeCluster(n_parallel)
-        parallel::clusterEvalQ(cl, library(rePredRet))
-        parallel::clusterExport(cl, c("n_boot", "alpha", "n_cores_per_model", "method",
-                                      "save_plots", "plot_dir", "datasets"),
-                               envir = environment())
+      # Build models in this batch; only the two datasets of each pair are
+      # sent to the workers
+      batch_data <- purrr::map(batch_pairs, function(pair) {
+        list(pair = pair, d1 = datasets[[pair$id1]], d2 = datasets[[pair$id2]])
+      })
+      results <- furrr::future_map(batch_data, function(b) {
+        rt_matrix <- get_common_compounds(b$d1, b$d2)
 
-        results <- parallel::parLapply(cl, batch_pairs, function(pair) {
-          # Fetch RT data on-demand for this model
-          rt_matrix <- get_common_compounds(datasets[[pair$id1]], datasets[[pair$id2]])
-
-          model <- build_model(
-            rt_matrix,
-            sys1_id = pair$id1,
-            sys2_id = pair$id2,
-            n_boot = n_boot,
-            alpha = alpha,
-            n_cores = n_cores_per_model,
-            method = method,
-            save_plot = save_plots,
-            plot_dir = plot_dir,
-            dataset1 = datasets[[pair$id1]],
-            dataset2 = datasets[[pair$id2]]
-          )
-          model$model_key <- paste0(pair$id1, "_to_", pair$id2)
-          model$method_type <- pair$method_type
-          model
-        })
-
-        parallel::stopCluster(cl)
-      } else {
-        results <- lapply(batch_pairs, function(pair) {
-          # Fetch RT data on-demand for this model
-          rt_matrix <- get_common_compounds(datasets[[pair$id1]], datasets[[pair$id2]])
-
-          model <- build_model(
-            rt_matrix,
-            sys1_id = pair$id1,
-            sys2_id = pair$id2,
-            n_boot = n_boot,
-            alpha = alpha,
-            n_cores = n_cores,
-            method = method,
-            save_plot = save_plots,
-            plot_dir = plot_dir,
-            dataset1 = datasets[[pair$id1]],
-            dataset2 = datasets[[pair$id2]]
-          )
-          model$model_key <- paste0(pair$id1, "_to_", pair$id2)
-          model$method_type <- pair$method_type
-          model
-        })
-      }
+        model <- build_model(
+          rt_matrix,
+          sys1_id = b$pair$id1,
+          sys2_id = b$pair$id2,
+          n_boot = n_boot,
+          alpha = alpha,
+          n_cores = n_cores_per_model,
+          method = method,
+          save_plot = save_plots,
+          plot_dir = plot_dir,
+          dataset1 = b$d1,
+          dataset2 = b$d2
+        )
+        model$model_key <- paste0(b$pair$id1, "_to_", b$pair$id2)
+        model$method_type <- b$pair$method_type
+        model
+      }, .options = furrr::furrr_options(seed = TRUE))
 
       # Save models from this batch immediately
       for (model in results) {

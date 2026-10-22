@@ -16,7 +16,7 @@ has_data <- !is.null(index) && nrow(index) > 0
 
 # Log axes with plain-number labels at 1, 3, 10, 30... (0.03 instead of 3e-02)
 log_breaks <- c(1, 3) * rep(10^(-4:6), each = 2)
-plain_labels <- function(b) vapply(b, format, "", scientific = FALSE, drop0trailing = TRUE)
+plain_labels <- function(b) purrr::map_chr(b, format, scientific = FALSE, drop0trailing = TRUE)
 scale_x_log <- function(...) scale_x_log10(breaks = log_breaks, labels = plain_labels, ...)
 scale_y_log <- function(...) scale_y_log10(breaks = log_breaks, labels = plain_labels, ...)
 ```

@@ -102,7 +102,7 @@ build_all_models_furrr <- function(report_data,
   # Find all pairs with enough common compounds (sparse overlap counts)
   rt_lookup <- prepare_rt_lookup(datasets)
   candidate_pairs <- find_model_pairs(rt_lookup, min_compounds)
-  candidate_keys <- vapply(candidate_pairs, function(p) paste0(p$id1, "_to_", p$id2), character(1))
+  candidate_keys <- purrr::map_chr(candidate_pairs, function(p) paste0(p$id1, "_to_", p$id2))
 
   if (verbose) {
     message("Found ", length(candidate_pairs), " system pairs with >=",
@@ -116,7 +116,7 @@ build_all_models_furrr <- function(report_data,
   } else {
     pairs_to_build <- candidate_pairs
   }
-  build_keys <- vapply(pairs_to_build, function(p) paste0(p$id1, "_to_", p$id2), character(1))
+  build_keys <- purrr::map_chr(pairs_to_build, function(p) paste0(p$id1, "_to_", p$id2))
 
   # Remove models that no longer qualify (e.g. a changed dataset lost overlap)
   n_stale <- 0
@@ -178,7 +178,7 @@ build_all_models_furrr <- function(report_data,
       }
 
       # Only the RT matrices are sent to the workers, not the full datasets
-      batch_pairs <- lapply(pairs_to_build[start_idx:end_idx], function(p) {
+      batch_pairs <- purrr::map(pairs_to_build[start_idx:end_idx], function(p) {
         list(
           sys1_id = p$id1,
           sys2_id = p$id2,
@@ -201,7 +201,7 @@ build_all_models_furrr <- function(report_data,
       # Log progress after batch completes
       if (verbose) {
         n_successful <- n_successful +
-          sum(vapply(batch_results, function(r) r$status == "success", logical(1)))
+          sum(purrr::map_lgl(batch_results, function(r) r$status == "success"))
         elapsed <- as.numeric(difftime(Sys.time(), build_start_time, units = "secs"))
         speed <- n_successful / max(1, elapsed)
 
@@ -226,16 +226,16 @@ build_all_models_furrr <- function(report_data,
     message("  \u2713 All models up-to-date, nothing to build\n")
   }
 
-  succeeded <- Filter(function(r) r$status == "success", all_results)
-  failed <- Filter(function(r) r$status != "success", all_results)
-  failed_keys <- vapply(failed, function(r) paste0(r$sys1_id, "_to_", r$sys2_id), character(1))
+  succeeded <- purrr::keep(all_results, function(r) r$status == "success")
+  failed <- purrr::discard(all_results, function(r) r$status == "success")
+  failed_keys <- purrr::map_chr(failed, function(r) paste0(r$sys1_id, "_to_", r$sys2_id))
 
   # Failed rebuilds must not leave stale files behind
   if (!is.null(export_dir) && length(failed_keys) > 0) {
     unlink(file.path(export_dir, failed_keys), recursive = TRUE)
   }
 
-  new_index <- do.call(rbind, lapply(succeeded, function(r) {
+  new_index <- purrr::list_rbind(purrr::map(succeeded, function(r) {
     data.frame(
       sys1_id = r$sys1_id,
       sys2_id = r$sys2_id,
@@ -262,9 +262,9 @@ build_all_models_furrr <- function(report_data,
     }
 
     skipped_keys <- setdiff(candidate_keys, build_keys)
-    skipped_ok <- skipped_keys[vapply(skipped_keys, function(k) {
+    skipped_ok <- skipped_keys[purrr::map_lgl(skipped_keys, function(k) {
       !identical(cache$models[[k]]$status, "failed")
-    }, logical(1))]
+    })]
 
     # Models present on disk but unknown to the cache were built elsewhere
     # and count as additions. How they were built is unknown, so no build time,
@@ -283,7 +283,7 @@ build_all_models_furrr <- function(report_data,
     kept_index$model_key <- NULL
     if (length(missing_keys) > 0) {
       message("Recovering ", length(missing_keys), " index rows from model.json files")
-      recovered <- do.call(rbind, lapply(missing_keys, function(k) {
+      recovered <- purrr::list_rbind(purrr::map(missing_keys, function(k) {
         index_row_from_json(file.path(export_dir, k, "model.json"))
       }))
       kept_index <- rbind(kept_index, recovered)
@@ -294,7 +294,7 @@ build_all_models_furrr <- function(report_data,
     index_df <- new_index
   }
 
-  if (is.null(index_df)) {
+  if (ncol(index_df) == 0) {  # nothing built and nothing kept
     index_df <- data.frame(
       sys1_id = character(),
       sys2_id = character(),
@@ -419,18 +419,16 @@ build_and_export_pair <- function(pair, alpha, method, export_dir) {
 #' @return Named list of lists with sorted `key` and matching median `rt`
 #' @keywords internal
 prepare_rt_lookup <- function(datasets) {
-  lapply(datasets, function(d) {
+  purrr::map(datasets, function(d) {
     if (is.null(d$rtdata)) {
       return(list(key = character(), rt = numeric()))
     }
-    key <- gsub("/(t|b|m|s)[^/]*.*$", "", d$rtdata$inchi.std)
-    # Same order as dplyr::group_by(): C locale, NA last
-    ukey <- sort(unique(key), method = "radix", na.last = TRUE)
-    groups <- split(d$rtdata$rt, factor(key, levels = ukey, exclude = NULL))
-    list(
-      key = ukey,
-      rt = vapply(groups, stats::median, numeric(1), na.rm = TRUE, USE.NAMES = FALSE)
-    )
+    # group_by() sorts the keys in the C locale, NA last
+    agg <- dplyr::tibble(key = gsub("/(t|b|m|s)[^/]*.*$", "", d$rtdata$inchi.std),
+                         rt = d$rtdata$rt) |>
+      dplyr::group_by(key) |>
+      dplyr::summarize(rt = stats::median(rt, na.rm = TRUE), .groups = "drop")
+    list(key = agg$key, rt = agg$rt)
   })
 }
 
@@ -465,7 +463,7 @@ common_rt_matrix <- function(lookup1, lookup2) {
 #' @keywords internal
 find_model_pairs <- function(rt_lookup, min_compounds) {
   ids <- names(rt_lookup)
-  keys <- lapply(rt_lookup, `[[`, "key")
+  keys <- purrr::map(rt_lookup, "key")
   all_keys <- unique(unlist(keys))
 
   if (length(all_keys) == 0) {
@@ -484,7 +482,7 @@ find_model_pairs <- function(rt_lookup, min_compounds) {
   hits <- which(overlap >= min_compounds, arr.ind = TRUE)
   hits <- hits[order(hits[, 1], hits[, 2]), , drop = FALSE]
 
-  lapply(seq_len(nrow(hits)), function(r) {
+  purrr::map(seq_len(nrow(hits)), function(r) {
     list(id1 = ids[hits[r, 1]], id2 = ids[hits[r, 2]])
   })
 }

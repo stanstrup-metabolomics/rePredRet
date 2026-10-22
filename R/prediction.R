@@ -145,7 +145,7 @@ predict_rt <- function(compound_id,
   }
 
   # Select best prediction (narrowest relative CI)
-  rel_widths <- sapply(predictions, function(p) p$ci_width_rel)
+  rel_widths <- purrr::map_dbl(predictions, "ci_width_rel")
   best <- predictions[[which.min(rel_widths)]]
 
   best$target_system <- target_system_id
@@ -195,17 +195,17 @@ generate_all_predictions <- function(models,
 
     # Aggregate RT by cleaned InChI (take median)
     unique_inchi <- unique(inchi_clean)
-    rt_lookup <- vapply(unique_inchi, function(ic) {
+    rt_lookup <- purrr::map_dbl(unique_inchi, function(ic) {
       stats::median(ds$rtdata$rt[inchi_clean == ic])
-    }, numeric(1))
+    })
 
     # Get names if available
     name_lookup <- NULL
     if ("name" %in% names(ds$rtdata) && !all(is.na(ds$rtdata$name))) {
-      name_lookup <- vapply(unique_inchi, function(ic) {
+      name_lookup <- purrr::map_chr(unique_inchi, function(ic) {
         val <- ds$rtdata$name[which(inchi_clean == ic)[1]]
         if (is.null(val) || is.na(val)) NA_character_ else as.character(val)
-      }, character(1))
+      })
     }
 
     dataset_lookup[[ds_id]] <- list(
@@ -236,7 +236,7 @@ generate_all_predictions <- function(models,
   }
 
   # Group models by target system
-  target_systems <- unique(sapply(models, function(m) m$sys2_id))
+  target_systems <- unique(purrr::map_chr(models, "sys2_id"))
 
   all_predictions <- list()
 
@@ -245,7 +245,7 @@ generate_all_predictions <- function(models,
 
     # Find models that predict TO this target
     target_models <- names(models)[
-      sapply(models, function(m) m$sys2_id == target_id)
+      purrr::map_lgl(models, function(m) m$sys2_id == target_id)
     ]
 
     if (length(target_models) == 0) next
@@ -312,17 +312,17 @@ generate_all_predictions <- function(models,
     # Convert to data frame
     pred_df <- data.frame(
       target_system = target_id,
-      compound_id = vapply(pred_list, `[[`, character(1), "inchi"),
-      compound_name = vapply(pred_list, `[[`, character(1), "name"),
-      predicted_rt = vapply(pred_list, `[[`, numeric(1), "pred_rt"),
-      ci_lower = vapply(pred_list, `[[`, numeric(1), "ci_lower"),
-      ci_upper = vapply(pred_list, `[[`, numeric(1), "ci_upper"),
-      ci_width = vapply(pred_list, `[[`, numeric(1), "ci_width"),
-      source_system = vapply(pred_list, `[[`, character(1), "source_id"),
-      source_rt = vapply(pred_list, `[[`, numeric(1), "source_rt"),
-      model_key = vapply(pred_list, `[[`, character(1), "model_key"),
-      n_calibration = vapply(pred_list, `[[`, numeric(1), "n_calibration"),
-      model_median_error = vapply(pred_list, `[[`, numeric(1), "model_median_error"),
+      compound_id = purrr::map_chr(pred_list, "inchi"),
+      compound_name = purrr::map_chr(pred_list, "name"),
+      predicted_rt = purrr::map_dbl(pred_list, "pred_rt"),
+      ci_lower = purrr::map_dbl(pred_list, "ci_lower"),
+      ci_upper = purrr::map_dbl(pred_list, "ci_upper"),
+      ci_width = purrr::map_dbl(pred_list, "ci_width"),
+      source_system = purrr::map_chr(pred_list, "source_id"),
+      source_rt = purrr::map_dbl(pred_list, "source_rt"),
+      model_key = purrr::map_chr(pred_list, "model_key"),
+      n_calibration = purrr::map_dbl(pred_list, "n_calibration"),
+      model_median_error = purrr::map_dbl(pred_list, "model_median_error"),
       report_version = report_version,
       generated_at = Sys.time(),
       stringsAsFactors = FALSE
@@ -370,7 +370,7 @@ export_predictions_pipeline <- function(predictions, output_dir = "predictions",
     )
 
     # JSON with more detail
-    pred_json <- lapply(seq_len(nrow(pred_df)), function(i) {
+    pred_json <- purrr::map(seq_len(nrow(pred_df)), function(i) {
       row <- pred_df[i, ]
       list(
         compound = list(
@@ -416,9 +416,9 @@ export_predictions_pipeline <- function(predictions, output_dir = "predictions",
   if (nrow(all_preds) > 0) {
     summary_stats <- dplyr::tibble(
       target_system = names(predictions),
-      n_predictions = sapply(predictions, nrow),
-      mean_ci_width = sapply(predictions, function(df) mean(df$ci_width)),
-      median_ci_width = sapply(predictions, function(df) median(df$ci_width))
+      n_predictions = purrr::map_int(predictions, nrow),
+      mean_ci_width = purrr::map_dbl(predictions, function(df) mean(df$ci_width)),
+      median_ci_width = purrr::map_dbl(predictions, function(df) median(df$ci_width))
     )
     readr::write_csv(
       summary_stats,

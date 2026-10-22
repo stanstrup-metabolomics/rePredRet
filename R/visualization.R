@@ -427,11 +427,10 @@ plot_compound_coverage <- function(models,
   rownames(all_data) <- NULL
 
   # Aggregate: take median RT per compound per system
-  all_data <- stats::aggregate(
-    rt ~ compound + system,
-    data = all_data,
-    FUN = stats::median
-  )
+  all_data <- all_data |>
+    dplyr::filter(!is.na(compound), !is.na(system), !is.na(rt)) |>
+    dplyr::group_by(compound, system) |>
+    dplyr::summarize(rt = stats::median(rt), .groups = "drop")
 
   # Count number of systems each compound appears in
   compound_counts <- as.data.frame(
@@ -453,7 +452,7 @@ plot_compound_coverage <- function(models,
 
   # Create truncated compound labels from InChI
   # Extract the molecular formula layer (second layer after InChI=1S/)
-  compound_labels <- vapply(top_compounds, function(inchi) {
+  compound_labels <- purrr::map_chr(top_compounds, function(inchi) {
     parts <- strsplit(inchi, "/")[[1]]
     if (length(parts) >= 2) {
       # Return formula layer (e.g., "C8H10N4O2")
@@ -461,7 +460,7 @@ plot_compound_coverage <- function(models,
     }
     # Fallback: truncate to 30 characters
     return(substr(inchi, 1, 30))
-  }, character(1))
+  })
 
   # Handle duplicate labels by appending a suffix
   if (any(duplicated(compound_labels))) {

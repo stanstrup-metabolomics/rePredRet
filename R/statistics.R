@@ -32,8 +32,7 @@ calculate_model_stats <- function(model_results, datasets = NULL) {
   }
 
   # Calculate per-model statistics
-  model_stats_list <- lapply(names(models), function(model_key) {
-    model <- models[[model_key]]
+  model_stats_list <- purrr::imap(models, function(model, model_key) {
 
     if (model$status != "success") {
       return(NULL)
@@ -44,7 +43,7 @@ calculate_model_stats <- function(model_results, datasets = NULL) {
     n_points <- nrow(cal)
 
     # Find predicted values at calibration x-values
-    pred_at_cal <- sapply(cal[, 1], function(x) {
+    pred_at_cal <- purrr::map_dbl(cal[, 1], function(x) {
       idx <- which.min(abs(x - model$newdata))
       model$ci[idx, 1]
     })
@@ -54,11 +53,11 @@ calculate_model_stats <- function(model_results, datasets = NULL) {
     errors_rel <- errors_abs / cal[, 2] * 100  # As percentage
 
     # CI widths
-    ci_lower_at_cal <- sapply(cal[, 1], function(x) {
+    ci_lower_at_cal <- purrr::map_dbl(cal[, 1], function(x) {
       idx <- which.min(abs(x - model$newdata))
       model$ci[idx, 2]
     })
-    ci_upper_at_cal <- sapply(cal[, 1], function(x) {
+    ci_upper_at_cal <- purrr::map_dbl(cal[, 1], function(x) {
       idx <- which.min(abs(x - model$newdata))
       model$ci[idx, 3]
     })
@@ -206,8 +205,7 @@ get_calibration_regression_data <- function(model_results) {
 
   models <- model_results$models
 
-  regression_data_list <- lapply(names(models), function(model_key) {
-    model <- models[[model_key]]
+  regression_data_list <- purrr::imap(models, function(model, model_key) {
 
     if (model$status != "success") {
       return(NULL)
@@ -216,7 +214,7 @@ get_calibration_regression_data <- function(model_results) {
     cal <- model$calibration
 
     # Find predicted values at calibration x-values
-    pred_at_cal <- sapply(cal[, 1], function(x) {
+    pred_at_cal <- purrr::map_dbl(cal[, 1], function(x) {
       idx <- which.min(abs(x - model$newdata))
       model$ci[idx, 1]
     })
@@ -253,8 +251,7 @@ calculate_database_stats <- function(report_data) {
   datasets <- report_data$datasets
   studies <- report_data$studies
 
-  stats_list <- lapply(names(datasets), function(id) {
-    ds <- datasets[[id]]
+  stats_list <- purrr::imap(datasets, function(ds, id) {
 
     n_compounds <- 0
     n_unique <- 0
@@ -315,8 +312,7 @@ calculate_prediction_stats <- function(predictions, model_results = NULL) {
     return(NULL)
   }
 
-  per_system <- lapply(names(predictions), function(target_id) {
-    preds <- predictions[[target_id]]
+  per_system <- purrr::imap(predictions, function(preds, target_id) {
 
     dplyr::tibble(
       target_system = target_id,

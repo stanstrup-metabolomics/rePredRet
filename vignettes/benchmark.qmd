@@ -72,11 +72,11 @@ kable(tab, digits = 3, row.names = FALSE, caption = "All 135 pairs (95% nominal 
 ```{r by-size}
 #| echo: false
 classes <- c("small (10-15)", "mid (30-60)", "large (200+)", "heteroscedastic")
-by_size <- sapply(classes, function(cl) {
-  vapply(order, function(m) get(m, "coverage", cl), numeric(1))
+by_size <- purrr::map(purrr::set_names(classes), function(cl) {
+  purrr::map_dbl(order, function(m) get(m, "coverage", cl))
 })
 by_size <- data.frame(Method = order, by_size, check.names = FALSE, row.names = NULL)
-het_noisy <- vapply(order, function(m) get(m, "cov_noisy", "heteroscedastic"), numeric(1))
+het_noisy <- purrr::map_dbl(order, function(m) get(m, "cov_noisy", "heteroscedastic"))
 by_size$`heteroscedastic, noisy regions` <- het_noisy
 kable(by_size, digits = 3, caption = "Coverage by group")
 ```
