@@ -214,7 +214,7 @@ model_is_complete <- function(model_key, export_dir) {
 #' @return Integer version.
 #' @keywords internal
 pi_method_version <- function(method) {
-  c(adaptive_pi = 1L, fast_ci = 2L, bootstrap = 2L)[[method]]
+  c(adaptive_pi = 2L, fast_ci = 2L, bootstrap = 3L)[[method]]
 }
 
 

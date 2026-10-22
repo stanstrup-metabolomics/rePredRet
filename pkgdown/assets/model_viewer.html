@@ -196,16 +196,14 @@
         <div class="controls">
             <div class="form-group">
                 <label for="sys1Select">Source System:</label>
-                <select id="sys1Select">
-                    <option value="">Loading systems...</option>
-                </select>
+                <input id="sys1Select" list="sys1List" placeholder="Loading systems..." autocomplete="off">
+                <datalist id="sys1List"></datalist>
             </div>
 
             <div class="form-group">
                 <label for="sys2Select">Target System:</label>
-                <select id="sys2Select">
-                    <option value="">Loading systems...</option>
-                </select>
+                <input id="sys2Select" list="sys2List" placeholder="Loading systems..." autocomplete="off">
+                <datalist id="sys2List"></datalist>
             </div>
 
             <button onclick="loadModel()">Load Model</button>
@@ -225,9 +223,12 @@
         // Configuration - Models fetched from separate data repository
         const DATA_URL = 'https://raw.githubusercontent.com/stanstrup-metabolomics/rePredRet-models/main';
         const MODELS_PATH = `${DATA_URL}/models`;
+        const STUDIES_URL = 'https://raw.githubusercontent.com/michaelwitting/RepoRT/master/processed_data/studies.tsv';
 
         // Global state
         let modelIndex = {};
+        let systemNames = {};
+        let allSystems = [];
         let currentModel = null;
 
         // Initialize
@@ -235,9 +236,66 @@
             await loadModelIndex();
         });
 
+        // System names and method types from RepoRT; the viewer works with ids only if this fails
+        async function loadSystemNames() {
+            try {
+                const response = await fetch(STUDIES_URL);
+                if (!response.ok) return {};
+                const [header, ...lines] = (await response.text()).trim().split('\n').map(l => l.split('\t'));
+                const idCol = header.indexOf('id');
+                const nameCol = header.indexOf('name');
+                const typeCol = header.indexOf('method.type');
+                const names = {};
+                lines.forEach(f => {
+                    const type = (f[typeCol] || '').trim();
+                    names[f[idCol]] = (f[nameCol] || '').trim() + (type ? ` (${type})` : '');
+                });
+                return names;
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // "0001 · FEM_short (RP)"; typing any part of it filters the list
+        function systemLabel(id) {
+            return systemNames[id] ? `${id} · ${systemNames[id]}` : id;
+        }
+
+        // The system id is the label up to the first space
+        function selectedId(inputId) {
+            const id = document.getElementById(inputId).value.trim().split(' ')[0];
+            return allSystems.includes(id) ? id : '';
+        }
+
+        function fillList(listId, ids) {
+            document.getElementById(listId).innerHTML =
+                ids.map(s => `<option value="${escapeHtml(systemLabel(s))}"></option>`).join('');
+        }
+
+        // Only offer targets that have a model from the chosen source
+        function updateTargets() {
+            const sys1 = selectedId('sys1Select');
+            const targets = sys1
+                ? allSystems.filter(s => `${sys1}_to_${s}` in modelIndex)
+                : allSystems;
+            fillList('sys2List', targets);
+            const sys2Input = document.getElementById('sys2Select');
+            sys2Input.placeholder = sys1
+                ? `Type to search ${targets.length} target systems`
+                : 'Type to search by id or name';
+            if (sys1 && sys2Input.value && !targets.includes(selectedId('sys2Select'))) {
+                sys2Input.value = '';
+            }
+        }
+
         // Load index of all available models
         async function loadModelIndex() {
             try {
+                const namesPromise = loadSystemNames();
                 const response = await fetch(`${DATA_URL}/model_index.csv`);
                 if (!response.ok) {
                     showMessage('error', 'Could not find model index at: ' + DATA_URL);
@@ -265,18 +323,15 @@
                     }
                 });
 
-                // Populate dropdowns
-                const sortedSystems = Array.from(systems).sort();
-                const sys1Sel = document.getElementById('sys1Select');
-                const sys2Sel = document.getElementById('sys2Select');
-
-                sys1Sel.innerHTML = '<option value="">Select source system</option>' +
-                    sortedSystems.map(s => `<option value="${s}">${s}</option>`).join('');
-
-                sys2Sel.innerHTML = '<option value="">Select target system</option>' +
-                    sortedSystems.map(s => `<option value="${s}">${s}</option>`).join('');
-
+                // Populate the searchable lists
                 modelIndex = systemPairs;
+                allSystems = Array.from(systems).sort();
+                systemNames = await namesPromise;
+
+                fillList('sys1List', allSystems);
+                document.getElementById('sys1Select').placeholder = 'Type to search by id or name';
+                updateTargets();
+
                 showMessage('success', `Loaded ${Object.keys(systemPairs).length} models`);
 
             } catch (error) {
@@ -286,8 +341,8 @@
 
         // Load and display model
         async function loadModel() {
-            const sys1 = document.getElementById('sys1Select').value;
-            const sys2 = document.getElementById('sys2Select').value;
+            const sys1 = selectedId('sys1Select');
+            const sys2 = selectedId('sys2Select');
 
             if (!sys1 || !sys2) {
                 showMessage('error', 'Please select both source and target systems');
@@ -383,7 +438,7 @@
             };
 
             const layout = {
-                title: `RT Mapping: ${data.sys1_id} → ${data.sys2_id}`,
+                title: `RT Mapping: ${systemLabel(data.sys1_id)} → ${systemLabel(data.sys2_id)}`,
                 xaxis: {
                     title: `Source System (${data.sys1_id}) RT (minutes)`,
                     showgrid: true,
@@ -429,7 +484,8 @@
                 </div>
             `;
             document.getElementById('stats').innerHTML = html;
-            document.getElementById('plotTitle').textContent = `${data.sys1_id} → ${data.sys2_id}`;
+            document.getElementById('plotTitle').textContent =
+                `${systemLabel(data.sys1_id)} → ${systemLabel(data.sys2_id)}`;
         }
 
         // UI helpers
@@ -443,6 +499,8 @@
             messageEl.innerHTML = `<div class="${type}">${message}</div>`;
             setTimeout(() => messageEl.innerHTML = '', 5000);
         }
+
+        document.getElementById('sys1Select').addEventListener('input', updateTargets);
 
         // Allow Enter key to load model
         document.getElementById('sys1Select').addEventListener('keypress', function(e) {

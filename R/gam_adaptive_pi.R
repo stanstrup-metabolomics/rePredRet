@@ -29,11 +29,16 @@ NULL
 #' 3. Local scale s(x): a Gamma GAM (log link, REML, at most 5 basis
 #'    functions) of the absolute cross-validated residuals, weighted by the
 #'    sigmoid outlier weights so that single outliers do not widen the band
-#'    locally. s(x) is floored at 30% of the global weighted scale.
-#' 4. Calibration: the multiplier q is the split-conformal quantile (the
-#'    `ceiling((n + 1) * (1 - alpha))`-th smallest value) of the normalized
-#'    residuals |e| / s(x). With fewer than about `1 / alpha` compounds this is
-#'    their maximum.
+#'    locally. Between the weighted compounds s(x) is interpolated linearly
+#'    (see [local_residual_scale()]). s(x) is floored at 30% of the global
+#'    weighted scale and capped at the largest residual.
+#' 4. Calibration: the multiplier q is the weighted split-conformal quantile
+#'    of the normalized residuals |e| / s(x), where each compound counts by
+#'    its sigmoid outlier weight ([weighted_conformal_quantile()]). Outliers
+#'    are taken to be wrong annotations, so the interval is meant to cover
+#'    `1 - alpha` of the well-annotated compounds, not the outliers. With
+#'    fewer than about `1 / alpha` compounds q is the largest score of the
+#'    compounds that are not down-weighted.
 #' 5. Interval: prediction +/- q * s(x). Each bound is made non-decreasing by
 #'    isotonic regression, which keeps lower <= prediction <= upper. The
 #'    lower bound is truncated at 0.
@@ -44,6 +49,10 @@ NULL
 #'
 #' Because the residuals are out-of-fold, q already includes the uncertainty
 #' of the fitted curve, so no separate standard error term is added.
+#'
+#' The idea for this method, and the problems with the earlier interval
+#' methods that it fixes, came from Barbora Hamidová's evaluation of
+#' rePredRet in her MSc thesis (2026).
 #'
 #' @references
 #' Lei, J., G'Sell, M., Rinaldo, A., Tibshirani, R. J. & Wasserman, L. (2018).
@@ -80,17 +89,49 @@ gam_adaptive_pi <- function(rt_matrix, newdata, alpha = 0.05, n_folds = 5) {
 #' @return A matrix with 3 columns: `[predicted, lower, upper]`.
 #' @keywords internal
 conformal_band <- function(fit, e, mu, newdata, alpha) {
-  n <- length(e)
-
   # Step 3: local scale of the residuals
   scale_fun <- local_residual_scale(fit$x, e, fit$w, fit$k)
 
   # Step 4: conformal multiplier
-  scores <- sort(abs(e) / scale_fun(fit$x))
-  q <- scores[min(ceiling((n + 1) * (1 - alpha)), n)]
+  q <- weighted_conformal_quantile(abs(e) / scale_fun(fit$x), fit$w, alpha)
 
   # Step 5: interval with monotone bounds
   monotone_interval(newdata, mu, q * scale_fun(newdata))
+}
+
+
+#' Weighted Conformal Quantile
+#'
+#' The `1 - alpha` quantile of the scores, where each compound counts by its
+#' outlier weight, so that compounds the fit treats as outliers (wrong
+#' annotations) do not set the width of the interval.
+#'
+#' @param scores Normalized residuals |e| / s(x).
+#' @param w Sigmoid outlier weights of the compounds.
+#' @param alpha Significance level.
+#'
+#' @return The multiplier q.
+#'
+#' @details
+#' The smallest score at which the cumulative weight of the sorted scores
+#' reaches `(1 - alpha) * (sum(w) + max(w))`; the extra `max(w)` stands for
+#' the new compound, assumed to be well annotated. With equal weights this is
+#' the split-conformal `ceiling((n + 1) * (1 - alpha))`-th smallest score.
+#' If the total weight is too small to reach that level (fewer than about
+#' `1 / alpha` well-fitting compounds), the largest score of the compounds
+#' with at least half the maximum weight is used.
+#'
+#' @references
+#' Tibshirani, R. J., Barber, R. F., Candès, E. J. & Ramdas, A. (2019).
+#' Conformal prediction under covariate shift. *Advances in Neural
+#' Information Processing Systems* 32.
+#'
+#' @keywords internal
+weighted_conformal_quantile <- function(scores, w, alpha) {
+  o <- order(scores)
+  j <- which(cumsum(w[o]) >= (1 - alpha) * (sum(w) + max(w)))[1]
+  if (!is.na(j)) return(scores[o][j])
+  max(scores[w >= 0.5 * max(w)])
 }
 
 
@@ -178,10 +219,18 @@ cv_residuals_gam_mono <- function(fit, n_folds = 5) {
 #' exact zeros (e.g. RTs reported with few decimals) are not allowed by the
 #' Gamma family. If the GAM fails, the global weighted scale is used.
 #'
+#' The GAM is only evaluated at the compounds that carry weight (`w` at least
+#' 5% of its maximum) and interpolated linearly between them; beyond them the
+#' scale is held constant. In gaps between compounds and next to
+#' down-weighted outliers the log-link smooth is unconstrained and can grow
+#' without bound (scales above 1e30 min were seen). The scale is capped at
+#' sqrt(pi / 2) times the largest absolute residual.
+#'
 #' @keywords internal
 local_residual_scale <- function(x, e, w, k, floor_frac = 0.3) {
   a <- abs(e)
   s_global <- max(sqrt(pi / 2) * sum(w * a) / sum(w), 1e-4)
+  s_max <- max(sqrt(pi / 2) * max(a), s_global)
 
   scale_fun <- tryCatch({
     dat <- data.frame(x = x, a = pmax(a, 0.05 * mean(a) + 1e-6))
@@ -192,12 +241,13 @@ local_residual_scale <- function(x, e, w, k, floor_frac = 0.3) {
       weights = w / mean(w),
       method = "REML"
     )
-    function(newx) {
-      sqrt(pi / 2) * as.numeric(stats::predict(fit, data.frame(x = newx), type = "response"))
-    }
+    xs <- sort(unique(x[w >= 0.05 * max(w)]))
+    s <- sqrt(pi / 2) * as.numeric(stats::predict(fit, data.frame(x = xs), type = "response"))
+    if (length(xs) < 2 || any(!is.finite(s))) stop("too few weighted compounds")
+    function(newx) stats::approx(xs, s, xout = newx, rule = 2)$y
   }, error = function(err) {
     function(newx) rep(s_global, length(newx))
   })
 
-  function(newx) pmax(scale_fun(newx), floor_frac * s_global)
+  function(newx) pmin(pmax(scale_fun(newx), floor_frac * s_global), s_max)
 }

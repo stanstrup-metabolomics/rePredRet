@@ -13,6 +13,12 @@ library(knitr)
 # Statistics are computed from the published model index, so they are always current
 index <- tryCatch(rePredRet_models(), error = function(e) NULL)
 has_data <- !is.null(index) && nrow(index) > 0
+
+# Log axes with plain-number labels at 1, 3, 10, 30... (0.03 instead of 3e-02)
+log_breaks <- c(1, 3) * rep(10^(-4:6), each = 2)
+plain_labels <- function(b) vapply(b, format, "", scientific = FALSE, drop0trailing = TRUE)
+scale_x_log <- function(...) scale_x_log10(breaks = log_breaks, labels = plain_labels, ...)
+scale_y_log <- function(...) scale_y_log10(breaks = log_breaks, labels = plain_labels, ...)
 ```
 
 All statistics are per model, computed at the calibration compounds of each model:
@@ -53,7 +59,7 @@ if (has_data) {
   ggplot(index, aes(x = median_error)) +
     geom_histogram(bins = 60, fill = "steelblue", color = "white", alpha = 0.8) +
     geom_vline(xintercept = median(index$median_error), color = "red", linetype = "dashed") +
-    scale_x_log10() +
+    scale_x_log() +
     labs(
       x = "Median Absolute Error (min, log scale)",
       y = "Number of Models",
@@ -74,7 +80,7 @@ if (has_data) {
   ggplot(index, aes(x = median_ci_width)) +
     geom_histogram(bins = 60, fill = "steelblue", color = "white", alpha = 0.8) +
     geom_vline(xintercept = median(index$median_ci_width), color = "red", linetype = "dashed") +
-    scale_x_log10() +
+    scale_x_log() +
     labs(
       x = "Median 95% PI Width (min, log scale)",
       y = "Number of Models",
@@ -95,8 +101,8 @@ if (has_data) {
   ggplot(index, aes(x = n_compounds, y = median_error)) +
     geom_point(alpha = 0.05, size = 0.5, color = "steelblue") +
     geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), se = TRUE, color = "red") +
-    scale_x_log10() +
-    scale_y_log10() +
+    scale_x_log() +
+    scale_y_log() +
     labs(
       x = "Number of Calibration Compounds (log scale)",
       y = "Median Absolute Error (min, log scale)",
@@ -114,8 +120,8 @@ if (has_data) {
   ggplot(index, aes(x = n_compounds, y = median_ci_width)) +
     geom_point(alpha = 0.05, size = 0.5, color = "steelblue") +
     geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), se = TRUE, color = "red") +
-    scale_x_log10() +
-    scale_y_log10() +
+    scale_x_log() +
+    scale_y_log() +
     labs(
       x = "Number of Calibration Compounds (log scale)",
       y = "Median 95% PI Width (min, log scale)",

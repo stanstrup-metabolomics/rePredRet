@@ -164,6 +164,29 @@ test_that("gam_adaptive_pi handles few compounds and outliers", {
 })
 
 
+test_that("weighted_conformal_quantile ignores down-weighted outliers", {
+  scores <- c(seq(0.1, 2, length.out = 39), 50)
+
+  # Equal weights: the split-conformal ceiling((n + 1) * 0.95)-th score
+  expect_equal(weighted_conformal_quantile(scores, rep(1, 40), 0.05),
+               sort(scores)[39])
+  # An outlier with weight ~0 does not set q, also with few compounds
+  expect_lte(weighted_conformal_quantile(scores, c(rep(0.95, 39), 0.001), 0.05), 2)
+  expect_lte(weighted_conformal_quantile(scores[30:40], c(rep(0.95, 10), 0.001), 0.05), 2)
+})
+
+
+test_that("local_residual_scale does not blow up in gaps between compounds", {
+  set.seed(5)
+  x <- c(runif(20, 2, 3), runif(10, 13, 20))
+  e <- c(rnorm(20, sd = 0.1), rnorm(10, sd = 1))
+  e[21:22] <- c(9, -8)
+  sf <- local_residual_scale(x, e, rep(0.9, 30), 10)
+
+  expect_lte(max(sf(seq(2, 20, length.out = 200))), sqrt(pi / 2) * max(abs(e)) + 1e-8)
+})
+
+
 test_that("build_model uses adaptive_pi by default", {
   model <- suppressMessages(build_model(make_het_data(30), "a", "b"))
 

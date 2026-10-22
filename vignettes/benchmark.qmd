@@ -28,7 +28,9 @@ monotone GAM (see [Methods](methods.html)):
 This article compares them with each other, with the versions before they were
 fixed, and with the alternatives suggested in an MSc thesis evaluation
 (B. Hamidová, 2026): a weighted or MAD residual scale, a heavy-tailed `scat`
-likelihood, quantile GAMs (`qgam`) and a location-scale GAM (`gaulss`).
+likelihood, quantile GAMs (`qgam`) and a location-scale GAM (`gaulss`). That
+evaluation found the problems with the earlier methods and gave the idea for
+`adaptive_pi`.
 
 ## Setup
 

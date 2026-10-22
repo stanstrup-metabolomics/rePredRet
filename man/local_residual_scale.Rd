@@ -30,5 +30,12 @@ normal errors E|e| = sigma * sqrt(2 / pi), so the fitted values are scaled
 by sqrt(pi / 2). Absolute residuals are floored at 5\% of their mean, since
 exact zeros (e.g. RTs reported with few decimals) are not allowed by the
 Gamma family. If the GAM fails, the global weighted scale is used.
+
+The GAM is only evaluated at the compounds that carry weight (\code{w} at least
+5\% of its maximum) and interpolated linearly between them; beyond them the
+scale is held constant. In gaps between compounds and next to
+down-weighted outliers the log-link smooth is unconstrained and can grow
+without bound (scales above 1e30 min were seen). The scale is capped at
+sqrt(pi / 2) times the largest absolute residual.
 }
 \keyword{internal}

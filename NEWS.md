@@ -9,7 +9,29 @@
   weighted to ignore outliers) and is calibrated by cross-validated conformal
   prediction. On held-out compounds from 135 RepoRT system pairs it covered
   94.6% (95% nominal), equally in low- and high-scatter regions (94.8% /
-  94.5%). It takes 60-90 ms per model.
+  94.5%). It takes 60-90 ms per model. Thanks to Barbora Hamidová for the
+  idea and for finding the problems with the other interval methods (MSc
+  thesis, 2026).
+* `adaptive_pi` and `bootstrap`: the local scale is no longer extrapolated
+  across gaps between compounds or past down-weighted outliers, where the
+  log-link smooth could grow without bound. In the first full build 1% of
+  the models had a median PI width above 79 min, up to 1e36 min. The scale
+  is now interpolated between the compounds and capped at the largest
+  residual (method versions bumped, so the next pipeline run rebuilds them).
+* `adaptive_pi` and `bootstrap`: the conformal multiplier q is now a weighted
+  quantile in which each compound counts by its sigmoid outlier weight
+  (`weighted_conformal_quantile()`). Before, with fewer than about 40
+  compounds a single outlier (a wrong annotation the fit already ignores)
+  set q and widened the whole band. The interval now aims to cover 95% of
+  the well-annotated compounds (weight >= 0.5). In cross-validation on 400
+  random published models it covered 94.9% of them (97.3% before) and 35%
+  of the outliers; the median width fell from 3.6 to 2.1 min, and the
+  models whose median width exceeds the target RT range from 71 to 17.
+* Model viewer: systems are shown with their RepoRT name and method type, the
+  system boxes can be searched by typing any part of the id or name, and the
+  target list only offers systems with a model from the chosen source.
+* Model statistics article: log axes are labelled with plain numbers
+  (0.03, 0.1, 0.3, 1, ...) instead of scientific notation.
 * `method = "fast_ci"` (`gam_fast_ci()`) is kept as the fast option (15-20 ms per
   model), with fixes: the residual variance comes from leave-one-out residuals
   instead of in-sample residuals (coverage 93.9% -> 95.5%; with 10-15

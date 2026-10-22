@@ -86,4 +86,9 @@ Authors:
   \item Jan Stanstrup \email{stanstrup@gmail.com} (\href{https://orcid.org/0000-0003-0541-7369}{ORCID})
 }
 
+Other contributors:
+\itemize{
+  \item Barbora Hamidová (Idea of the adaptive prediction intervals; found the problems with the earlier interval methods) [contributor]
+}
+
 }
