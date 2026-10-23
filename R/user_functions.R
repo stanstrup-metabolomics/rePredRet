@@ -57,7 +57,10 @@ NULL
 #' @param refresh If TRUE, download fresh copies instead of using the cache.
 #'
 #' @return Tibble with system information from RepoRT (id, name, url,
-#'   method.type, authors, ...).
+#'   method.type, authors, ...), plus `n_compounds` (compounds with an RT in
+#'   the system) and `n_models` (models from or to it) from the published
+#'   `systems.csv`. Model sets published before `systems.csv` was added give
+#'   NA for these two columns.
 #'
 #' @importFrom readr read_tsv
 #' @export
@@ -72,8 +75,21 @@ rePredRet_systems <- function(refresh = FALSE) {
 
   models <- rePredRet_models(refresh = refresh)
   system_ids <- unique(c(models$sys1_id, models$sys2_id))
+  studies <- studies[studies$id %in% system_ids, ]
 
-  studies[studies$id %in% system_ids, ]
+  systems_file <- tryCatch(
+    .fetch_file(paste0(.models_url_base, "/systems.csv"), "models/systems.csv", refresh = refresh),
+    error = function(e) NULL
+  )
+  counts <- if (!is.null(systems_file)) {
+    readr::read_csv(systems_file, col_types = readr::cols(sys_id = "c"), progress = FALSE)
+  } else {
+    data.frame(sys_id = character(), n_compounds = integer(), n_models = integer())
+  }
+  studies$n_compounds <- counts$n_compounds[match(studies$id, counts$sys_id)]
+  studies$n_models <- counts$n_models[match(studies$id, counts$sys_id)]
+
+  studies
 }
 
 
@@ -146,81 +162,133 @@ rePredRet_model <- function(from_id, to_id, refresh = FALSE) {
 
 #' Plot System Network
 #'
-#' Creates a network visualization showing connections between chromatographic
-#' systems based on pre-built model availability.
+#' Network of the chromatographic systems with pre-built models. Each point
+#' is a system and each line a pair of systems with models between them.
 #'
-#' @param min_compounds Minimum compounds to show edge (default 20).
-#' @param show_labels If TRUE (default), label each system with its ID.
+#' @param min_compounds Minimum shared compounds for a pair to count
+#'   (default 20).
+#' @param n_links Number of links drawn per system (default 3): the pairs
+#'   with the most shared compounds. A line is drawn if it is among the
+#'   `n_links` strongest of either of its systems. Drawing all pairs gives an
+#'   unreadable tangle.
+#' @param show_labels If TRUE, label each system with its ID (default FALSE).
 #' @param refresh If TRUE, download a fresh model index instead of using the cache.
 #'
 #' @return A ggplot object.
 #'
-#' @importFrom ggplot2 ggplot aes geom_segment geom_point geom_text
-#' @importFrom ggplot2 coord_fixed theme_void labs
+#' @details
+#' Both directions of a pair share the same compounds, so each pair is one
+#' line. Line width is the number of shared compounds and point size the
+#' number of compounds in the system (the number of models for model sets
+#' published before `systems.csv` existed), both on log scales. The shape
+#' shows the method type. The colour shows groups of systems that share
+#' many compounds: Louvain communities of all pairs (weighted by log10
+#' shared compounds), not only of the lines drawn, so a group can appear in
+#' more than one place. The layout (Fruchterman-Reingold on the lines drawn)
+#' and the communities use a fixed seed.
+#'
+#' Requires the igraph package.
+#'
 #' @export
-rePredRet_plot_network <- function(min_compounds = 20, show_labels = TRUE, refresh = FALSE) {
-  models <- rePredRet_models(refresh = refresh)
+rePredRet_plot_network <- function(min_compounds = 20, n_links = 3, show_labels = FALSE,
+                                   refresh = FALSE) {
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    stop("Package 'igraph' is required. Install with: install.packages('igraph')")
+  }
 
-  # Filter by minimum compounds
-  models <- models[models$n_compounds >= min_compounds, ]
+  # One undirected edge per system pair
+  edges <- rePredRet_models(refresh = refresh) |>
+    dplyr::filter(n_compounds >= min_compounds) |>
+    dplyr::mutate(from = pmin(sys1_id, sys2_id), to = pmax(sys1_id, sys2_id)) |>
+    dplyr::distinct(from, to, .keep_all = TRUE) |>
+    dplyr::select(from, to, n_compounds)
 
-  if (nrow(models) == 0) {
+  if (nrow(edges) == 0) {
     stop("No models meet the minimum compound threshold")
   }
 
-  # Get unique nodes
-  nodes <- unique(c(models$sys1_id, models$sys2_id))
-  n_nodes <- length(nodes)
+  g <- igraph::graph_from_data_frame(edges, directed = FALSE)
+  weights <- log10(edges$n_compounds)
 
-  # Create circular layout
-  angles <- seq(0, 2 * pi, length.out = n_nodes + 1)[-(n_nodes + 1)]
-  node_coords <- data.frame(
-    id = nodes,
-    x = cos(angles),
-    y = sin(angles)
-  )
+  # Communities of all pairs, numbered from the largest
+  membership <- withr::with_seed(1, igraph::membership(igraph::cluster_louvain(g, weights = weights)))
+  by_size <- as.integer(names(sort(table(membership), decreasing = TRUE)))
 
-  # Create edge coordinates
-  edges <- merge(models, node_coords, by.x = "sys1_id", by.y = "id")
-  names(edges)[names(edges) == "x"] <- "x_from"
-  names(edges)[names(edges) == "y"] <- "y_from"
-  edges <- merge(edges, node_coords, by.x = "sys2_id", by.y = "id")
-  names(edges)[names(edges) == "x"] <- "x_to"
-  names(edges)[names(edges) == "y"] <- "y_to"
+  systems <- rePredRet_systems(refresh = refresh)
+  nodes <- data.frame(id = igraph::V(g)$name)
+  info <- match(nodes$id, systems$id)
+  nodes$method_type <- dplyr::coalesce(systems$method.type[info], "unknown")
+  nodes$community <- factor(match(membership, by_size))
+  nodes$node_size <- systems$n_compounds[info]
+  size_name <- "Compounds\nin system"
+  if (anyNA(nodes$node_size)) {
+    nodes$node_size <- igraph::degree(g)
+    size_name <- "Models"
+  }
+
+  # The n_links strongest links of each system
+  edges$edge <- seq_len(nrow(edges))
+  keep <- dplyr::bind_rows(dplyr::select(edges, node = from, edge, n_compounds),
+                           dplyr::select(edges, node = to, edge, n_compounds)) |>
+    dplyr::group_by(node) |>
+    dplyr::slice_max(n_compounds, n = n_links, with_ties = FALSE) |>
+    dplyr::pull(edge) |>
+    unique() |>
+    sort()
+  g_shown <- igraph::subgraph_from_edges(g, keep, delete.vertices = FALSE)
+
+  xy <- withr::with_seed(1, igraph::layout_with_fr(g_shown, weights = weights[keep]))
+  nodes$x <- xy[, 1]
+  nodes$y <- xy[, 2]
+
+  shown <- edges[keep, ]
+  shown$x_from <- nodes$x[match(shown$from, nodes$id)]
+  shown$y_from <- nodes$y[match(shown$from, nodes$id)]
+  shown$x_to <- nodes$x[match(shown$to, nodes$id)]
+  shown$y_to <- nodes$y[match(shown$to, nodes$id)]
+
+  # Log legends labelled 1, 3, 10, 30, ... 10,000
+  log_breaks <- c(1, 3) * rep(10^(0:5), each = 2)
+  plain_labels <- function(b) format(b, big.mark = ",", scientific = FALSE, trim = TRUE)
 
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data = edges,
-      ggplot2::aes(
-        x = x_from, y = y_from,
-        xend = x_to, yend = y_to,
-        alpha = n_compounds
-      ),
-      color = "gray50"
+      data = shown,
+      ggplot2::aes(x = x_from, y = y_from, xend = x_to, yend = y_to, linewidth = n_compounds),
+      colour = "grey50", alpha = 0.25
     ) +
     ggplot2::geom_point(
-      data = node_coords,
-      ggplot2::aes(x = x, y = y),
-      size = 4,
-      color = "steelblue"
-    )
+      data = nodes,
+      ggplot2::aes(x = x, y = y, size = node_size, colour = community, shape = method_type),
+      alpha = 0.85
+    ) +
+    ggplot2::scale_linewidth(range = c(0.15, 2.5), trans = "log10", breaks = log_breaks,
+                             labels = plain_labels, name = "Shared\ncompounds") +
+    ggplot2::scale_size(range = c(0.8, 7), trans = "log10", breaks = log_breaks,
+                        labels = plain_labels, name = size_name) +
+    ggplot2::scale_shape_discrete(name = "Method") +
+    ggplot2::guides(colour = "none")
+
+  if (nlevels(nodes$community) <= 8) {
+    p <- p + ggplot2::scale_colour_brewer(palette = "Dark2")
+  }
 
   if (show_labels) {
     p <- p + ggplot2::geom_text(
-      data = node_coords,
-      ggplot2::aes(x = x * 1.15, y = y * 1.15, label = id),
-      size = 3
+      data = nodes,
+      ggplot2::aes(x = x, y = y, label = id),
+      size = 2.5, vjust = -1
     )
   }
 
-  p <- p +
-    ggplot2::coord_fixed() +
+  p +
+    ggplot2::coord_equal() +
     ggplot2::theme_void() +
     ggplot2::labs(
       title = "Chromatographic System Network",
-      subtitle = paste(n_nodes, "systems,", nrow(edges), "model pairs"),
-      alpha = "Common\nCompounds"
+      subtitle = sprintf("%d systems, %s of %s pairs drawn (the %d strongest links of each system)",
+                         nrow(nodes), format(length(keep), big.mark = ","),
+                         format(nrow(edges), big.mark = ","), n_links),
+      caption = "Colour: groups of systems that share many compounds"
     )
-
-  return(p)
 }

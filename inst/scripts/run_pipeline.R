@@ -36,7 +36,8 @@ if (!dir.exists(report_cache_dir)) {
   dir.create(report_cache_dir, recursive = TRUE)
 }
 report_path <- download_report(dest_dir = report_cache_dir, overwrite = FALSE)
-report_data <- load_report_data(report_path, method_types = c("RP"))
+# Models are only built within a method type (RP with RP, HILIC with HILIC)
+report_data <- load_report_data(report_path, method_types = c("RP", "HILIC"))
 message("  ✓ Loaded ", length(report_data$datasets), " datasets")
 
 if (!is.na(max_systems) && max_systems > 0) {

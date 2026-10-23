@@ -11,7 +11,10 @@ rePredRet_systems(refresh = FALSE)
 }
 \value{
 Tibble with system information from RepoRT (id, name, url,
-method.type, authors, ...).
+method.type, authors, ...), plus \code{n_compounds} (compounds with an RT in
+the system) and \code{n_models} (models from or to it) from the published
+\code{systems.csv}. Model sets published before \code{systems.csv} was added give
+NA for these two columns.
 }
 \description{
 Returns RepoRT study information for all chromatographic systems that

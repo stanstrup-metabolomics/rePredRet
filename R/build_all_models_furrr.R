@@ -29,10 +29,16 @@
 #' This function uses furrr::future_map for outer-level parallelization,
 #' avoiding nested parallelization overhead. Each worker builds models sequentially.
 #'
+#' Models are only built between systems of the same method type
+#' (`method.type` in `report_data$studies`, e.g. RP or HILIC), since the
+#' elution order differs between types.
+#'
 #' Caching (requires export_dir): models are only rebuilt when one of their
 #' datasets changed or their files are missing. Models whose datasets were
 #' removed, or that no longer have enough common compounds, are deleted.
-#' The build cache and `model_index.csv` are updated in export_dir.
+#' The build cache, `model_index.csv` and `systems.csv` (one row per system:
+#' name, method type, number of compounds and number of models) are updated
+#' in export_dir.
 #'
 #' @importFrom furrr future_map
 #' @importFrom future plan multisession
@@ -76,6 +82,14 @@ build_all_models_furrr <- function(report_data,
     NULL
   }
 
+  # Method type of each dataset; models are only built within a type
+  studies <- report_data$studies
+  method_types <- if (!is.null(studies)) {
+    studies$method.type[match(dataset_ids, studies$id)]
+  } else {
+    NULL
+  }
+
   if (!is.null(cache_file)) {
     cache <- load_build_cache(cache_file)
     message("Analyzing dataset changes for incremental build...")
@@ -101,7 +115,7 @@ build_all_models_furrr <- function(report_data,
 
   # Find all pairs with enough common compounds (sparse overlap counts)
   rt_lookup <- prepare_rt_lookup(datasets)
-  candidate_pairs <- find_model_pairs(rt_lookup, min_compounds)
+  candidate_pairs <- find_model_pairs(rt_lookup, min_compounds, groups = method_types)
   candidate_keys <- purrr::map_chr(candidate_pairs, function(p) paste0(p$id1, "_to_", p$id2))
 
   if (verbose) {
@@ -317,6 +331,8 @@ build_all_models_furrr <- function(report_data,
     save_build_cache(cache, cache_file)
     utils::write.csv(index_df, index_file, row.names = FALSE)
     message("Model index saved: ", index_file, " (", nrow(index_df), " models)")
+    utils::write.csv(systems_table(rt_lookup, studies, index_df),
+                     file.path(export_dir, "systems.csv"), row.names = FALSE)
   }
 
   # Summary statistics
@@ -459,9 +475,12 @@ common_rt_matrix <- function(lookup1, lookup2) {
 #'
 #' @param rt_lookup Output of [prepare_rt_lookup()]
 #' @param min_compounds Minimum common compounds
+#' @param groups Optional group of each dataset (e.g. its method type), in
+#'   the order of `rt_lookup`. Pairs are only formed within a group; datasets
+#'   with a missing group form a group of their own.
 #' @return List of pairs with id1 and id2
 #' @keywords internal
-find_model_pairs <- function(rt_lookup, min_compounds) {
+find_model_pairs <- function(rt_lookup, min_compounds, groups = NULL) {
   ids <- names(rt_lookup)
   keys <- purrr::map(rt_lookup, "key")
   all_keys <- unique(unlist(keys))
@@ -478,6 +497,10 @@ find_model_pairs <- function(rt_lookup, min_compounds) {
   )
   overlap <- as.matrix(Matrix::crossprod(M))
   diag(overlap) <- 0
+  if (!is.null(groups)) {
+    groups <- dplyr::coalesce(groups, "<none>")
+    overlap[outer(groups, groups, "!=")] <- 0
+  }
 
   hits <- which(overlap >= min_compounds, arr.ind = TRUE)
   hits <- hits[order(hits[, 1], hits[, 2]), , drop = FALSE]
@@ -541,6 +564,32 @@ index_row_from_json <- function(json_file) {
     n_compounds = j$n_compounds,
     median_ci_width = j$stats$median_ci_width,
     median_error = j$stats$median_error,
+    stringsAsFactors = FALSE
+  )
+}
+
+
+#' Table of Systems
+#'
+#' One row per dataset for `systems.csv`: id, name and method type from
+#' RepoRT's studies table, the number of compounds (unique InChIs without
+#' stereochemistry) and the number of models from or to the system.
+#'
+#' @param rt_lookup Output of [prepare_rt_lookup()]
+#' @param studies RepoRT studies table, or NULL
+#' @param index_df Model index with sys1_id and sys2_id
+#' @return data.frame with sys_id, name, method_type, n_compounds, n_models
+#' @keywords internal
+systems_table <- function(rt_lookup, studies, index_df) {
+  ids <- names(rt_lookup)
+  info <- if (!is.null(studies)) match(ids, studies$id) else rep(NA_integer_, length(ids))
+  n_models <- table(factor(c(index_df$sys1_id, index_df$sys2_id), levels = ids))
+  data.frame(
+    sys_id = ids,
+    name = if (!is.null(studies)) studies$name[info] else NA_character_,
+    method_type = if (!is.null(studies)) studies$method.type[info] else NA_character_,
+    n_compounds = unname(purrr::map_int(rt_lookup, function(l) sum(!is.na(l$key)))),
+    n_models = as.integer(n_models),
     stringsAsFactors = FALSE
   )
 }

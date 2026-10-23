@@ -61,6 +61,35 @@ test_that("find_model_pairs respects min_compounds", {
 })
 
 
+test_that("find_model_pairs only pairs datasets of the same group", {
+  rd <- make_report_data()
+  lookup <- prepare_rt_lookup(rd$datasets)
+
+  pairs <- find_model_pairs(lookup, 10, groups = c("RP", "RP", "HILIC"))
+  keys <- purrr::map_chr(pairs, function(p) paste(p$id1, p$id2))
+  expect_setequal(keys, c("0001 0002", "0002 0001"))
+  # A missing group forms a group of its own
+  expect_length(find_model_pairs(lookup, 10, groups = c("RP", NA, NA)), 2)
+})
+
+
+test_that("build_all_models_furrr builds within method types and writes systems.csv", {
+  export_dir <- withr::local_tempdir()
+  rd <- make_report_data()
+  rd$studies <- data.frame(id = c("0001", "0002", "0003"), name = c("a", "b", "c"),
+                           method.type = c("RP", "RP", "HILIC"))
+
+  run <- build_quietly(rd, export_dir)
+  expect_setequal(paste(run$index$sys1_id, run$index$sys2_id), c("0001 0002", "0002 0001"))
+
+  systems <- utils::read.csv(file.path(export_dir, "systems.csv"), colClasses = c(sys_id = "character"))
+  expect_equal(systems$sys_id, c("0001", "0002", "0003"))
+  expect_equal(systems$method_type, c("RP", "RP", "HILIC"))
+  expect_equal(systems$n_compounds, c(30, 30, 30))
+  expect_equal(systems$n_models, c(2, 2, 0))
+})
+
+
 test_that("build_all_models_furrr only rebuilds what changed", {
   export_dir <- withr::local_tempdir()
   rd <- make_report_data()

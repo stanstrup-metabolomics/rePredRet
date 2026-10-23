@@ -27,11 +27,6 @@
   random published models it covered 94.9% of them (97.3% before) and 35%
   of the outliers; the median width fell from 3.6 to 2.1 min, and the
   models whose median width exceeds the target RT range from 71 to 17.
-* Model viewer: systems are shown with their RepoRT name and method type, the
-  system boxes can be searched by typing any part of the id or name, and the
-  target list only offers systems with a model from the chosen source.
-* Model statistics article: log axes are labelled with plain numbers
-  (0.03, 0.1, 0.3, 1, ...) instead of scientific notation.
 * `method = "fast_ci"` (`gam_fast_ci()`) is kept as the fast option (15-20 ms per
   model), with fixes: the residual variance comes from leave-one-out residuals
   instead of in-sample residuals (coverage 93.9% -> 95.5%; with 10-15
@@ -70,6 +65,8 @@
 
 ## Breaking changes
 
+* `rePredRet_plot_network()` draws a different plot (see Website), and its
+  `show_labels` now defaults to FALSE.
 * Removed `rePredRet_download()`, `rePredRet_predict()`,
   `rePredRet_system_predictions()` and `rePredRet_plot_errors()`. They depended on a
   `rePredRet-data` repository with pre-computed predictions that does not exist.
@@ -96,6 +93,17 @@
 
 ## Website
 
+* `rePredRet_plot_network()` was a circle that is unreadable with hundreds of
+  systems. It is now a force-directed network that draws each system's
+  strongest links (new argument `n_links`, default 3), with point size the
+  number of compounds in the system, line width the shared compounds, shape
+  the method type and colour groups of systems that share many compounds.
+  `show_labels` now defaults to FALSE. It needs the igraph package (Suggests).
+* Model viewer: systems are shown with their RepoRT name and method type, the
+  system boxes can be searched by typing any part of the id or name, and the
+  target list only offers systems with a model from the chosen source.
+* Model statistics article: log axes are labelled with plain numbers
+  (0.03, 0.1, 0.3, 1, ...) instead of scientific notation.
 * The Overview, Model Statistics and Network articles are computed from the published
   model index when the site is built, instead of from statistics files committed in
   January (a 642-model test run). The site is rebuilt after each model update.
@@ -105,6 +113,8 @@
 
 ## Other
 
+* `build_all_models()` runs its batches with furrr instead of a parallel cluster
+  per batch; purrr is now imported and parallel no longer is.
 * `rePredRet_plot_network()` gains `show_labels`.
 * `inst/scripts/run_pipeline.R` writes to `output/` by default (was `website/data/`).
 * Runner setup (`github_runner.yml`, `RUNNER_SETUP.md`): host paths are set in `.env`
@@ -112,6 +122,15 @@
 
 ## Pipeline
 
+* The pipeline now also builds models between HILIC systems (about 3,000 from
+  RepoRT's 71 HILIC systems; it was reversed-phase only).
+  `build_all_models_furrr()` and `find_model_pairs()` only pair systems of the
+  same method type (`method.type` in the studies table), so no RP-HILIC models
+  are built.
+* `build_all_models_furrr()` writes `systems.csv` next to `model_index.csv`:
+  name, method type, number of compounds and number of models per system. The
+  pipeline publishes it, and `rePredRet_systems()` gains `n_compounds` and
+  `n_models` columns from it.
 * `build_all_models_furrr()` now builds incrementally: only models whose datasets
   changed or whose files are missing are rebuilt. Previously the build cache was
   loaded but never applied or saved, so every run rebuilt all models.

@@ -4,12 +4,23 @@
 \alias{rePredRet_plot_network}
 \title{Plot System Network}
 \usage{
-rePredRet_plot_network(min_compounds = 20, show_labels = TRUE, refresh = FALSE)
+rePredRet_plot_network(
+  min_compounds = 20,
+  n_links = 3,
+  show_labels = FALSE,
+  refresh = FALSE
+)
 }
 \arguments{
-\item{min_compounds}{Minimum compounds to show edge (default 20).}
+\item{min_compounds}{Minimum shared compounds for a pair to count
+(default 20).}
 
-\item{show_labels}{If TRUE (default), label each system with its ID.}
+\item{n_links}{Number of links drawn per system (default 3): the pairs
+with the most shared compounds. A line is drawn if it is among the
+\code{n_links} strongest of either of its systems. Drawing all pairs gives an
+unreadable tangle.}
+
+\item{show_labels}{If TRUE, label each system with its ID (default FALSE).}
 
 \item{refresh}{If TRUE, download a fresh model index instead of using the cache.}
 }
@@ -17,6 +28,19 @@ rePredRet_plot_network(min_compounds = 20, show_labels = TRUE, refresh = FALSE)
 A ggplot object.
 }
 \description{
-Creates a network visualization showing connections between chromatographic
-systems based on pre-built model availability.
+Network of the chromatographic systems with pre-built models. Each point
+is a system and each line a pair of systems with models between them.
+}
+\details{
+Both directions of a pair share the same compounds, so each pair is one
+line. Line width is the number of shared compounds and point size the
+number of compounds in the system (the number of models for model sets
+published before \code{systems.csv} existed), both on log scales. The shape
+shows the method type. The colour shows groups of systems that share
+many compounds: Louvain communities of all pairs (weighted by log10
+shared compounds), not only of the lines drawn, so a group can appear in
+more than one place. The layout (Fruchterman-Reingold on the lines drawn)
+and the communities use a fixed seed.
+
+Requires the igraph package.
 }

@@ -4,12 +4,16 @@
 \alias{find_model_pairs}
 \title{Find Model Pairs by Compound Overlap}
 \usage{
-find_model_pairs(rt_lookup, min_compounds)
+find_model_pairs(rt_lookup, min_compounds, groups = NULL)
 }
 \arguments{
 \item{rt_lookup}{Output of \code{\link[=prepare_rt_lookup]{prepare_rt_lookup()}}}
 
 \item{min_compounds}{Minimum common compounds}
+
+\item{groups}{Optional group of each dataset (e.g. its method type), in
+the order of \code{rt_lookup}. Pairs are only formed within a group; datasets
+with a missing group form a group of their own.}
 }
 \value{
 List of pairs with id1 and id2

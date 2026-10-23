@@ -148,7 +148,7 @@ jobs:
           cd "$DATA_REPO"
 
           # Move metadata from models/ back to the repo root
-          for f in build_cache.rds model_index.csv report_version.txt; do
+          for f in build_cache.rds model_index.csv systems.csv report_version.txt; do
             if [ -f "models/$f" ]; then mv "models/$f" .; fi
           done
 

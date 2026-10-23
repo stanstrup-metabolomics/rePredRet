@@ -46,6 +46,7 @@ Imports:
     withr
 Suggests:
     curl,
+    igraph,
     testthat (>= 3.0.0),
     writexl
 Config/testthat/edition: 3

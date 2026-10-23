@@ -83,11 +83,14 @@ test_that("plot_model builds a ggplot with system names", {
 
 test_that("rePredRet_plot_network uses the model index", {
   local_model_repo()
+  skip_if_not_installed("igraph")
   p <- rePredRet_plot_network(min_compounds = 10)
-  expect_length(p$layers, 3)
-  expect_length(rePredRet_plot_network(min_compounds = 10, show_labels = FALSE)$layers, 2)
+  expect_length(p$layers, 2)
+  expect_length(rePredRet_plot_network(min_compounds = 10, show_labels = TRUE)$layers, 3)
 
   expect_s3_class(p, "ggplot")
+  # Without a published systems.csv, points are sized by the number of models
+  expect_equal(p$scales$get_scales("size")$name, "Models")
   expect_error(rePredRet_plot_network(min_compounds = 100), "No models meet")
 })
 

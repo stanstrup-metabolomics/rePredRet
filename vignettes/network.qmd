@@ -19,24 +19,28 @@ systems <- tryCatch(rePredRet_systems(), error = function(e) NULL)
 
 ## Network Overview
 
-The network shows how chromatographic systems are connected through pairwise models. Each node is a system and each edge a model between two systems (models are directional: one per source/target pair).
+The network shows how chromatographic systems are connected through pairwise models. Each node is a system and each edge a model between two systems (models are directional: one per source/target pair). Models are only built between systems of the same method type (reversed-phase with reversed-phase, HILIC with HILIC), since the elution order differs between the types.
 
 ```{r network-summary}
 #| echo: false
 if (has_data) {
   n_nodes <- length(unique(c(index$sys1_id, index$sys2_id)))
   n_edges <- nrow(index)
+  type <- if (!is.null(systems)) systems$method.type[match(index$sys1_id, systems$id)] else NA
+  models_by_type <- table(type)
 
   summary_table <- data.frame(
     Metric = c(
       "Total Systems (Nodes)",
       "Total Models (Edges)",
+      paste0("Models between ", names(models_by_type), " systems"),
       "Average Models per System (as source)",
       "Network Density"
     ),
     Value = c(
       n_nodes,
       format(n_edges, big.mark = ","),
+      format(as.integer(models_by_type), big.mark = ","),
       round(n_edges / n_nodes, 1),
       sprintf("%.2f%%", n_edges / (n_nodes * (n_nodes - 1)) * 100)
     )
@@ -49,13 +53,21 @@ if (has_data) {
 
 ## Network Visualization
 
+Each point is a system, sized by its number of compounds; the shape shows the
+method type. With hundreds of systems, drawing every pair of systems that share
+at least 20 compounds gives an unreadable tangle, so each system only shows its
+3 strongest links: the systems it shares the most compounds with (line width).
+Systems that share many compounds are pulled together. The colours are groups
+of systems that share many compounds, found from all pairs, not only the lines
+drawn; a group can therefore appear in more than one place.
+
 ```{r network-plot}
 #| fig-width: 12
-#| fig-height: 12
+#| fig-height: 11
 #| echo: false
 if (has_data) {
-  rePredRet_plot_network(min_compounds = 20, show_labels = FALSE) +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 16))
+  rePredRet_plot_network(min_compounds = 20, n_links = 3) +
+    theme(plot.title = element_text(face = "bold", size = 16))
 }
 ```
 
