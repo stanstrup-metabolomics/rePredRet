@@ -80,13 +80,16 @@ where $f$ is a monotonically increasing function.
      as `adaptive_pi` (jackknife+-after-bootstrap)
 
    On held-out compounds from 135 RepoRT system pairs the 95% intervals
-   covered 94.6% (`adaptive_pi`), 95.5% (`fast_ci`) and 94.8% (`bootstrap`) of
-   the compounds. In the regions with the least / most scatter `adaptive_pi`
-   covered 94.8% / 94.5%, while `fast_ci` covered 97.4% / 93.4%: a constant
-   width is too wide where compounds agree and too narrow where they scatter.
+   covered 94.6% (`adaptive_pi`), 98.1% (`fast_ci`) and 94.9% (`bootstrap`) of
+   the well-annotated compounds (outlier weight ≥ 0.5; the other 6% of the
+   compounds are taken to be wrong annotations and are not meant to be
+   covered). In the regions with the least / most scatter `adaptive_pi`
+   covered 94.9% / 94.4%, while `fast_ci` covered 99.1% / 97.0%: its constant
+   width has to be wide everywhere to hold where compounds scatter (median
+   width 31% of the target RT range, against 21% for `adaptive_pi`).
 
    **Few compounds**: with only 10–15 shared compounds no method reaches the
-   nominal level. Coverage was 86% (`adaptive_pi`), 90% (`fast_ci`) and 89%
+   nominal level. Coverage was 85% (`adaptive_pi`), 92% (`fast_ci`) and 88%
    (`bootstrap`). With so few compounds, a 95% interval would have to be
    very wide to hold. Treat intervals from models with fewer than about 20
    compounds as roughly 85–90% intervals.

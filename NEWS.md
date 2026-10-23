@@ -8,8 +8,8 @@
   calibration compounds (a Gamma GAM of cross-validated absolute residuals,
   weighted to ignore outliers) and is calibrated by cross-validated conformal
   prediction. On held-out compounds from 135 RepoRT system pairs it covered
-  94.6% (95% nominal), equally in low- and high-scatter regions (94.8% /
-  94.5%). It takes 60-90 ms per model. Thanks to Barbora Hamidová for the
+  94.6% of the well-annotated compounds (95% nominal), equally in low- and
+  high-scatter regions (94.9% / 94.4%). It takes 60-90 ms per model. Thanks to Barbora Hamidová for the
   idea and for finding the problems with the other interval methods (MSc
   thesis, 2026).
 * `adaptive_pi` and `bootstrap`: the local scale is no longer extrapolated
@@ -29,17 +29,18 @@
   models whose median width exceeds the target RT range from 71 to 17.
 * `method = "fast_ci"` (`gam_fast_ci()`) is kept as the fast option (15-20 ms per
   model), with fixes: the residual variance comes from leave-one-out residuals
-  instead of in-sample residuals (coverage 93.9% -> 95.5%; with 10-15
-  compounds 83% -> 90%), and the bounds are made monotone by isotonic
+  instead of in-sample residuals (coverage 97.1% -> 98.1%; with 10-15
+  compounds 86% -> 92%), and the bounds are made monotone by isotonic
   regression instead of a running maximum, which narrowed the lower side. Its
-  width is still nearly constant (97.4% / 93.4% coverage in low- / high-scatter
-  regions).
+  width is still nearly constant, so it is wider than `adaptive_pi` (99.1% /
+  97.0% coverage in low- / high-scatter regions; median width 31% of the
+  target RT range, against 21%).
 * `method = "bootstrap"` was a confidence interval of the curve, not a
-  prediction interval (59% coverage; 53% with 200+ compounds). It now uses the
+  prediction interval (65% coverage; 58% with 200+ compounds). It now uses the
   out-of-bag predictions as out-of-sample residuals with the same local scale
-  and conformal calibration as `adaptive_pi` (94.8% coverage).
+  and conformal calibration as `adaptive_pi` (94.9% coverage).
   `boot2ci_PI()` has a new signature and the unused `boot2ci()` was removed.
-* With 10-15 compounds no method reaches the nominal coverage (86-90%); this is
+* With 10-15 compounds no method reaches the nominal coverage (85-92%); this is
   now documented.
 * All methods truncate the lower bound at 0.
 * Model statistics (`model.json` `stats` and `model$stats`) gain `r_squared`,
@@ -59,8 +60,11 @@
 * The monotone GAM fit is shared by all interval methods (`fit_gam_mono()`). Its
   sigmoid outlier weights (0.1, 30) were set by eye for the original PredRet
   and have never been optimized; this is now documented.
-* New article "Prediction interval benchmark", and the benchmark script
-  `inst/benchmark/pi_benchmark.R`.
+* New article "Prediction interval benchmark", and the benchmark scripts
+  `inst/benchmark/pi_benchmark.R` and `inst/benchmark/pi_benchmark_figures.R`.
+  Coverage is measured on the well-annotated compounds (outlier weight >= 0.5
+  in the full fit, 94% of the compounds); the coverage of all compounds and of
+  the outliers is reported alongside.
 * `withr` moved from Suggests to Imports; `MASS` is no longer needed.
 
 ## Breaking changes

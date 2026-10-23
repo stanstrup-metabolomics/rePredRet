@@ -42,9 +42,15 @@ evaluation found the problems with the earlier methods and gave the idea for
 - **Coverage**: compounds were held out by cross-validation (leave-one-out up to 30
   compounds, 10-fold up to 100, 5-fold above). A held-out compound is covered if its
   measured RT lies inside the PI of the model built without it.
+- **Well-annotated compounds**: outliers are taken to be wrong annotations, which the
+  model and its interval should ignore. A compound counts as well-annotated if its
+  sigmoid outlier weight in the fit with all compounds is at least 0.5; this holds for
+  `r pct(1 - get("adaptive_pi", "outlier_share"))` of the compounds. **Coverage** is
+  the coverage of the well-annotated compounds, which should be 95%. The coverage of
+  all compounds and of the outliers alone are shown for comparison.
 - **Quiet / noisy**: each compound is labelled by the scatter of its neighbours along
   the source RT, split at the pair's median. An interval whose width follows the
-  scatter covers about 95% in both.
+  scatter covers about 95% of the well-annotated compounds in both.
 - **Interval score**: width + (2 / 0.05) × distance outside the interval, divided by
   the target RT range (median over pairs; lower is better). It rewards coverage and
   narrow intervals together.
@@ -58,7 +64,8 @@ The script is `inst/benchmark/pi_benchmark.R`.
 
 ```{r overall}
 #| echo: false
-cols <- c(Method = "method", Coverage = "coverage", Quiet = "cov_quiet", Noisy = "cov_noisy",
+cols <- c(Method = "method", Coverage = "coverage", `All compounds` = "cov_all",
+          Outliers = "cov_outliers", Quiet = "cov_quiet", Noisy = "cov_noisy",
           `Interval score` = "med_iscore", `Median width / range` = "med_width_rel",
           `Width ratio` = "width_ratio_q95q05", Failures = "fail_fits", Absurd = "absurd")
 order <- c("adaptive_pi", "fast_ci", "bootstrap", "fast_ci (before fix)", "bootstrap (before fix)",
@@ -66,7 +73,7 @@ order <- c("adaptive_pi", "fast_ci", "bootstrap", "fast_ci (before fix)", "boots
 tab <- summary_tab[summary_tab$class == "all", ]
 tab <- tab[match(order, tab$method), cols]
 names(tab) <- names(cols)
-kable(tab, digits = 3, row.names = FALSE, caption = "All 135 pairs (95% nominal coverage)")
+kable(tab, digits = 3, row.names = FALSE, caption = "All 135 pairs (95% nominal coverage of the well-annotated compounds)")
 ```
 
 ```{r by-size}
@@ -78,30 +85,39 @@ by_size <- purrr::map(purrr::set_names(classes), function(cl) {
 by_size <- data.frame(Method = order, by_size, check.names = FALSE, row.names = NULL)
 het_noisy <- purrr::map_dbl(order, function(m) get(m, "cov_noisy", "heteroscedastic"))
 by_size$`heteroscedastic, noisy regions` <- het_noisy
-kable(by_size, digits = 3, caption = "Coverage by group")
+kable(by_size, digits = 3, caption = "Coverage of the well-annotated compounds by group")
 ```
 
 - **`adaptive_pi`** covers `r pct(get("adaptive_pi", "coverage"))` overall, and about the
   same in quiet and noisy regions (`r pct(get("adaptive_pi", "cov_quiet"))` /
   `r pct(get("adaptive_pi", "cov_noisy"))`). Its width varies along the model
-  (median ratio `r round(get("adaptive_pi", "width_ratio_q95q05"), 1)`).
-- **`fast_ci`** covers `r pct(get("fast_ci", "coverage"))`, but too much in quiet regions
-  and too little in noisy ones (`r pct(get("fast_ci", "cov_quiet"))` /
-  `r pct(get("fast_ci", "cov_noisy"))`). In pairs with unequal scatter it covered
-  `r pct(get("fast_ci", "cov_noisy", "heteroscedastic"))` in the noisy regions.
-  Before the fix (in-sample residual variance and running-maximum bounds) it covered
+  (median ratio `r round(get("adaptive_pi", "width_ratio_q95q05"), 1)`). It covers
+  `r pct(get("adaptive_pi", "cov_outliers"))` of the outliers: it does not widen to
+  include wrong annotations.
+- **`fast_ci`** covers `r pct(get("fast_ci", "coverage"))`, more than the nominal 95%,
+  most of all in quiet regions (`r pct(get("fast_ci", "cov_quiet"))` /
+  `r pct(get("fast_ci", "cov_noisy"))`). Its nearly constant width has to be wide
+  everywhere to hold where the compounds scatter: the median width is
+  `r pct(get("fast_ci", "med_width_rel"))` of the target RT range, against
+  `r pct(get("adaptive_pi", "med_width_rel"))` for `adaptive_pi`. Its variance also
+  includes the outliers, which it covers more often
+  (`r pct(get("fast_ci", "cov_outliers"))`). Before the fix (in-sample residual variance and running-maximum bounds) it covered
   `r pct(get("fast_ci (before fix)", "coverage"))` overall and
   `r pct(get("fast_ci (before fix)", "coverage", "small (10-15)"))` with 10-15 compounds.
 - **`bootstrap`** behaves like `adaptive_pi` (`r pct(get("bootstrap", "coverage"))`
   coverage) at 25-50 times the cost. Before the fix it was a confidence interval of
   the curve rather than a prediction interval
   (`r pct(get("bootstrap (before fix)", "coverage"))` coverage).
-- A **weighted** or **MAD** residual scale makes the interval narrower but undercovers,
-  most of all in noisy regions. Outliers are part of the data the interval must cover;
-  a robust scale only helps together with an empirical calibration.
-- **`scat`** keeps a constant width and undercovers. **`qgam`** covers well from 30
-  compounds up but failed `r get("qgam", "fail_fits")` fits, mostly with 10-15 compounds,
-  and takes about 1.3 s per model. **`gaulss`** adapts the width but is unstable with few
+- A **weighted** or **MAD** residual scale ignores the outliers too, but with a
+  constant width and a normal quantile it undercovers
+  (`r pct(get("weighted sigma", "coverage"))` and `r pct(get("MAD sigma", "coverage"))`),
+  most of all in noisy regions. A robust scale needs an empirical calibration, as in
+  `adaptive_pi`.
+- **`scat`** keeps a constant width: too wide in quiet regions and too narrow in noisy
+  ones (`r pct(get("scat", "cov_quiet"))` / `r pct(get("scat", "cov_noisy"))`).
+  **`qgam`** overcovers with wide intervals from 30 compounds up, failed
+  `r get("qgam", "fail_fits")` fits, mostly with 10-15 compounds, and takes about
+  1.3 s per model. **`gaulss`** adapts the width but is unstable with few
   compounds (`r get("gaulss", "fail_fits")` failures, very large width ratios).
 
 ### Few compounds
