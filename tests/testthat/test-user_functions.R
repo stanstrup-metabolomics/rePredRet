@@ -85,13 +85,30 @@ test_that("rePredRet_plot_network uses the model index", {
   local_model_repo()
   skip_if_not_installed("igraph")
   p <- rePredRet_plot_network(min_compounds = 10)
+  expect_s3_class(p, "ggplot")
   expect_length(p$layers, 2)
   expect_length(rePredRet_plot_network(min_compounds = 10, show_labels = TRUE)$layers, 3)
-
-  expect_s3_class(p, "ggplot")
-  # Without a published systems.csv, points are sized by the number of models
-  expect_equal(p$scales$get_scales("size")$name, "Models")
+  # Without a published systems.csv, system sizes are lower bounds
+  expect_equal(p$scales$get_scales("size")$name, "Compounds in\nsystem (at least)")
   expect_error(rePredRet_plot_network(min_compounds = 100), "No models meet")
+
+  expect_s3_class(rePredRet_plot_network(min_compounds = 10, interactive = TRUE), "plotly")
+  expect_s3_class(rePredRet_plot_system_matrix(min_compounds = 10), "ggplot")
+})
+
+
+test_that("network_data gives the Jaccard similarity from systems.csv", {
+  repo <- local_model_repo()
+  skip_if_not_installed("igraph")
+  utils::write.csv(data.frame(sys_id = c("0001", "0002"), name = c("a", "b"), method_type = "RP",
+                              n_compounds = c(40, 30), n_models = 1),
+                   file.path(repo, "models", "systems.csv"), row.names = FALSE)
+
+  net <- network_data(10, layout_similarity = 0.4)
+  expect_equal(net$edges$similarity, 20 / (40 + 30 - 20))
+  expect_equal(net$nodes$n_compounds, c(40, 30))
+  expect_true(all(c("x", "y") %in% names(net$nodes)))
+  expect_false("x" %in% names(network_data(10, layout_similarity = NULL)$nodes))
 })
 
 

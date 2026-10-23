@@ -94,11 +94,19 @@
 ## Website
 
 * `rePredRet_plot_network()` was a circle that is unreadable with hundreds of
-  systems. It is now a force-directed network that draws each system's
-  strongest links (new argument `n_links`, default 3), with point size the
-  number of compounds in the system, line width the shared compounds, shape
-  the method type and colour groups of systems that share many compounds.
-  `show_labels` now defaults to FALSE. It needs the igraph package (Suggests).
+  systems. It is now a force-directed network in which the similarity of two
+  systems is the Jaccard index of their compounds. Systems are placed by the
+  links with similarity of at least `layout_similarity` (default 0.4), and all
+  links are drawn with width and opacity growing with similarity, so weak
+  links fade into the background. Point size is the number of compounds in
+  the system, shape the method type and colour groups of systems that share
+  many compounds. `interactive = TRUE` gives a plotly version with the system
+  names on hover and a slider for the minimum similarity of the links drawn;
+  the Network article uses it. `show_labels` now defaults to FALSE. It needs
+  the igraph package (Suggests).
+* New `rePredRet_plot_system_matrix()`: all system pairs as a similarity
+  matrix ordered by group. It replaces the heatmap ordered by number of models
+  in the Network article.
 * Model viewer: systems are shown with their RepoRT name and method type, the
   system boxes can be searched by typing any part of the id or name, and the
   target list only offers systems with a model from the chosen source.
