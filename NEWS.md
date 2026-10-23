@@ -104,6 +104,14 @@
   names on hover and a slider for the minimum similarity of the links drawn;
   the Network article uses it. `show_labels` now defaults to FALSE. It needs
   the igraph package (Suggests).
+* Six groups of systems are named (A-F, e.g. "Plant and food natural
+  products", "Endogenous metabolite standards, Folberth et al. 2020"), from
+  the studies that contributed their systems and the chemical classes of
+  their compounds. Their members are listed in `inst/extdata/system_groups.csv`.
+  Since the groups are recomputed from the current data, a group is named only
+  when it matches a named group by mutual majority of their systems. The
+  network and matrix plots show the letters and name them in the caption; the
+  interactive network names them in its legend and on hover.
 * New `rePredRet_plot_system_matrix()`: all system pairs as a similarity
   matrix ordered by group. It replaces the heatmap ordered by number of models
   in the Network article.

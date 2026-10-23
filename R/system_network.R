@@ -83,8 +83,22 @@ rePredRet_plot_network <- function(min_compounds = 20, layout_similarity = 0.4,
     ggplot2::scale_alpha(range = c(0.002, 0.3), limits = c(0, 1), name = "Similarity\n(Jaccard)") +
     ggplot2::scale_size(range = c(0.8, 7), trans = "log10", breaks = log_breaks,
                         labels = plain_labels, name = net$size_name) +
-    ggplot2::scale_colour_manual(values = net$palette, name = "Group") +
+    ggplot2::scale_colour_manual(
+      values = stats::setNames(net$palette, net$group_names$community),
+      breaks = as.character(net$group_names$community[order(is.na(net$group_names$group), net$group_names$label)]),
+      labels = stats::setNames(net$group_names$label, net$group_names$community),
+      name = "Group"
+    ) +
     ggplot2::scale_shape_discrete(name = "Method")
+
+  # Letters of the named groups at the centre of their systems
+  centres <- group_centres(nodes, net$group_names)
+  if (nrow(centres) > 0) {
+    p <- p + ggplot2::geom_label(
+      data = centres, ggplot2::aes(x = x, y = y, label = group),
+      fill = "white", alpha = 0.8, fontface = "bold", size = 5, linewidth = 0
+    )
+  }
 
   if (show_labels) {
     p <- p + ggplot2::geom_text(
@@ -97,11 +111,12 @@ rePredRet_plot_network <- function(min_compounds = 20, layout_similarity = 0.4,
   p +
     ggplot2::coord_equal() +
     ggplot2::theme_void() +
+    ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0)) +
     ggplot2::labs(
       title = "Chromatographic System Network",
       subtitle = sprintf("%d systems, %s pairs sharing at least %d compounds",
                          nrow(nodes), format(nrow(edges), big.mark = ","), min_compounds),
-      caption = "Colour: groups of systems that share many compounds"
+      caption = group_caption(net$group_names)
     )
 }
 
@@ -141,16 +156,61 @@ rePredRet_plot_system_matrix <- function(min_compounds = 20, refresh = FALSE) {
   pairs <- dplyr::bind_rows(edges, dplyr::rename(edges, from = to, to = from)) |>
     dplyr::mutate(from = factor(from, levels = ord), to = factor(to, levels = rev(ord)))
 
+  # Letters of the named groups next to their block on the diagonal
+  blocks <- net$group_names[!is.na(net$group_names$group), ]
+  blocks$centre <- purrr::map_dbl(as.character(blocks$community), function(cm) {
+    stats::median(match(nodes$id[nodes$community == cm], ord))
+  })
+
   ggplot2::ggplot(pairs, ggplot2::aes(x = from, y = to, fill = similarity)) +
     ggplot2::geom_tile() +
+    ggplot2::geom_label(
+      data = data.frame(x = blocks$centre, y = length(ord) - blocks$centre + 1, group = blocks$group),
+      ggplot2::aes(x = x, y = y, label = group), inherit.aes = FALSE,
+      fill = "white", alpha = 0.8, fontface = "bold", size = 5, linewidth = 0
+    ) +
     ggplot2::scale_fill_viridis_c(option = "magma", direction = -1, limits = c(0, 1),
                                   name = "Similarity\n(Jaccard)") +
     ggplot2::coord_equal() +
     ggplot2::theme_void() +
+    ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0)) +
     ggplot2::labs(
       title = "System Similarity Matrix",
-      subtitle = sprintf("%d systems, ordered by group and similarity", nrow(nodes))
+      subtitle = sprintf("%d systems, ordered by group and similarity", nrow(nodes)),
+      caption = group_caption(net$group_names)
     )
+}
+
+
+#' Caption Naming the Groups
+#'
+#' @param group_names Output of [name_communities()].
+#' @return One line per named group ("A: name"), or a generic caption.
+#' @keywords internal
+group_caption <- function(group_names) {
+  named <- group_names[!is.na(group_names$group), ]
+  named <- named[order(named$group), ]
+  if (nrow(named) == 0) {
+    return("Colour: groups of systems that share many compounds")
+  }
+  paste(c("Colour: groups of systems that share many compounds. Named groups:",
+          paste0(named$group, ": ", named$name)), collapse = "\n")
+}
+
+
+#' Centres of the Named Groups
+#'
+#' @param nodes Systems with x, y and community.
+#' @param group_names Output of [name_communities()].
+#' @return data.frame with group (letter), x and y (medians of its systems).
+#' @keywords internal
+group_centres <- function(nodes, group_names) {
+  named <- group_names[!is.na(group_names$group), ]
+  data.frame(
+    group = named$group,
+    x = purrr::map_dbl(as.character(named$community), function(cm) stats::median(nodes$x[nodes$community == cm])),
+    y = purrr::map_dbl(as.character(named$community), function(cm) stats::median(nodes$y[nodes$community == cm]))
+  )
 }
 
 
@@ -217,6 +277,10 @@ network_data <- function(min_compounds, layout_similarity, refresh = FALSE) {
   nodes$community <- factor(match(membership, by_size))
   palette <- grDevices::hcl.colors(nlevels(nodes$community), "Dark 3")
 
+  # Names of the groups that match a named reference group
+  group_names <- name_communities(nodes$id, nodes$community)
+  nodes$group <- group_names$label[match(nodes$community, group_names$community)]
+
   if (!is.null(layout_similarity)) {
     # Links that place the systems: the similar ones, plus each system's most
     # similar link so that no system is left unconnected
@@ -239,7 +303,63 @@ network_data <- function(min_compounds, layout_similarity, refresh = FALSE) {
     edges$y_to <- nodes$y[match(edges$to, nodes$id)]
   }
 
-  list(nodes = nodes, edges = edges, palette = palette, size_name = size_name)
+  list(nodes = nodes, edges = edges, palette = palette, size_name = size_name,
+       group_names = group_names)
+}
+
+
+#' Name Groups of Systems
+#'
+#' Gives each group (community) of systems the letter and name of the named
+#' reference group it matches. The reference groups
+#' (`inst/extdata/system_groups.csv` and `system_group_names.csv`) were named
+#' by hand from the studies that contributed their systems and the classes of
+#' their compounds (RepoRT data of October 2026, see the Network article).
+#' Since the groups are recomputed from the current data, a group gets a
+#' reference name only when they match by mutual majority: at least half of
+#' the group's systems are in the reference group and at least half of the
+#' reference group's current systems are in the group. Each name is used at
+#' most once.
+#'
+#' @param ids System ids.
+#' @param community Group of each system (factor).
+#' @param reference data.frame with sys_id and group (letter).
+#' @param reference_names data.frame with group and name.
+#'
+#' @return data.frame with one row per community: community, group (letter or
+#'   NA), name (or NA) and label (letter, or "unnamed" with a number).
+#' @keywords internal
+name_communities <- function(ids, community,
+                             reference = utils::read.csv(
+                               system.file("extdata", "system_groups.csv", package = "rePredRet"),
+                               colClasses = "character"),
+                             reference_names = utils::read.csv(
+                               system.file("extdata", "system_group_names.csv", package = "rePredRet"),
+                               colClasses = "character")) {
+  reference <- reference[reference$sys_id %in% ids, ]
+  community_size <- table(community)
+  group_size <- table(reference$group)
+
+  # Overlap of every community with every reference group
+  overlap <- data.frame(community = community[match(reference$sys_id, ids)], group = reference$group) |>
+    dplyr::count(community, group, name = "n") |>
+    dplyr::mutate(
+      share_of_community = n / as.integer(community_size[as.character(community)]),
+      share_of_group = n / as.integer(group_size[group])
+    ) |>
+    dplyr::filter(share_of_community >= 0.5, share_of_group >= 0.5) |>
+    dplyr::arrange(dplyr::desc(n))
+
+  # Mutual majority makes the matches unique; drop duplicates defensively
+  overlap <- overlap[!duplicated(overlap$community) & !duplicated(overlap$group), ]
+
+  result <- data.frame(community = factor(levels(community), levels = levels(community)))
+  result$group <- overlap$group[match(result$community, overlap$community)]
+  result$name <- reference_names$name[match(result$group, reference_names$group)]
+  unnamed <- is.na(result$group)
+  result$label <- result$group
+  result$label[unnamed] <- paste("unnamed", seq_len(sum(unnamed)))
+  result
 }
 
 
@@ -280,12 +400,15 @@ plot_network_interactive <- function(net) {
 
   log_n <- log10(nodes$n_compounds)
   nodes$marker_size <- 5 + 15 * (log_n - min(log_n)) / max(diff(range(log_n)), 1e-9)
+  # Legend and hover name of each group: "A: name" or "unnamed 1"
+  gn <- net$group_names
+  gn$title <- ifelse(is.na(gn$group), gn$label, paste0(gn$group, ": ", gn$name))
   nodes$hover <- sprintf(
     "<b>%s</b> %s (%s)<br>%s compounds, %s models<br>Group %s",
     nodes$id, dplyr::coalesce(nodes$name, ""), nodes$method_type,
     format(nodes$n_compounds, big.mark = ",", trim = TRUE),
     format(nodes$n_models, big.mark = ",", trim = TRUE),
-    nodes$community
+    gn$title[match(nodes$community, gn$community)]
   )
 
   p <- purrr::reduce(levels(nodes$community), function(p, cm) {
@@ -296,7 +419,7 @@ plot_network_interactive <- function(net) {
       marker = list(size = d$marker_size, color = net$palette[as.integer(cm)], opacity = 0.9,
                     symbol = ifelse(d$method_type == "HILIC", "diamond", "circle"),
                     line = list(color = "white", width = 0.5)),
-      text = d$hover, hoverinfo = "text", name = paste("Group", cm)
+      text = d$hover, hoverinfo = "text", name = gn$title[gn$community == cm]
     )
   }, .init = p)
 
@@ -317,6 +440,10 @@ plot_network_interactive <- function(net) {
     yaxis = c(axis, list(scaleanchor = "x")),
     hovermode = "closest",
     legend = list(title = list(text = "Group")),
+    annotations = purrr::pmap(group_centres(nodes, gn), function(group, x, y) {
+      list(x = x, y = y, text = paste0("<b>", group, "</b>"), showarrow = FALSE,
+           font = list(size = 18), bgcolor = "rgba(255,255,255,0.8)")
+    }),
     sliders = list(list(
       active = 0, steps = steps,
       currentvalue = list(prefix = "Links drawn from similarity (Jaccard) ")

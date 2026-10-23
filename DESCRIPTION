@@ -28,7 +28,7 @@ Imports:
     dplyr,
     future,
     furrr,
-    ggplot2,
+    ggplot2 (>= 3.5.0),
     htmlwidgets,
     jsonlite,
     Matrix,

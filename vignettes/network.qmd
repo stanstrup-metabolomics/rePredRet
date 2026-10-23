@@ -69,12 +69,39 @@ The colours are groups of systems that share many compounds, found from all
 pairs. Dark bundles between groups are many pairs of systems in two groups
 that share a fair part of their compounds.
 
+The groups mostly reflect which lab submitted a series of systems measured with
+the same set of standards; where a lab's standards are distinctive, the kind of
+compounds shows through. Six groups were named by hand (see the table below).
+The groups are recomputed whenever the data change, so a group gets a name only
+when it still matches the named group: at least half of its systems belong to
+the named group, and at least half of the named group's systems are in it.
+Other groups are shown as unnamed.
+
 ```{r network-plot}
 #| echo: false
 #| out-width: "100%"
 if (has_data) {
   plotly::layout(rePredRet_plot_network(min_compounds = 20, interactive = TRUE), height = 800)
 }
+```
+
+### Named Groups
+
+The groups were named from the studies that contributed their systems (titles
+from their DOIs) and the chemical classes (ClassyFire) of their compounds, using
+the RepoRT data of October 2026. A further group of 69 systems, mostly
+metabolomics of human, plant and food samples from many labs, could not be
+given a convincing name. The member lists are in
+`inst/extdata/system_groups.csv`.
+
+```{r named-groups}
+#| echo: false
+groups <- utils::read.csv(system.file("extdata", "system_groups.csv", package = "rePredRet"),
+                          colClasses = "character")
+group_names <- utils::read.csv(system.file("extdata", "system_group_names.csv", package = "rePredRet"))
+group_names$systems <- as.integer(table(groups$group)[group_names$group])
+kable(group_names[, c("group", "name", "systems", "basis")],
+      col.names = c("Group", "Name", "Systems (Oct 2026)", "Basis"))
 ```
 
 ## Connectivity Statistics

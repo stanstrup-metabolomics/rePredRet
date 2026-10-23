@@ -97,6 +97,32 @@ test_that("rePredRet_plot_network uses the model index", {
 })
 
 
+test_that("name_communities names groups that match a reference group by mutual majority", {
+  ids <- sprintf("%04d", 1:10)
+  community <- factor(c(1, 1, 1, 1, 2, 2, 2, 3, 3, 3))
+  reference <- data.frame(sys_id = sprintf("%04d", c(1, 2, 3, 5, 8, 9, 20)),
+                          group = c("A", "A", "A", "A", "B", "C", "C"))
+  reference_names <- data.frame(group = c("A", "B", "C"), name = c("alpha", "beta", "gamma"))
+
+  named <- name_communities(ids, community, reference, reference_names)
+  # 1: 3 of its 4 systems are A and 3 of A's 4 current systems are in it
+  expect_equal(named$group[1], "A")
+  expect_equal(named$name[1], "alpha")
+  # 2: only 1 of its 3 systems is in a reference group
+  expect_true(is.na(named$group[2]))
+  # 3: B and C have 1 system each in it, a third of the group: no majority
+  expect_true(is.na(named$group[3]))
+  expect_equal(named$label, c("A", "unnamed 1", "unnamed 2"))
+
+  # The shipped reference groups are complete and named
+  shipped <- utils::read.csv(system.file("extdata", "system_groups.csv", package = "rePredRet"),
+                             colClasses = "character")
+  shipped_names <- utils::read.csv(system.file("extdata", "system_group_names.csv", package = "rePredRet"))
+  expect_setequal(unique(shipped$group), shipped_names$group)
+  expect_false(anyDuplicated(shipped$sys_id) > 0)
+})
+
+
 test_that("network_data gives the Jaccard similarity from systems.csv", {
   repo <- local_model_repo()
   skip_if_not_installed("igraph")
