@@ -18,7 +18,10 @@ rePredRet_systems(refresh = FALSE)
 ## Value
 
 Tibble with system information from RepoRT (id, name, url, method.type,
-authors, ...).
+authors, ...), plus `n_compounds` (compounds with an RT in the system)
+and `n_models` (models from or to it) from the published `systems.csv`.
+Model sets published before `systems.csv` was added give NA for these
+two columns.
 
 ## Examples
 

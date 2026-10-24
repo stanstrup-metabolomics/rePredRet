@@ -6,7 +6,7 @@ incidence matrix and returns the pairs with at least `min_compounds`.
 ## Usage
 
 ``` r
-find_model_pairs(rt_lookup, min_compounds)
+find_model_pairs(rt_lookup, min_compounds, groups = NULL)
 ```
 
 ## Arguments
@@ -19,6 +19,12 @@ find_model_pairs(rt_lookup, min_compounds)
 - min_compounds:
 
   Minimum common compounds
+
+- groups:
+
+  Optional group of each dataset (e.g. its method type), in the order of
+  `rt_lookup`. Pairs are only formed within a group; datasets with a
+  missing group form a group of their own.
 
 ## Value
 

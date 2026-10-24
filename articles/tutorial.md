@@ -335,12 +335,12 @@ After generating predictions, filter based on:
 
 ## Summary
 
-| Function                                                                                                   | Purpose                                    |
-|------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| Function | Purpose |
+|----|----|
 | [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md) | Build calibration models from your RT data |
-| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)     | Generate predictions using built models    |
-| [`plot()`](https://rdrr.io/r/graphics/plot.default.html)                                                   | Visualize model diagnostics                |
-| [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)                                             | Extract predictions as data.frame          |
+| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md) | Generate predictions using built models |
+| [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | Visualize model diagnostics |
+| [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) | Extract predictions as data.frame |
 
 This workflow allows you to get RT predictions for compounds you haven’t
 measured, without needing to submit your data to RepoRT.

@@ -235,15 +235,15 @@ common <- get_common_compounds(dataset1, dataset2)
 
 ## Summary Table
 
-| Function                                                                                                             | Purpose                              |
-|----------------------------------------------------------------------------------------------------------------------|--------------------------------------|
-| [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md)           | List systems with pre-built models   |
-| [`rePredRet_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md)             | List pre-built models                |
-| [`rePredRet_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.md)               | Get a pre-built model                |
-| [`plot_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_model.md)                         | Plot a pre-built model               |
+| Function | Purpose |
+|----|----|
+| [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md) | List systems with pre-built models |
+| [`rePredRet_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md) | List pre-built models |
+| [`rePredRet_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.md) | Get a pre-built model |
+| [`plot_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_model.md) | Plot a pre-built model |
 | [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md) | Plot the network of pre-built models |
-| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md)           | Build models from your data          |
-| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)               | Generate predictions                 |
-| [`compare_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md)               | Find similar systems                 |
-| [`search_compound()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md)               | Search for compounds by InChI        |
-| [`get_system_info()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.md)               | Get system details                   |
+| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md) | Build models from your data |
+| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md) | Generate predictions |
+| [`compare_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md) | Find similar systems |
+| [`search_compound()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md) | Search for compounds by InChI |
+| [`get_system_info()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.md) | Get system details |

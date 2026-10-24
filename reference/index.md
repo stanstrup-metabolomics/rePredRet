@@ -79,6 +79,8 @@ on demand from the rePredRet-models repository and cached locally.
   : Get Model Details
 - [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md)
   : Plot System Network
+- [`rePredRet_plot_system_matrix()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_system_matrix.md)
+  : Plot System Similarity Matrix
 
 ## Core Pipeline
 

@@ -25,7 +25,8 @@ each model:
 
 ## Prediction Interval Width Distribution
 
-    Warning in scale_x_log10(): log-10 transformation introduced infinite values.
+    Warning in scale_x_log10(breaks = log_breaks, labels = plain_labels, ...):
+    log-10 transformation introduced infinite values.
 
     Warning: Removed 44 rows containing non-finite outside the scale range
     (`stat_bin()`).
@@ -36,7 +37,7 @@ each model:
 
 ![](models_files/figure-html/compounds-vs-error-1.png)
 
-    Warning in scale_y_log10(): log-10 transformation introduced infinite values.
+    Warning in scale_y_log10(breaks = log_breaks, labels = plain_labels, ...): log-10 transformation introduced infinite values.
     log-10 transformation introduced infinite values.
 
     Warning: Removed 44 rows containing non-finite outside the scale range

@@ -112,42 +112,42 @@ for details.
 
 ### Your Own Data
 
-| Function                                                                                                     | Description                                     |
-|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| [`check_input_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/check_input_data.md)     | Validate InChIs and RTs                         |
-| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md)   | Build models from RepoRT systems to your system |
-| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md)       | Predict RTs with those models                   |
-| [`compare_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md)       | Rank RepoRT systems by similarity to yours      |
-| [`validate_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/validate_models.md)       | Cross-validate model quality                    |
-| [`export_predictions()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_predictions.md) | Export predictions to CSV or Excel              |
+| Function | Description |
+|----|----|
+| [`check_input_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/check_input_data.md) | Validate InChIs and RTs |
+| [`build_user_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_user_models.md) | Build models from RepoRT systems to your system |
+| [`predict_rt_user()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt_user.md) | Predict RTs with those models |
+| [`compare_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/compare_systems.md) | Rank RepoRT systems by similarity to yours |
+| [`validate_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/validate_models.md) | Cross-validate model quality |
+| [`export_predictions()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_predictions.md) | Export predictions to CSV or Excel |
 
 ### Pre-built Models
 
-| Function                                                                                                             | Description                           |
-|----------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md)           | List systems with pre-built models    |
-| [`rePredRet_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md)             | List pre-built models with statistics |
-| `rePredRet_model(from, to)`                                                                                          | Get a pre-built model                 |
-| `plot_model(from, to)`                                                                                               | Plot a pre-built model                |
-| [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md) | Plot the network of pre-built models  |
+| Function | Description |
+|----|----|
+| [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md) | List systems with pre-built models |
+| [`rePredRet_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.md) | List pre-built models with statistics |
+| `rePredRet_model(from, to)` | Get a pre-built model |
+| `plot_model(from, to)` | Plot a pre-built model |
+| [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md) | Plot the network of pre-built models |
 
 ### RepoRT Data
 
-| Function                                                                                                 | Description                                    |
-|----------------------------------------------------------------------------------------------------------|------------------------------------------------|
-| [`search_compound()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md)   | Find all systems where a compound was measured |
-| [`get_system_info()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.md)   | Get system metadata (column, gradient, …)      |
-| [`download_report()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/download_report.md)   | Download RepoRT                                |
-| [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md) | Load datasets from RepoRT                      |
+| Function | Description |
+|----|----|
+| [`search_compound()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.md) | Find all systems where a compound was measured |
+| [`get_system_info()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.md) | Get system metadata (column, gradient, …) |
+| [`download_report()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/download_report.md) | Download RepoRT |
+| [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md) | Load datasets from RepoRT |
 
 ### Model Building
 
-| Function                                                                                                             | Description                                       |
-|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
-| [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md)                       | Build a single model                              |
+| Function | Description |
+|----|----|
+| [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md) | Build a single model |
 | [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md) | Build all pairwise models (incremental, parallel) |
-| [`get_common_compounds()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.md)     | Find compounds in both systems                    |
-| [`export_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_models.md)                   | Save models to files                              |
+| [`get_common_compounds()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.md) | Find compounds in both systems |
+| [`export_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/export_models.md) | Save models to files |
 
 ## References
 

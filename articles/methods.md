@@ -16,9 +16,11 @@ If compound A elutes before compound B in chromatographic system 1, it
 will likely also elute before B in a similar system 2. This relationship
 can be modeled as a monotonic function:
 
-$$RT_{target} = f(RT_{source})$$
+``` math
+RT_{target} = f(RT_{source})
+```
 
-where $f$ is a monotonically increasing function.
+where $`f`$ is a monotonically increasing function.
 
 ### Model Fitting
 
@@ -49,7 +51,10 @@ where $f$ is a monotonically increasing function.
 
     **`method = "adaptive_pi"`** (default): the width of the interval
     follows the local scatter of the calibration compounds, and its
-    level is calibrated by cross-validated conformal prediction.
+    level is calibrated by cross-validated conformal prediction. The
+    idea for this method, and the problems with the earlier interval
+    methods, came from Barbora Hamidová’s evaluation of rePredRet in her
+    MSc thesis (2026).
 
     - *Cross-validated residuals*: the compounds are split into 5 folds,
       interleaved along the source RT. Each fold is predicted by the
@@ -59,10 +64,18 @@ where $f$ is a monotonically increasing function.
     - *Local scale* s(x): a Gamma GAM (log link, REML, at most 5 basis
       functions) of the absolute residuals, weighted by the sigmoid
       outlier weights so that a single outlier does not widen the band
-      around it. s(x) is floored at 30% of the global scale.
-    - *Calibration*: the multiplier q is the conformal quantile of the
-      normalized residuals \|e\| / s(x): the ⌈(n + 1) · 0.95⌉-th
-      smallest. With fewer than 19 compounds this is the largest one.
+      around it. The GAM is evaluated at the compounds and interpolated
+      linearly between them, since in gaps between compounds the
+      log-link smooth can grow without bound. s(x) is floored at 30% of
+      the global scale and capped at the largest residual.
+    - *Calibration*: each compound’s score is its residual in units of
+      the local scatter, \|e\| / s(x). The multiplier q is the score
+      below which 95% of the compounds fall, where each compound counts
+      by its sigmoid outlier weight (a weighted conformal quantile).
+      Outliers are taken to be wrong annotations, so they do not set the
+      width: the interval aims to cover 95% of the well-annotated
+      compounds. With fewer than about 20 compounds q is the largest
+      score of the compounds that are not down-weighted.
     - *Interval*: fit ± q · s(x). Each bound is made non-decreasing by
       isotonic regression, which keeps lower ≤ fit ≤ upper, and the
       lower bound is truncated at 0.
@@ -85,15 +98,18 @@ where $f$ is a monotonically increasing function.
       calibration as `adaptive_pi` (jackknife+-after-bootstrap)
 
     On held-out compounds from 135 RepoRT system pairs the 95% intervals
-    covered 94.6% (`adaptive_pi`), 95.5% (`fast_ci`) and 94.8%
-    (`bootstrap`) of the compounds. In the regions with the least / most
-    scatter `adaptive_pi` covered 94.8% / 94.5%, while `fast_ci` covered
-    97.4% / 93.4%: a constant width is too wide where compounds agree
-    and too narrow where they scatter.
+    covered 94.6% (`adaptive_pi`), 98.1% (`fast_ci`) and 94.9%
+    (`bootstrap`) of the well-annotated compounds (outlier weight ≥ 0.5;
+    the other 6% of the compounds are taken to be wrong annotations and
+    are not meant to be covered). In the regions with the least / most
+    scatter `adaptive_pi` covered 94.9% / 94.4%, while `fast_ci` covered
+    99.1% / 97.0%: its constant width has to be wide everywhere to hold
+    where compounds scatter (median width 31% of the target RT range,
+    against 21% for `adaptive_pi`).
 
     **Few compounds**: with only 10–15 shared compounds no method
-    reaches the nominal level. Coverage was 86% (`adaptive_pi`), 90%
-    (`fast_ci`) and 89% (`bootstrap`). With so few compounds, a 95%
+    reaches the nominal level. Coverage was 85% (`adaptive_pi`), 92%
+    (`fast_ci`) and 88% (`bootstrap`). With so few compounds, a 95%
     interval would have to be very wide to hold. Treat intervals from
     models with fewer than about 20 compounds as roughly 85–90%
     intervals.
@@ -162,15 +178,15 @@ Compounds are matched between systems using standardized InChI:
 
 ### Key Functions
 
-| Function                                                                                                                 | Purpose                                           |
-|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
-| [`download_report()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/download_report.md)                   | Download RepoRT data                              |
-| [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md)                 | Load datasets from RepoRT                         |
-| [`get_common_compounds()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.md)         | Find shared compounds                             |
-| [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md)                           | Build single pairwise model                       |
-| [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md)     | Build all pairwise models (incremental, parallel) |
-| [`predict_rt()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt.md)                             | Predict RT for a compound                         |
-| [`generate_all_predictions()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/generate_all_predictions.md) | Generate all predictions                          |
+| Function | Purpose |
+|----|----|
+| [`download_report()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/download_report.md) | Download RepoRT data |
+| [`load_report_data()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/load_report_data.md) | Load datasets from RepoRT |
+| [`get_common_compounds()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.md) | Find shared compounds |
+| [`build_model()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_model.md) | Build single pairwise model |
+| [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md) | Build all pairwise models (incremental, parallel) |
+| [`predict_rt()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_rt.md) | Predict RT for a compound |
+| [`generate_all_predictions()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/generate_all_predictions.md) | Generate all predictions |
 
 ### Computational Considerations
 

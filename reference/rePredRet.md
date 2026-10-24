@@ -110,3 +110,8 @@ Authors:
 
 - Jan Stanstrup <stanstrup@gmail.com>
   ([ORCID](https://orcid.org/0000-0003-0541-7369))
+
+Other contributors:
+
+- Barbora Hamidová (Idea of the adaptive prediction intervals; found the
+  problems with the earlier interval methods) \[contributor\]

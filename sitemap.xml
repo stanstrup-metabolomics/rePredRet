@@ -53,6 +53,8 @@
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/get_common_compounds.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/get_latest_report_release.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/get_system_info.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/group_caption.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/group_centres.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/index.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/index_row_from_json.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/load_build_cache.html</loc></url>
@@ -62,9 +64,12 @@
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/model_is_complete.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/model_plotting.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/monotone_interval.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/name_communities.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/network_data.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/pi_method_version.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_compound_coverage.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_model.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_network_interactive.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_prediction_errors.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/plot_system_network.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/predict_gam_mono.html</loc></url>
@@ -78,6 +83,7 @@
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_model.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_models.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_system_matrix.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/read_model_index.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/save_build_cache.html</loc></url>
@@ -85,10 +91,13 @@
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compound.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/search_compounds.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/statistics.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/system_network.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/systems_table.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/update_dataset_cache.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/user_functions.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/validate_models.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/visualization.html</loc></url>
+<url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/weighted_conformal_quantile.html</loc></url>
 <url><loc>https://stanstrup-metabolomics.github.io/rePredRet/reference/zzz.html</loc></url>
 </urlset>
 

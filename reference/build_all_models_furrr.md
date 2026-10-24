@@ -89,7 +89,13 @@ This function uses furrr::future_map for outer-level parallelization,
 avoiding nested parallelization overhead. Each worker builds models
 sequentially.
 
+Models are only built between systems of the same method type
+(`method.type` in `report_data$studies`, e.g. RP or HILIC), since the
+elution order differs between types.
+
 Caching (requires export_dir): models are only rebuilt when one of their
 datasets changed or their files are missing. Models whose datasets were
 removed, or that no longer have enough common compounds, are deleted.
-The build cache and `model_index.csv` are updated in export_dir.
+The build cache, `model_index.csv` and `systems.csv` (one row per
+system: name, method type, number of compounds and number of models) are
+updated in export_dir.

@@ -52,12 +52,20 @@ Algorithm:
 3.  Local scale s(x): a Gamma GAM (log link, REML, at most 5 basis
     functions) of the absolute cross-validated residuals, weighted by
     the sigmoid outlier weights so that single outliers do not widen the
-    band locally. s(x) is floored at 30% of the global weighted scale.
+    band locally. Between the weighted compounds s(x) is interpolated
+    linearly (see
+    [`local_residual_scale()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/local_residual_scale.md)).
+    s(x) is floored at 30% of the global weighted scale and capped at
+    the largest residual.
 
-4.  Calibration: the multiplier q is the split-conformal quantile (the
-    `ceiling((n + 1) * (1 - alpha))`-th smallest value) of the
-    normalized residuals \|e\| / s(x). With fewer than about `1 / alpha`
-    compounds this is their maximum.
+4.  Calibration: the multiplier q is the weighted split-conformal
+    quantile of the normalized residuals \|e\| / s(x), where each
+    compound counts by its sigmoid outlier weight
+    ([`weighted_conformal_quantile()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/weighted_conformal_quantile.md)).
+    Outliers are taken to be wrong annotations, so the interval is meant
+    to cover `1 - alpha` of the well-annotated compounds, not the
+    outliers. With fewer than about `1 / alpha` compounds q is the
+    largest score of the compounds that are not down-weighted.
 
 5.  Interval: prediction +/- q \* s(x). Each bound is made
     non-decreasing by isotonic regression, which keeps lower \<=
@@ -65,11 +73,15 @@ Algorithm:
 
 With few compounds the interval covers less than its nominal level: in a
 cross-validation benchmark on RepoRT pairs with 10-15 shared compounds a
-95% interval covered about 86% (about 95% from 30 compounds up).
+95% interval covered about 85% (about 95% from 30 compounds up).
 
 Because the residuals are out-of-fold, q already includes the
 uncertainty of the fitted curve, so no separate standard error term is
 added.
+
+The idea for this method, and the problems with the earlier interval
+methods that it fixes, came from Barbora Hamidová's evaluation of
+rePredRet in her MSc thesis (2026).
 
 ## References
 

@@ -5,6 +5,10 @@
 - **Jan Stanstrup**. Author, maintainer.
   [](https://orcid.org/0000-0003-0541-7369)
 
+- **Barbora Hamidová**. Contributor.  
+  Idea of the adaptive prediction intervals; found the problems with the
+  earlier interval methods
+
 ## Citation
 
 Source:

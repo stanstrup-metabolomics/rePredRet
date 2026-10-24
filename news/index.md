@@ -16,25 +16,46 @@
   compounds (a Gamma GAM of cross-validated absolute residuals, weighted
   to ignore outliers) and is calibrated by cross-validated conformal
   prediction. On held-out compounds from 135 RepoRT system pairs it
-  covered 94.6% (95% nominal), equally in low- and high-scatter regions
-  (94.8% / 94.5%). It takes 60-90 ms per model.
+  covered 94.6% of the well-annotated compounds (95% nominal), equally
+  in low- and high-scatter regions (94.9% / 94.4%). It takes 60-90 ms
+  per model. Thanks to Barbora Hamidová for the idea and for finding the
+  problems with the other interval methods (MSc thesis, 2026).
+- `adaptive_pi` and `bootstrap`: the local scale is no longer
+  extrapolated across gaps between compounds or past down-weighted
+  outliers, where the log-link smooth could grow without bound. In the
+  first full build 1% of the models had a median PI width above 79 min,
+  up to 1e36 min. The scale is now interpolated between the compounds
+  and capped at the largest residual (method versions bumped, so the
+  next pipeline run rebuilds them).
+- `adaptive_pi` and `bootstrap`: the conformal multiplier q is now a
+  weighted quantile in which each compound counts by its sigmoid outlier
+  weight
+  ([`weighted_conformal_quantile()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/weighted_conformal_quantile.md)).
+  Before, with fewer than about 40 compounds a single outlier (a wrong
+  annotation the fit already ignores) set q and widened the whole band.
+  The interval now aims to cover 95% of the well-annotated compounds
+  (weight \>= 0.5). In cross-validation on 400 random published models
+  it covered 94.9% of them (97.3% before) and 35% of the outliers; the
+  median width fell from 3.6 to 2.1 min, and the models whose median
+  width exceeds the target RT range from 71 to 17.
 - `method = "fast_ci"`
   ([`gam_fast_ci()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/gam_fast_ci.md))
   is kept as the fast option (15-20 ms per model), with fixes: the
   residual variance comes from leave-one-out residuals instead of
-  in-sample residuals (coverage 93.9% -\> 95.5%; with 10-15 compounds
-  83% -\> 90%), and the bounds are made monotone by isotonic regression
+  in-sample residuals (coverage 97.1% -\> 98.1%; with 10-15 compounds
+  86% -\> 92%), and the bounds are made monotone by isotonic regression
   instead of a running maximum, which narrowed the lower side. Its width
-  is still nearly constant (97.4% / 93.4% coverage in low- /
-  high-scatter regions).
+  is still nearly constant, so it is wider than `adaptive_pi` (99.1% /
+  97.0% coverage in low- / high-scatter regions; median width 31% of the
+  target RT range, against 21%).
 - `method = "bootstrap"` was a confidence interval of the curve, not a
-  prediction interval (59% coverage; 53% with 200+ compounds). It now
+  prediction interval (65% coverage; 58% with 200+ compounds). It now
   uses the out-of-bag predictions as out-of-sample residuals with the
-  same local scale and conformal calibration as `adaptive_pi` (94.8%
+  same local scale and conformal calibration as `adaptive_pi` (94.9%
   coverage).
   [`boot2ci_PI()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/boot2ci_PI.md)
   has a new signature and the unused `boot2ci()` was removed.
-- With 10-15 compounds no method reaches the nominal coverage (86-90%);
+- With 10-15 compounds no method reaches the nominal coverage (85-92%);
   this is now documented.
 - All methods truncate the lower bound at 0.
 - Model statistics (`model.json` `stats` and `model$stats`) gain
@@ -59,12 +80,19 @@
   ([`fit_gam_mono()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/fit_gam_mono.md)).
   Its sigmoid outlier weights (0.1, 30) were set by eye for the original
   PredRet and have never been optimized; this is now documented.
-- New article “Prediction interval benchmark”, and the benchmark script
-  `inst/benchmark/pi_benchmark.R`.
+- New article “Prediction interval benchmark”, and the benchmark scripts
+  `inst/benchmark/pi_benchmark.R` and
+  `inst/benchmark/pi_benchmark_figures.R`. Coverage is measured on the
+  well-annotated compounds (outlier weight \>= 0.5 in the full fit, 94%
+  of the compounds); the coverage of all compounds and of the outliers
+  is reported alongside.
 - `withr` moved from Suggests to Imports; `MASS` is no longer needed.
 
 ### Breaking changes
 
+- [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md)
+  draws a different plot (see Website), and its `show_labels` now
+  defaults to FALSE.
 - Removed `rePredRet_download()`, `rePredRet_predict()`,
   `rePredRet_system_predictions()` and `rePredRet_plot_errors()`. They
   depended on a `rePredRet-data` repository with pre-computed
@@ -112,6 +140,38 @@
 
 ### Website
 
+- [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md)
+  was a circle that is unreadable with hundreds of systems. It is now a
+  force-directed network in which the similarity of two systems is the
+  Jaccard index of their compounds. Systems are placed by the links with
+  similarity of at least `layout_similarity` (default 0.4), and all
+  links are drawn with width and opacity growing with similarity, so
+  weak links fade into the background. Point size is the number of
+  compounds in the system, shape the method type and colour groups of
+  systems that share many compounds. `interactive = TRUE` gives a plotly
+  version with the system names on hover and a slider for the minimum
+  similarity of the links drawn; the Network article uses it.
+  `show_labels` now defaults to FALSE. It needs the igraph package
+  (Suggests).
+- Six groups of systems are named (A-F, e.g. “Plant and food natural
+  products”, “Endogenous metabolite standards, Folberth et al. 2020”),
+  from the studies that contributed their systems and the chemical
+  classes of their compounds. Their members are listed in
+  `inst/extdata/system_groups.csv`. Since the groups are recomputed from
+  the current data, a group is named only when it matches a named group
+  by mutual majority of their systems. The network and matrix plots show
+  the letters and name them in the caption; the interactive network
+  names them in its legend and on hover.
+- New
+  [`rePredRet_plot_system_matrix()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_system_matrix.md):
+  all system pairs as a similarity matrix ordered by group. It replaces
+  the heatmap ordered by number of models in the Network article.
+- Model viewer: systems are shown with their RepoRT name and method
+  type, the system boxes can be searched by typing any part of the id or
+  name, and the target list only offers systems with a model from the
+  chosen source.
+- Model statistics article: log axes are labelled with plain numbers
+  (0.03, 0.1, 0.3, 1, …) instead of scientific notation.
 - The Overview, Model Statistics and Network articles are computed from
   the published model index when the site is built, instead of from
   statistics files committed in January (a 642-model test run). The site
@@ -123,6 +183,9 @@
 
 ### Other
 
+- [`build_all_models()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models.md)
+  runs its batches with furrr instead of a parallel cluster per batch;
+  purrr is now imported and parallel no longer is.
 - [`rePredRet_plot_network()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_plot_network.md)
   gains `show_labels`.
 - `inst/scripts/run_pipeline.R` writes to `output/` by default (was
@@ -133,6 +196,19 @@
 
 ### Pipeline
 
+- The pipeline now also builds models between HILIC systems (about 3,000
+  from RepoRT’s 71 HILIC systems; it was reversed-phase only).
+  [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md)
+  and
+  [`find_model_pairs()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/find_model_pairs.md)
+  only pair systems of the same method type (`method.type` in the
+  studies table), so no RP-HILIC models are built.
+- [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md)
+  writes `systems.csv` next to `model_index.csv`: name, method type,
+  number of compounds and number of models per system. The pipeline
+  publishes it, and
+  [`rePredRet_systems()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/rePredRet_systems.md)
+  gains `n_compounds` and `n_models` columns from it.
 - [`build_all_models_furrr()`](https://stanstrup-metabolomics.github.io/rePredRet/reference/build_all_models_furrr.md)
   now builds incrementally: only models whose datasets changed or whose
   files are missing are rebuilt. Previously the build cache was loaded
