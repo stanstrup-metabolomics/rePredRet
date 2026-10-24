@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   check-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
       version: ${{ steps.check.outputs.version }}
@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Git LFS
         run: git lfs install --skip-repo
@@ -217,7 +217,7 @@ jobs:
   notify:
     needs: [check-release, build]
     if: always() && needs.check-release.outputs.should_run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Report status
         run: |
