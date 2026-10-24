@@ -106,6 +106,7 @@ reference:
       - rePredRet_models
       - rePredRet_model
       - rePredRet_plot_network
+      - rePredRet_plot_system_matrix
 
   - title: Core Pipeline
     desc: >
