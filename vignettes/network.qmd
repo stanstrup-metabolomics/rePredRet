@@ -54,7 +54,8 @@ if (has_data) {
 ## Network Visualization
 
 Each point is a system, sized by its number of compounds; the shape shows the
-method type. Hover over a system to see its name.
+method type. Hover over a system to see its name and group; the letters of the
+named groups are explained in the table below the plot.
 
 How close two systems are is measured by their similarity: the Jaccard index
 of their compounds, i.e. shared compounds divided by the compounds in either
@@ -81,7 +82,7 @@ Other groups are shown as unnamed.
 #| echo: false
 #| out-width: "100%"
 if (has_data) {
-  plotly::layout(rePredRet_plot_network(min_compounds = 20, interactive = TRUE), height = 800)
+  rePredRet_plot_network(min_compounds = 20, interactive = TRUE)
 }
 ```
 

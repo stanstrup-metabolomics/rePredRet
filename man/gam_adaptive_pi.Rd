@@ -56,7 +56,7 @@ lower bound is truncated at 0.
 
 With few compounds the interval covers less than its nominal level: in a
 cross-validation benchmark on RepoRT pairs with 10-15 shared compounds a
-95\% interval covered about 86\% (about 95\% from 30 compounds up).
+95\% interval covered about 85\% (about 95\% from 30 compounds up).
 
 Because the residuals are out-of-fold, q already includes the uncertainty
 of the fitted curve, so no separate standard error term is added.

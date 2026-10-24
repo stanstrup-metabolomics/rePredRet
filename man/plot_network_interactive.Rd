@@ -4,10 +4,12 @@
 \alias{plot_network_interactive}
 \title{Interactive System Network}
 \usage{
-plot_network_interactive(net)
+plot_network_interactive(net, height = 750)
 }
 \arguments{
 \item{net}{Output of \code{\link[=network_data]{network_data()}} with a layout.}
+
+\item{height}{Height of the plot in pixels.}
 }
 \value{
 A plotly object.

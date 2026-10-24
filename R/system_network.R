@@ -370,9 +370,10 @@ name_communities <- function(ids, community,
 #' similarity) so that a slider can hide the weaker bins in the browser.
 #'
 #' @param net Output of [network_data()] with a layout.
+#' @param height Height of the plot in pixels.
 #' @return A plotly object.
 #' @keywords internal
-plot_network_interactive <- function(net) {
+plot_network_interactive <- function(net, height = 750) {
   nodes <- net$nodes
   edges <- net$edges
   edges$bin <- pmin(floor(edges$similarity * 10), 9)  # 0.0-0.1 is bin 0, 0.9-1.0 bin 9
@@ -396,11 +397,12 @@ plot_network_interactive <- function(net) {
       line = list(width = tr$width, color = "rgb(40,40,40)"), opacity = tr$opacity,
       hoverinfo = "skip", showlegend = FALSE
     )
-  }, .init = plotly::plot_ly())
+  }, .init = plotly::plot_ly(height = height))
 
   log_n <- log10(nodes$n_compounds)
   nodes$marker_size <- 5 + 15 * (log_n - min(log_n)) / max(diff(range(log_n)), 1e-9)
-  # Legend and hover name of each group: "A: name" or "unnamed 1"
+  # Hover name of each group: "A: name" or "unnamed 1". The legend shows only
+  # the letters, so that long names do not squeeze the plot
   gn <- net$group_names
   gn$title <- ifelse(is.na(gn$group), gn$label, paste0(gn$group, ": ", gn$name))
   nodes$hover <- sprintf(
@@ -419,7 +421,9 @@ plot_network_interactive <- function(net) {
       marker = list(size = d$marker_size, color = net$palette[as.integer(cm)], opacity = 0.9,
                     symbol = ifelse(d$method_type == "HILIC", "diamond", "circle"),
                     line = list(color = "white", width = 0.5)),
-      text = d$hover, hoverinfo = "text", name = gn$title[gn$community == cm]
+      text = d$hover, hoverinfo = "text", name = gn$label[gn$community == cm],
+      # Named groups A-F first, then the unnamed ones
+      legendrank = 1000 + match(gn$label[gn$community == cm], sort(gn$label))
     )
   }, .init = p)
 
@@ -439,7 +443,8 @@ plot_network_interactive <- function(net) {
     xaxis = axis,
     yaxis = c(axis, list(scaleanchor = "x")),
     hovermode = "closest",
-    legend = list(title = list(text = "Group")),
+    legend = list(title = list(text = "Group"), itemsizing = "constant"),
+    margin = list(l = 10, r = 10, t = 50, b = 10),
     annotations = purrr::pmap(group_centres(nodes, gn), function(group, x, y) {
       list(x = x, y = y, text = paste0("<b>", group, "</b>"), showarrow = FALSE,
            font = list(size = 18), bgcolor = "rgba(255,255,255,0.8)")
