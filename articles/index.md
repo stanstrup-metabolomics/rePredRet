@@ -20,12 +20,12 @@ viewer](https://stanstrup-metabolomics.github.io/rePredRet/model_viewer.md).
 
 | Metric                           |     Value |
 |:---------------------------------|----------:|
-| Number of Models                 |    49,570 |
-| Number of Systems                |       328 |
-| Total Calibration Points         | 3,356,376 |
+| Number of Models                 |    52,612 |
+| Number of Systems                |       399 |
+| Total Calibration Points         | 3,458,980 |
 | Median Compounds per Model       |        37 |
-| Median Absolute Error            | 0.142 min |
-| Median Prediction Interval Width | 3.822 min |
+| Median Absolute Error            | 0.151 min |
+| Median Prediction Interval Width | 2.178 min |
 
 Errors are the median absolute differences between fitted and measured
 RTs of the calibration compounds of each model; the table shows the
@@ -37,12 +37,12 @@ The original PredRet paper (Stanstrup et al. 2015) reported:
 
 | Metric       | Paper Value   | rePredRet Value |
 |--------------|---------------|-----------------|
-| Median Error | 0.01-0.28 min | 0.142 min       |
+| Median Error | 0.01-0.28 min | 0.151 min       |
 
 ### Data Source
 
 **RepoRT version (commit):**
-[9de8d60](https://github.com/michaelwitting/RepoRT/tree/9de8d603377bbb6cc0f74e250eb7533fd8874df1)
+[1115f14](https://github.com/michaelwitting/RepoRT/tree/1115f14202b3ff29a0fb3dd0d410a03969fe0d89)
 
 ## Quick Links
 

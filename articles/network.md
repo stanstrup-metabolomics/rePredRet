@@ -11,11 +11,12 @@ between the types.
 
 | Metric                                |  Value |
 |:--------------------------------------|-------:|
-| Total Systems (Nodes)                 |    328 |
-| Total Models (Edges)                  | 49,570 |
+| Total Systems (Nodes)                 |    399 |
+| Total Models (Edges)                  | 52,612 |
+| Models between HILIC systems          |  3,042 |
 | Models between RP systems             | 49,570 |
-| Average Models per System (as source) |  151.1 |
-| Network Density                       | 46.22% |
+| Average Models per System (as source) |  131.9 |
+| Network Density                       | 33.13% |
 
 ## Network Visualization
 
