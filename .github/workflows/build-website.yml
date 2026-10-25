@@ -25,6 +25,11 @@ on:
   release:
     types: [published]
 
+# Never cancel a deployment that is already running
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   pkgdown:
     runs-on: ubuntu-26.04
@@ -32,8 +37,13 @@ jobs:
 
     # Grant GITHUB_TOKEN permission to deploy to GitHub Pages
     permissions:
-      contents: write
+      contents: read
       pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -65,9 +75,13 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = TRUE, quiet = FALSE)
         shell: Rscript {0}
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      # Pages is set to deploy from GitHub Actions rather than the gh-pages
+      # branch, which would run GitHub's built-in pages-build-deployment
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
-          clean: false
-          branch: gh-pages
-          folder: docs
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
